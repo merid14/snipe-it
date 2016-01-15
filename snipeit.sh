@@ -20,6 +20,11 @@ if [ "$(id -u)" != "0" ]; then
 fi
 #First things first, let's set some variables and find our distro.
 clear
+##TODO Preping things to switch over from wget to git to pull down files
+#  Set this to your github username to pull your changes ** Only for Devs **
+fork='snipe'
+#  Set this to the branch you want to pull  ** Only for Devs **
+branch='develop'
 
 name="snipeit"
 si="Snipe-IT"
