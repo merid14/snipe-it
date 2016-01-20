@@ -12,50 +12,31 @@ fork='snipe'
 #  Set this to the branch you want to pull  ** Only for Devs **
 branch='develop'
 
+##TODO: Update docs on what the upgrade script is doing
+
+name='snipeit'
+si="Snipe-IT"
+date="$(date '+%Y-%b-%d')"
+backup=/opt/$name/backup/$date
+webdir=/var/www/html
+installed="$webdir/$name/.installed"
+log="$(find /var/log/ -type f -name "snipeit-install.log")"
+
+echo "##  Checking for previous version of $si."
+echo ""
+
 
 ##TODO: Check if /var/log/snipeit-install.log exists. if it does suggest upgrade path.
 ##TODO: Add .snipeitinstaller with app version
 
-##TODO: Create backup directory /opt/snipeit/backup/$date
-##TODO: Backup app/config/app.php file /opt/snipeit/backup/$date
-##TODO: Backup database to /opt/snipeit/backup/$date
-##TODO: Empty these directories: app/storage/cache and app/storage/views
+if [$log]
+then
+    echo "##  $name install found."
+    echo "    Proceeding with upgrade."
+    echo >> $installed "updated to $si version: from:"
+else
+fi
 
-##TODO: Write warning that we are pulling from master not the latest release.
-    ##TODO: Pull from latest release with: git tag | grep -v 'pre' | tail -1
-##TODO: Copy app/config/app.php back
-##TODO: Run laravel upgrade commands
-
-
-##TODO: Update docs on what the upgrade script is doing
-
-#  https://github.com/snipe/snipe-it/releases/latest
-#  https://github.com/snipe/snipe-it/archive/v2.0.6.zip
-
-# until [[ $setbranch == "yes" ]] || [[ $ans == "no" ]]; do
-# echo -n "  Q. What branch would you like to use to upgrade? (master) "
-# read setbranch
-
-# case $setbranch in
-#         master)
-#               echo "  Branch has been set to master."
-#                 branch="https://github.com/snipe/snipe-it/archive/master.zip"
-#                 ans="yes"
-#                 ;;
-#         develop)
-#                 echo "  Branch has been set to develop."
-#                 branch="https://github.com/snipe/snipe-it/archive/develop.zip"
-#                 ;;
-#         *)        echo "  Invalid answer. Please type y or n"
-#                 ;;
-# esac
-# done
-# file=$branch'.zip'
-
-name='snipeit'
-date="$(date '+%Y-%b-%d')"
-backup=/opt/$name/backup/$date
-webdir=/var/www/html
 
 echo "##  Beginning the snipeit update process."
 echo ""
@@ -64,15 +45,52 @@ echo "##  Setting up backup directory."
 echo "    $backup"
 mkdir $backup
 
-# echo "Getting update."
+##TODO: Backup app/config/app.php file /opt/snipeit/backup/$date
+##TODO: Backup database to /opt/snipeit/backup/$date
+##TODO: Empty these directories: app/storage/cache and app/storage/views
 
-# wget -P $tmp/ https://github.com/$fork/snipe-it/archive/$file >> /var/log/snipeit-update.log 2>&1
+echo "Getting update."
+echo ""
+
+#TODO: Write warning that we are pulling from master not the latest release.
+    #TODO: Pull from latest release with: git tag | grep -v 'pre' | tail -1
+
+until [[ $ans == "yes" ]]; do
+setbranch=1
+echo "  Q. What branch would you like to use to upgrade? (latest release) "
+echo ""
+echo "    1. Latest Release (default)"
+echo "    2. Master"
+echo "    3. Develop"
+echo ""
+read setbranch
+echo " setbranch equals $setbranch."
+case $setbranch in
+        1)
+              echo "  Branch has been set to latest release."
+
+                branch=$(git tag | grep -v 'pre' | tail -1)
+                ans="yes"
+                ;;
+        2)
+              echo "  Branch has been set to master."
+                branch="master"
+                ans="yes"
+                ;;
+        3)
+                echo "  Branch has been set to develop."
+                branch="develop"
+                ans="yes"
+                ;;
+        *)        echo "  Invalid answer. Please select the number for the branch you want."
+                ;;
+esac
+done
+file=$branch'.zip'
 
 # echo "Applying update files."
+##TODO: Copy app/config/app.php back
 
-# unzip -qo $tmp/$file -d $tmp/
-# cp -Ru $tmp/snipe-it-$branch/* $webdir/$name
-# cd /var/www/html/snipeit
 
 echo "##  Running composer to apply update."
 echo ""
