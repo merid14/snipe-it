@@ -167,7 +167,7 @@ case $distro in
     	#  Get files and extract to web dir
 		echo ""
 		echo "##  Cloning Snipe-IT from github to the web directory.";
-		git clone https://github.com/$fork/snipe-it /var/www/html/snipeit >> /var/log/snipeit-install.log 2>&1
+		git clone https://github.com/$fork/snipe-it $webdir/$name >> /var/log/snipeit-install.log 2>&1
 		# wget -P $tmp/ https://github.com/snipe/snipe-it/archive/$file >> /var/log/snipeit-install.log 2>&1
 		# unzip -qo $tmp/$file -d $tmp/
 		# cp -R $tmp/snipe-it-master $webdir/$name
@@ -369,7 +369,7 @@ case $distro in
 		php composer.phar install --no-dev --prefer-source
 
 		#Change permissions on directories
-		echo "##  Seting permissions on web directory."
+		echo "##  Setting permissions on web directory."
 		sudo chmod -R 755 $webdir/$name/app/storage
 		sudo chmod -R 755 $webdir/$name/app/private_uploads
 		sudo chmod -R 755 $webdir/$name/public/uploads
@@ -427,7 +427,7 @@ case $distro in
         echo ""
 		echo "##  Cloning Snipe-IT from github to the web directory.";
 
-		git clone https://github.com/$fork/snipe-it /var/www/html/snipeit >> /var/log/snipeit-install.log 2>&1
+		git clone https://github.com/$fork/snipe-it $webdir/$name >> /var/log/snipeit-install.log 2>&1
 		# wget -P $tmp/ https://github.com/snipe/snipe-it/archive/$file >> /var/log/snipeit-install.log 2>&1
 		# unzip -qo $tmp/$file -d $tmp/
 		# cp -R $tmp/snipe-it-master $webdir/$name
@@ -515,7 +515,7 @@ case $distro in
 		php composer.phar install --no-dev --prefer-source
 
 		# Change permissions on directories
-		echo "##  Seting permissions on web directory."
+		echo "##  Setting permissions on web directory."
 		sudo chmod -R 755 $webdir/$name/app/storage
 		sudo chmod -R 755 $webdir/$name/app/private_uploads
 		sudo chmod -R 755 $webdir/$name/public/uploads
@@ -563,7 +563,7 @@ case $distro in
         echo ""
 		echo "##  Downloading Snipe-IT from github and put it in the web directory.";
 
-		git clone https://github.com/$fork/snipe-it /var/www/html/snipeit >> /var/log/snipeit-install.log 2>&1
+		git clone https://github.com/$fork/snipe-it $webdir/$name >> /var/log/snipeit-install.log 2>&1
 		# wget -P $tmp/ https://github.com/snipe/snipe-it/archive/$file >> /var/log/snipeit-install.log 2>&1
 		# unzip -qo $tmp/$file -d $tmp/
 		# cp -R $tmp/snipe-it-master $webdir/$name
@@ -649,7 +649,7 @@ case $distro in
 		php composer.phar install --no-dev --prefer-source
 
 		# Change permissions on directories
-		echo "##  Seting permissions on web directory."
+		echo "##  Setting permissions on web directory."
 		sudo chmod -R 755 $webdir/$name/app/storage
 		sudo chmod -R 755 $webdir/$name/app/private_uploads
 		sudo chmod -R 755 $webdir/$name/public/uploads
