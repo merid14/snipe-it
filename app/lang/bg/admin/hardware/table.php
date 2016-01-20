@@ -18,6 +18,7 @@ return array(
     'serial'   		=> 'Сериен номер',
     'status'   		=> 'Статус',
     'title'      	=> 'Актив ',
+    'image'		=> 'Изображение на устройството',
     'days_without_acceptance' => 'Дни без да е предаден'
 
 );

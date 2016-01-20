@@ -30,6 +30,13 @@
 <div class="row profile">
 <div class="col-md-9 bio">
 
+@if (!is_null($license->company))
+    <div class="col-md-12 col-sm-12" style="padding-bottom: 10px; margin-left: 15px; word-wrap: break-word;">
+        <strong>@lang('general.company'): </strong>
+        {{{ $license->company->name }}}
+    </div>
+@endif
+
 @if ($license->serial)
 	<div class="col-md-12 col-sm-12" style="padding-bottom: 10px; margin-left: 15px; word-wrap: break-word;">
 	<strong>@lang('admin/licenses/form.serial'): </strong>
@@ -326,7 +333,7 @@
                     @endif
                     @if ($license->purchase_cost > 0)
                     <li><strong>@lang('admin/licenses/form.cost'):</strong>
-                    @lang('general.currency')
+                    {{{ Setting::first()->default_currency }}}
                     {{{ number_format($license->purchase_cost,2) }}} </li>
                     @endif
                     @if ($license->order_number)

@@ -2,17 +2,17 @@
 
 return array(
 
-    'does_not_exist' => 'Diese Kategorie existiert nicht.',
+    'does_not_exist' => 'Zubehör existiert nicht.',
     'assoc_users'	 => 'Dieses Zubehör ist derzeit an :count  Benutzern zur Verwendung ausgegeben worden. Bitte buchen Sie das Zubehör wieder ein und versuchen es dann noch Einmal. ',
 
     'create' => array(
-        'error'   => 'Die Kategorie wurde nicht erstellt, bitte versuchen Sie es erneut.',
-        'success' => 'Die Kategorie wurde erfolgreich erstellt.'
+        'error'   => 'Zubehör wurde nicht erzeugt, bitte versuchen Sie es erneut.',
+        'success' => 'Zubehör erfolgreich angelegt.'
     ),
 
     'update' => array(
-        'error'   => 'Die Kategorie konnte nicht aktualisiert werden, bitte versuchen Sie es erneut',
-        'success' => 'Die Kategorie wurde erfolgreich aktualisiert.'
+        'error'   => 'Zubehör wurde nicht aktualisiert, bitte versuchen Sie es erneut',
+        'success' => 'Zubehör wurde erfolgreich aktualisiert.'
     ),
 
     'delete' => array(
@@ -20,7 +20,7 @@ return array(
         'error'   => 'Beim Löschen der Kategorie ist ein Problem aufgetreten. Bitte versuchen Sie es erneut.',
         'success' => 'Die Kategorie wurde erfolgreich gelöscht.'
     ),
-    
+
      'checkout' => array(
         'error'   		=> 'Zubehör konnte nicht ausgebucht werden, bitte versuchen Sie es erneut',
         'success' 		=> 'Zubehör erfolgreich ausgebucht.',

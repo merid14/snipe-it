@@ -22,7 +22,7 @@ return array(
         'suspend'   => 'Käyttäjä jäädytettiin onnistuneesti.',
         'unsuspend' => 'Käyttäjän jäädytys poistettiin onnistuneesti.',
         'restored'  => 'Käyttäjä palautettiin onnistuneesti.',
-        'import'    => 'Users imported successfully.',
+        'import'    => 'Käyttäjät tuotiin onnistuneesti.',
     ),
 
     'error' => array(
@@ -33,6 +33,7 @@ return array(
         'import'    => 'There was an issue importing users. Please try again.',
         'asset_already_accepted' => 'This asset has already been accepted.',
         'accept_or_decline' => 'You must either accept or decline this asset.',
+        'incorrect_user_accepted' => 'The asset you have attempted to accept was not checked out to you.',
         'ldap_could_not_connect' => 'Could not connect to the LDAP server. Please check your LDAP server configuration in the LDAP config file. <br>Error from LDAP Server:',
         'ldap_could_not_bind' => 'Could not bind to the LDAP server. Please check your LDAP server configuration in the LDAP config file. <br>Error from LDAP Server: ',
         'ldap_could_not_search' => 'Could not search the LDAP server. Please check your LDAP server configuration in the LDAP config file. <br>Error from LDAP Server:',
@@ -41,13 +42,13 @@ return array(
 
     'deletefile' => array(
         'error'   => 'File not deleted. Please try again.',
-        'success' => 'File successfully deleted.',
+        'success' => 'Tiedosto poistettiin onnistuneesti.',
     ),
 
     'upload' => array(
         'error'   => 'File(s) not uploaded. Please try again.',
-        'success' => 'File(s) successfully uploaded.',
-        'nofiles' => 'You did not select any files for upload',
+        'success' => 'Tiedostot lähetettiin onnistuneesti.',
+        'nofiles' => 'Et valinnut yhtään tiedostoa lähetettäväksi',
         'invalidfiles' => 'One or more of your files is too large or is a filetype that is not allowed. Allowed filetypes are png, gif, jpg, doc, docx, pdf, and txt.',
     ),
 

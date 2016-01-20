@@ -1,7 +1,9 @@
 <?php
 
 return array(
-
+	'bulk_delete'		=> 'Confrm Bulk Delete Assets',
+  'bulk_delete_help'	=> 'Review the assets for bulk deletion below. Once deleted, these assets can be restored, but they will no longer be associated with any users they are currently assigned to.',
+  'bulk_delete_warn'	=> 'You are about to delete :asset_count assets.',
 	'bulk_update'		=> 'Редактировать выбранное',
 	'bulk_update_help'	=> 'Эта форма позволяет Вам обновить несколько объектов за раз. Заполняйте только те поля, которые нужно изменить. Пустые поля останутся без изменений. ',
 	'bulk_update_warn'	=> 'Редактирование свойств :asset_count assets.',
@@ -20,7 +22,7 @@ return array(
     'expected_checkin'  => 'Ожидаемая дата возврата',
     'expires'			=> 'Истекает',
     'fully_depreciated'	=> 'Полностью изношен',
-    'help_checkout'		=> 'If you wish to assign this asset immediately, select "Ready to Deploy" from the status list above. ',
+    'help_checkout'		=> 'Если вы хотите привязать этот актив немедленно, выберите статус "Готов к установке" из списка ниже. ',
     'mac_address'		=> 'MAC Адрес',
     'manufacturer'		=> 'Производитель',
     'model'				=> 'Модель',

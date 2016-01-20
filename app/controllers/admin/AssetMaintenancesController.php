@@ -5,7 +5,7 @@
     use AdminController;
     use AssetMaintenance;
     use Carbon\Carbon;
-    use Datatable;
+    use Company;
     use DB;
     use Input;
     use Lang;
@@ -20,9 +20,16 @@
     use TCPDF;
     use Validator;
     use View;
+    use Setting;
+    use Asset;
 
     class AssetMaintenancesController extends AdminController
     {
+        private static function getInsufficientPermissionsRedirect()
+        {
+            return Redirect::to( 'admin/asset_maintenances')
+                ->with('error', Lang::get( 'general.insufficient_permissions' ) );
+        }
 
         /**
          * getIndex
@@ -45,71 +52,73 @@
          * @author  Vincent Sposato <vincent.sposato@gmail.com>
          * @version v1.0
          */
-        public function getDatatable()
-        {
 
-            $assetMaintenances = AssetMaintenance::orderBy( 'created_at', 'DESC' )
-                                            ->get();
+     public function getDatatable()
+     {
+        $maintenances = AssetMaintenance::with('asset','supplier','asset.company')
+         ->whereNull('deleted_at');
 
-            $actions = new \Chumper\Datatable\Columns\FunctionColumn( 'actions', function ( $assetMaintenances ) {
+         if (Input::has('search')) {
+             $maintenances = $maintenances->TextSearch(e(Input::get('search')));
+         }
 
-                return '<a href="' . route( 'update/asset_maintenance', $assetMaintenances->id )
-                       . '" class="btn btn-warning btn-sm" style="margin-right:5px;"><i class="fa fa-pencil icon-white"></i></a><a data-html="false" class="btn delete-asset btn-danger btn-sm" data-toggle="modal" href="'
-                       . route( 'delete/asset_maintenance', $assetMaintenances->id ) . '" data-content="'
-                       . Lang::get( 'admin/asset_maintenances/message.delete.confirm' ) . '" data-title="'
-                       . Lang::get( 'general.delete' ) . ' ' . htmlspecialchars( $assetMaintenances->title )
-                       . '?" onClick="return false;"><i class="fa fa-trash icon-white"></i></a>';
-            } );
+         if (Input::has('offset')) {
+             $offset = e(Input::get('offset'));
+         } else {
+             $offset = 0;
+         }
 
-            return Datatable::collection( $assetMaintenances )
-                            ->addColumn( 'asset', function ( $assetMaintenances ) {
+         if (Input::has('limit')) {
+             $limit = e(Input::get('limit'));
+         } else {
+             $limit = 50;
+         }
 
-                                return link_to( '/hardware/' . $assetMaintenances->asset_id . '/view',
-                                    mb_strimwidth( $assetMaintenances->asset->name, 0, 50, "..." ) );
-                            } )
-                            ->addColumn( 'supplier', function ( $assetMaintenances ) {
+         $allowed_columns = ['id','title','asset_maintenance_time','asset_maintenance_type','cost','start_date','completion_date','notes'];
+         $order = Input::get('order') === 'asc' ? 'asc' : 'desc';
+         $sort = in_array(Input::get('sort'), $allowed_columns) ? Input::get('sort') : 'created_at';
 
-                                return link_to( '/admin/settings/suppliers/' . $assetMaintenances->supplier_id
-                                                . '/view',
-                                    mb_strimwidth( $assetMaintenances->supplier->name, 0, 50, "..." ) );
-                            } )
-                            ->addColumn( 'asset_maintenance_type', function ( $assetMaintenances ) {
+         $maintenances->orderBy($sort, $order);
 
-                                return $assetMaintenances->asset_maintenance_type;
-                            } )
-                            ->addColumn( 'title', function ( $assetMaintenances ) {
+         $maintenancesCount = $maintenances->count();
+         $maintenances = $maintenances->skip($offset)->take($limit)->get();
 
-                                return link_to( '/admin/asset_maintenances/' . $assetMaintenances->id . '/view',
-                                    mb_strimwidth( $assetMaintenances->title, 0, 50, "..." ) );
-                            } )
-                            ->addColumn( 'start_date', function ( $assetMaintenances ) {
+         $rows = array();
+         $settings = Setting::getSettings();
 
-                                return $assetMaintenances->start_date;
-                            } )
-                            ->addColumn( 'completion_date', function ( $assetMaintenances ) {
+         foreach($maintenances as $maintenance) {
 
-                                return $assetMaintenances->completion_date;
-                            } )
-                            ->addColumn( 'asset_maintenance_time', function ( $assetMaintenances ) {
+            $actions = '<nobr><a href="'.route('update/asset_maintenance', $maintenance->id).'" class="btn btn-warning btn-sm" style="margin-right:5px;"><i class="fa fa-pencil icon-white"></i></a><a data-html="false" class="btn delete-asset btn-danger btn-sm" data-toggle="modal" href="'.route('delete/asset_maintenance', $maintenance->id).'" data-content="'.Lang::get('admin/asset_maintenances/message.delete.confirm').'" data-title="'.Lang::get('general.delete').' '.htmlspecialchars($maintenance->title).'?" onClick="return false;"><i class="fa fa-trash icon-white"></i></a></nobr>';
 
-                                if (is_null( $assetMaintenances->asset_maintenance_time )) {
-                                    $assetMaintenances->asset_maintenance_time = Carbon::now()
-                                                                                       ->diffInDays( Carbon::parse( $assetMaintenances->start_date ) );
-                                }
+            if (($maintenance->cost) && ($maintenance->asset->assetloc) &&  ($maintenance->asset->assetloc->currency!='')) {
+                $maintenance_cost = $maintenance->asset->assetloc->currency.$maintenance->cost;
+            } else {
+                $maintenance_cost = $settings->default_currency.$maintenance->cost;
+            }
 
-                                return intval( $assetMaintenances->asset_maintenance_time );
-                            } )
-                            ->addColumn( 'cost', function ( $assetMaintenances ) {
+            $company = $maintenance->asset->company;
 
-                                return sprintf( Lang::get( 'general.currency' ) . '%01.2f', $assetMaintenances->cost );
-                            } )
-                            ->addColumn( $actions )
-                            ->searchColumns( 'asset', 'supplier', 'asset_maintenance_type', 'title', 'start_date',
-                                'completion_date', 'asset_maintenance_time', 'cost', 'actions' )
-                            ->orderColumns( 'asset', 'supplier', 'asset_maintenance_type', 'title', 'start_date',
-                                'completion_date', 'asset_maintenance_time', 'cost', 'actions' )
-                            ->make();
-        }
+             $rows[] = array(
+                 'id'            => $maintenance->id,
+                 'asset_name'    =>  link_to('/hardware/'.$maintenance->asset->id.'/view', $maintenance->asset->showAssetName()) ,
+                 'title'         => $maintenance->title,
+                 'notes'         => $maintenance->notes,
+                 'supplier'      => $maintenance->supplier->name,
+                 'cost'          => $maintenance_cost,
+                 'asset_maintenance_type'          => e($maintenance->asset_maintenance_type),
+                 'start_date'         => $maintenance->start_date,
+                 'asset_maintenance_time'          => $maintenance->asset_maintenance_time,
+                 'completion_date'     => $maintenance->completion_date,
+                 'actions'       => $actions,
+                 'companyName'   => is_null($company) ? '' : $company->name
+             );
+         }
+
+         $data = array('total' => $maintenancesCount, 'rows' => $rows);
+
+         return $data;
+
+     }
 
         /**
          * getCreate
@@ -122,7 +131,6 @@
          */
         public function getCreate( $assetId = null )
         {
-
             // Prepare Asset Maintenance Type List
             $assetMaintenanceType = [
                                         '' => 'Select an asset maintenance type',
@@ -130,7 +138,7 @@
             // Mark the selected asset, if it came in
             $selectedAsset = $assetId;
             // Get the possible assets using a left join to get a list of assets and some other helpful info
-            $asset               = DB::table( 'assets' )
+            $asset               = Company::scopeCompanyables( DB::table( 'assets' ), 'assets.company_id' )
                                      ->leftJoin( 'users', 'users.id', '=', 'assets.assigned_to' )
                                      ->leftJoin( 'models', 'assets.model_id', '=', 'models.id' )
                                      ->select( 'assets.id', 'assets.name', 'first_name', 'last_name', 'asset_tag',
@@ -206,6 +214,12 @@
                     $assetMaintenance->notes = e( Input::get( 'notes' ) );
                 }
 
+                $asset = Asset::find( e( Input::get( 'asset_id' ) ) );
+
+                if (!Company::isCurrentUserHasAccess($asset)) {
+                    return static::getInsufficientPermissionsRedirect();
+                }
+
                 // Save the asset maintenance data
                 $assetMaintenance->asset_id               = e( Input::get( 'asset_id' ) );
                 $assetMaintenance->asset_maintenance_type = e( Input::get( 'asset_maintenance_type' ) );
@@ -217,6 +231,16 @@
                     || ( $assetMaintenance->completion_date == "0000-00-00" )
                 ) {
                     $assetMaintenance->completion_date = null;
+                }
+
+                if (( $assetMaintenance->completion_date !== "" )
+                    && ( $assetMaintenance->completion_date !== "0000-00-00" )
+                    && ( $assetMaintenance->start_date !== "" )
+                    && ( $assetMaintenance->start_date !== "0000-00-00" )
+                ) {
+                    $startDate                                = Carbon::parse( $assetMaintenance->start_date );
+                    $completionDate                           = Carbon::parse( $assetMaintenance->completion_date );
+                    $assetMaintenance->asset_maintenance_time = $completionDate->diffInDays( $startDate );
                 }
 
                 // Was the asset maintenance created?
@@ -253,12 +277,14 @@
          */
         public function getEdit( $assetMaintenanceId = null )
         {
-
             // Check if the asset maintenance exists
             if (is_null( $assetMaintenance = AssetMaintenance::find( $assetMaintenanceId ) )) {
                 // Redirect to the improvement management page
                 return Redirect::to( 'admin/asset_maintenances' )
                                ->with( 'error', Lang::get( 'admin/asset_maintenances/message.not_found' ) );
+            }
+            else if (!Company::isCurrentUserHasAccess( $assetMaintenance->asset )) {
+                return static::getInsufficientPermissionsRedirect();
             }
 
             if ($assetMaintenance->completion_date == '0000-00-00') {
@@ -279,7 +305,7 @@
                                     ] + AssetMaintenance::getImprovementOptions();
 
             // Get the possible assets using a left join to get a list of assets and some other helpful info
-            $asset               = DB::table( 'assets' )
+            $asset               = Company::scopeCompanyables( DB::table( 'assets' ), 'assets.company_id' )
                                      ->leftJoin( 'users', 'users.id', '=', 'assets.assigned_to' )
                                      ->leftJoin( 'models', 'assets.model_id', '=', 'models.id' )
                                      ->select( 'assets.id', 'assets.name', 'first_name', 'last_name', 'asset_tag',
@@ -334,6 +360,9 @@
                 return Redirect::to( 'admin/asset_maintenances' )
                                ->with( 'error', Lang::get( 'admin/asset_maintenances/message.not_found' ) );
             }
+            else if (!Company::isCurrentUserHasAccess( $assetMaintenance->asset )) {
+                return static::getInsufficientPermissionsRedirect();
+            }
 
             // attempt validation
             if ($assetMaintenance->validate( $new )) {
@@ -360,6 +389,12 @@
                     $assetMaintenance->notes = null;
                 } else {
                     $assetMaintenance->notes = e( Input::get( 'notes' ) );
+                }
+
+                $asset = Asset::find( e( Input::get( 'asset_id' ) ) );
+
+                if (!Company::isCurrentUserHasAccess($asset)) {
+                    return static::getInsufficientPermissionsRedirect();
                 }
 
                 // Save the asset maintenance data
@@ -424,13 +459,16 @@
          */
         public function getDelete( $assetMaintenanceId )
         {
-
             // Check if the asset maintenance exists
             if (is_null( $assetMaintenance = AssetMaintenance::find( $assetMaintenanceId ) )) {
                 // Redirect to the asset maintenance management page
                 return Redirect::to( 'admin/asset_maintenances' )
                                ->with( 'error', Lang::get( 'admin/asset_maintenances/message.not_found' ) );
             }
+            else if (!Company::isCurrentUserHasAccess( $assetMaintenance->asset )) {
+                return static::getInsufficientPermissionsRedirect();
+            }
+
             // Delete the asset maintenance
             $assetMaintenance->delete();
 
@@ -450,12 +488,14 @@
          */
         public function getView( $assetMaintenanceId )
         {
-
             // Check if the asset maintenance exists
             if (is_null( $assetMaintenance = AssetMaintenance::find( $assetMaintenanceId ) )) {
                 // Redirect to the asset maintenance management page
                 return Redirect::to( 'admin/asset_maintenances' )
                                ->with( 'error', Lang::get( 'admin/asset_maintenances/message.not_found' ) );
+            }
+            else if (!Company::isCurrentUserHasAccess( $assetMaintenance->asset )) {
+                return static::getInsufficientPermissionsRedirect();
             }
 
             return View::make( 'backend/asset_maintenances/view')->with('assetMaintenance', $assetMaintenance);

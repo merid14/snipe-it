@@ -18,6 +18,7 @@ return array(
     'serial'   		=> 'シリアル',
     'status'   		=> '状態',
     'title'      	=> '資産 ',
+    'image'		=> '写真',
     'days_without_acceptance' => '未受理期間'
 
 );

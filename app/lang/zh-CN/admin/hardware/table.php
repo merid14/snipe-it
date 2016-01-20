@@ -18,6 +18,7 @@ return array(
     'serial'   		=> '序列号',
     'status'   		=> '状态',
     'title'      	=> '资产',
+    'image'		=> '设备图片',
     'days_without_acceptance' => '过期天数'
 
 );

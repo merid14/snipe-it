@@ -19,6 +19,9 @@
                         <img src="{{{ $user->gravatar() }}}" class="avatar img-circle hidden-print">
                     @endif
                     <h3 class="name">{{{ $user->fullName() }}}
+                    @if (!is_null($user->company))
+                        - {{{ $user->company->name }}}
+                    @endif
                     @if ($user->employee_num)
                     		({{{ $user->employee_num }}})
                         @endif</h3>
@@ -82,7 +85,7 @@
                             <!-- checked out assets table -->
                             @if (count($user->assets) > 0)
 	                            <div class="table-responsive">
-									<table class="display table table-hover">
+						<table class="display table table-hover">
 		                                <thead>
 		                                    <tr>
 		                                        <th class="col-md-3">@lang('admin/hardware/table.asset_model')</th>

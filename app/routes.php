@@ -28,7 +28,11 @@
                 } else {
                     return '0';
                 }
-            } );
+
+            });
+
+            Route::get( 'list', [ 'as' => 'api.statuslabels.list', 'uses' => 'StatuslabelsController@getDatatable' ] );
+
         } );
 
         /*---Accessories API---*/
@@ -40,17 +44,45 @@
         } );
 
         /*---Consumables API---*/
-        Route::group( [ 'prefix' => 'consumables' ], function () {
+        Route::group(array('prefix'=>'consumables'), function () {
+            Route::get('list', array('as'=>'api.consumables.list', 'uses'=>'ConsumablesController@getDatatable'));
+            Route::get('{consumableID}/view', array('as'=>'api.consumables.view', 'uses'=>'ConsumablesController@getDataView'));
+        });
 
-            Route::get( 'list', [ 'as' => 'api.consumables.list', 'uses' => 'ConsumablesController@getDatatable' ] );
-            Route::get( '{accessoryID}/view',
-                [ 'as' => 'api.consumables.view', 'uses' => 'ConsumablesController@getDataView' ] );
-        } );
+        /*---Locations API---*/
+        Route::group(array('prefix'=>'locations'), function () {
+            Route::get('list', array('as'=>'api.locations.list', 'uses'=>'LocationsController@getDatatable'));
+            Route::get('{locationID}/view', array('as'=>'api.locations.view', 'uses'=>'LocationsController@getDataView'));
+            Route::get('{locationID}/users', array('as'=>'api.locations.viewusers', 'uses'=>'LocationsController@getDataViewUsers'));
+            Route::get('{locationID}/assets', array('as'=>'api.locations.viewassets', 'uses'=>'LocationsController@getDataViewAssets'));
+        });
+
+        /*---Depreciations API---*/
+        Route::group(array('prefix'=>'depreciations'), function () {
+            Route::get('list', array('as'=>'api.depreciations.list', 'uses'=>'DepreciationsController@getDatatable'));
+            Route::get('{$depreciationID}/view', array('as'=>'api.depreciations.view', 'uses'=>'DepreciationsController@getDataView'));
+        });
+
+        /*---Manufacturers API---*/
+        Route::group(array('prefix'=>'manufacturers'), function () {
+            Route::get('list', array('as'=>'api.manufacturers.list', 'uses'=>'ManufacturersController@getDatatable'));
+            Route::get('{manufacturerID}/view', array('as'=>'api.manufacturers.view', 'uses'=>'ManufacturersController@getDataView'));
+        });
+
+        /*---Suppliers API---*/
+        Route::group(array('prefix'=>'suppliers'), function () {
+            Route::get('list', array('as'=>'api.suppliers.list', 'uses'=>'SuppliersController@getDatatable'));
+        });
 
         /*---Users API---*/
         Route::group( [ 'prefix' => 'users' ], function () {
             Route::post( '/', [ 'as' => 'api.users.store', 'uses' => 'UsersController@store' ] );
             Route::get( 'list/{status?}', [ 'as' => 'api.users.list', 'uses' => 'UsersController@getDatatable' ] );
+        } );
+
+        /*---Groups API---*/
+        Route::group( [ 'prefix' => 'groups' ], function () {
+            Route::get( 'list', [ 'as' => 'api.groups.list', 'uses' => 'GroupsController@getDatatable' ] );
         } );
 
         /*---Licenses API---*/
@@ -83,13 +115,6 @@
 
             Route::resource( '/', 'ModelsController' );
             Route::get( 'list/{status?}', [ 'as' => 'api.models.list', 'uses' => 'ModelsController@getDatatable' ] );
-            Route::get( '{modelId}/check', function ( $modelId ) {
-
-                $model = Model::find( $modelId );
-
-                return $model->show_mac_address;
-            } );
-
             Route::get( '{modelID}/view', [ 'as' => 'api.models.view', 'uses' => 'ModelsController@getDataView' ] );
         } );
 
@@ -174,6 +199,11 @@
                     'as'   => 'hardware/bulkedit',
                     'uses' => 'AssetsController@postBulkEdit'
                 ] );
+            Route::post( 'bulkdelete',
+                [
+                    'as'   => 'hardware/bulkdelete',
+                    'uses' => 'AssetsController@postBulkDelete'
+                ] );
             Route::post( 'bulksave',
                 [
                     'as'   => 'hardware/bulksave',
@@ -193,6 +223,7 @@
                 Route::get( '{modelId}/delete', [ 'as' => 'delete/model', 'uses' => 'ModelsController@getDelete' ] );
                 Route::get( '{modelId}/view', [ 'as' => 'view/model', 'uses' => 'ModelsController@getView' ] );
                 Route::get( '{modelID}/restore', [ 'as' => 'restore/model', 'uses' => 'ModelsController@getRestore' ] );
+                Route::get( '{modelId}/custom_fields',['as' => 'custom_fields/model','uses' => 'ModelsController@getCustomFields']);
             } );
 
             Route::get( '/', [
@@ -294,7 +325,7 @@
             Route::get( '{consumableID}/checkout',
                 [ 'as' => 'checkout/consumable', 'uses' => 'ConsumablesController@getCheckout' ] );
             Route::post( '{consumableID}/checkout', 'ConsumablesController@postCheckout' );
-            Route::get( '/', [ 'as' => 'accessories', 'uses' => 'ConsumablesController@getIndex' ] );
+            Route::get( '/', [ 'as' => 'consumables', 'uses' => 'ConsumablesController@getIndex' ] );
         } );
 
         # Admin Settings Routes (for categories, maufactureres, etc)
@@ -309,7 +340,7 @@
             } );
 
             # Settings
-            Route::group( [ 'prefix' => 'backups' ], function () {
+            Route::group( [ 'prefix' => 'backups', 'before' => 'backup-auth' ], function () {
 
 
                 Route::get( 'download/{filename}', [
@@ -328,6 +359,18 @@
                 ]);
                 Route::get( '/', [ 'as' => 'settings/backups', 'uses' => 'SettingsController@getBackups' ] );
             } );
+
+            # Companies
+            Route::group([ 'prefix' => 'companies' ], function () {
+
+                Route::get('{companyId}/edit', ['as' => 'update/company', 'uses' => 'CompaniesController@getEdit']);
+                Route::get('create', ['as' => 'create/company', 'uses' => 'CompaniesController@getCreate']);
+                Route::get('/', ['as' => 'companies', 'uses' => 'CompaniesController@getIndex']);
+
+                Route::post('{companyId}/delete', ['as' => 'delete/company', 'uses' => 'CompaniesController@postDelete']);
+                Route::post('{companyId}/edit', 'CompaniesController@postEdit');
+                Route::post('create', 'CompaniesController@postCreate');
+            });
 
             # Manufacturers
             Route::group( [ 'prefix' => 'manufacturers' ], function () {
@@ -397,6 +440,7 @@
                 Route::get( '{locationId}/edit',
                     [ 'as' => 'update/location', 'uses' => 'LocationsController@getEdit' ] );
                 Route::post( '{locationId}/edit', 'LocationsController@postEdit' );
+                Route::get( '{locationId}/view', 'LocationsController@getView' );
                 Route::get( '{locationId}/delete',
                     [ 'as' => 'delete/location', 'uses' => 'LocationsController@getDelete' ] );
             } );
@@ -415,6 +459,13 @@
             } );
 
         } );
+
+        # Custom fields support
+        Route::get('custom_fields/create-field',['uses' =>'CustomFieldsController@createField','as' => 'admin.custom_fields.create-field']);
+        Route::post('custom_fields/create-field',['uses' => 'CustomFieldsController@storeField','as' => 'admin.custom_fields.store-field']);
+        Route::post('custom_fields/{id}/associate',['uses' => 'CustomFieldsController@associate','as' => 'admin.custom_fields.associate']);
+        Route::match(['DELETE'],'custom_fields/delete-field/{id}',['uses' => 'CustomFieldsController@deleteField','as' => 'admin.custom_fields.delete-field']);
+        Route::resource('custom_fields','CustomFieldsController');
 
         # User Management
         Route::group( [ 'prefix' => 'users' ], function () {

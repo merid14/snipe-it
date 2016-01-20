@@ -32,7 +32,7 @@ class AppCommand extends Command
         'password'   => null
     );
 
-	protected $dummyData = true;
+	protected $dummyData = false;
 
     /**
      * Create a new command instance.
@@ -70,7 +70,7 @@ class AppCommand extends Command
         $this->askUserEmail();
         $this->askUserPassword();
 
-		$this->askUserDummyData();
+		    $this->askUserDummyData();
 
         $this->comment('');
         $this->comment('');
@@ -222,12 +222,23 @@ class AppCommand extends Command
     {
         do {
             // Ask the user to input the user password
-            $password = $this->ask('Please enter your user password (at least 8 characters): ');
+            $password = $this->secret('Please enter your user password (at least 8 characters): ');
+            $password1 = $this->secret('Please confirm your user password: ');
 
             // Check if password is valid
-            if ($password == '') {
+            if ($password == '' || $password1 == '') {
                 // Return an error message
                 $this->error('Password is invalid. Please try again.');
+                $password = '';
+                $password1 = '';
+            }
+            else{
+                // Verify the user password
+                if ($password != $password1){
+                    $this->error('Password do not match. Please try again.');
+                    $password = '';
+                    $password1 = '';
+                }
             }
 
             // Store the password
@@ -235,19 +246,18 @@ class AppCommand extends Command
         } while( ! $password);
     }
 
-	/**
-	 * Asks the user to create dummy data
-	 *
-	 * @return void
-	 * @todo   Use the Laravel Validator
-	 */
-	protected function askUserDummyData()
-	{
-		// Ask the user to input the user password
-		$dummydata = $this->ask('Do you want to seed your database with dummy data? Y/n (default is yes): ');
-
-		$this->dummyData = ( strstr($dummydata, 'Y' ) || empty($dummydata) ) ? true : false;
-	}
+    /**
+     * Asks the user to create dummy data
+     *
+     * @return void
+     * @todo   Use the Laravel Validator
+     */
+    protected function askUserDummyData()
+    {
+        // Ask the user to input the user password
+        $dummydata = $this->ask('Do you want to seed your database with dummy data? y/N (default is no): ');
+        $this->dummyData = (strstr($dummydata, 'y' )) ? true : false;
+    }
 
     /**
      * Runs all the necessary Sentry commands.
@@ -349,6 +359,8 @@ class AppCommand extends Command
             'permissions' => array(
                 'admin' => 1,
                 'user'  => 1,
+                'superuser' => 1,
+                'reports' => 1,
             ),
         ));
 

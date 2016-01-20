@@ -2,17 +2,17 @@
 
 return array(
 
-    'does_not_exist' => '分类不存在。',
+    'does_not_exist' => '配件不存在。',
     'assoc_users'	 => '配件目前状态：可用数量不足，请检查改配件再重试。',
 
     'create' => array(
-        'error'   => '分类创建失败，请重试。',
-        'success' => '分类创建成功。'
+        'error'   => '配件添加失败，请重试。',
+        'success' => '配件添加成功。'
     ),
 
     'update' => array(
-        'error'   => '分类创建失败，请重试',
-        'success' => '分类更新成功。'
+        'error'   => '配件更新失败，请重试。',
+        'success' => '配件更新成功。'
     ),
 
     'delete' => array(
@@ -20,7 +20,7 @@ return array(
         'error'   => '删除分类出现异常，请重试。',
         'success' => '分类已经被成功删除。'
     ),
-    
+
      'checkout' => array(
         'error'   		=> '配件不能被预订，请重试。',
         'success' 		=> '配件成功预订。',
