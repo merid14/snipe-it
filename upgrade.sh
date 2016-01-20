@@ -43,7 +43,7 @@ else
     echo "##  $name install found."
     echo "##  Beginning the $si update process."
     echo ""
-    echo >> $installed "Upgraded to $si version: from:"
+
 fi
 
 echo "##  Setting up backup directory."
@@ -95,8 +95,10 @@ until [[ $ans == "yes" ]]; do
     esac
 done
 
-git pull
-
+cd $webdir/$name
+currentBranch=$(basename $(git symbolic-ref HEAD))
+git checkout -b $branch $branch
+echo >> $installed "Upgraded $si to version:$branch from:$currentBranch"
 
 echo "##  Cleaning cache and view directories."
 echo ""
