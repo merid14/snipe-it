@@ -29,10 +29,6 @@ log="$(find /var/log/ -type f -name "snipeit-install.log")"
 echo "##  Checking for previous version of $si."
 echo ""
 
-
-##TODO: Check if /var/log/snipeit-install.log exists. if it does suggest upgrade path.
-##TODO: Add .installed with app version
-
 if [!$log] || [!$installed]
 then
     echo "    It appears that you haven't installed $name with the installer."
@@ -43,8 +39,6 @@ else
     echo "##  $name install found."
     echo "##  Beginning the $si update process."
     echo ""
-
-fi
 
 echo "##  Setting up backup directory."
 echo "    $backup"
@@ -113,3 +107,4 @@ echo ""
 sudo php composer.phar install --no-dev --prefer-source
 sudo php composer.phar dump-autoload
 sudo php artisan migrate
+fi
