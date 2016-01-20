@@ -12,6 +12,14 @@ fork='snipe'
 #  Set this to the branch you want to pull  ** Only for Devs **
 branch='develop'
 
+
+##TODO: Check if /var/log/snipeit-install.log exists. if it does suggest upgrade path.
+##TODO: Add .snipeitinstaller with app version
+
+##TODO: Create backup directory /opt/snipeit/backup/$date
+##TODO: Backup app/config/app.php file /opt/snipeit/backup/$date
+##TODO: Backup database to /opt/snipeit/backup/$date
+##TODO:
 #  https://github.com/snipe/snipe-it/releases/latest
 #  https://github.com/snipe/snipe-it/archive/v2.0.6.zip
 
