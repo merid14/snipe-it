@@ -29,20 +29,20 @@ log="$(find /var/log/ -type f -name "snipeit-install.log")"
 echo "##  Checking for previous version of $si."
 echo ""
 
-if [!$log] || [!$installed]
+if [ ! $log ] || [ ! $installed ]
 then
     echo "    It appears that you haven't installed $name with the installer."
     echo "    Please upgrade manually by following the instructions in the documentation."
     echo "    http://docs.snipeitapp.com/upgrading.html"
 ##TODO: ask if user would like to procceed anyway and promp them to backup their files.
 else
-    echo "##  $name install found."
+    echo "##  $si install found."
     echo "##  Beginning the $si update process."
     echo ""
 
 echo "##  Setting up backup directory."
 echo "    $backup"
-mkdir $backup
+mkdir -p $backup
 
 echo "##  Backing up app file."
 echo ""
@@ -50,13 +50,14 @@ cp $webdir/$name/app/config/app.php $backup/app.php
 
 echo "##  Backing up database."
 echo ""
-mysqldump db_name > $backup/$name.sql
+mysqldump $name > $backup/$name.sql
 
 echo "##  Getting update."
 echo ""
 # echo "    By default we are pulling from the latest release not master."
 # echo "    If you pulled from "
 # echo ""
+cd $webdir/$name
 
 until [[ $ans == "yes" ]]; do
     echo "  Q. What branch would you like to use to upgrade?"
@@ -68,7 +69,7 @@ until [[ $ans == "yes" ]]; do
     read setbranch
     echo " setbranch equals $setbranch." ## for debug
     case $setbranch in
-        1)
+        1 || '')
             branch=$(git tag | grep -v 'pre' | tail -1)
             echo "  Branch has been set to latest release. $branch"
             ans="yes"
@@ -89,7 +90,6 @@ until [[ $ans == "yes" ]]; do
     esac
 done
 
-cd $webdir/$name
 currentBranch=$(basename $(git symbolic-ref HEAD))
 git checkout -b $branch $branch
 echo >> $installed "Upgraded $si to version:$branch from:$currentBranch"
