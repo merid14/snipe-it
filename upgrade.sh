@@ -104,6 +104,11 @@ then
     echo "    You are already on the latest version."
     echo "    Version: $currentBranch"
 else
+    git add -p
+    git commit
+    git stash
+    git checkout other-branch
+    git stash pop
     git checkout -b $branch $branch
     echo >> $installed "Upgraded $si to version:$branch from:$currentBranch"
 fi
