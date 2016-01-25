@@ -30,6 +30,7 @@ name="snipeit"
 si="Snipe-IT"
 hostname="$(hostname)"
 fqdn="$(hostname --fqdn)"
+installed="$webdir/$name/.installed"
 ans=default
 hosts=/etc/hosts
 file=master.zip
@@ -241,6 +242,7 @@ case $distro in
 		/usr/bin/mysql_secure_installation
 
 		# Install / configure composer
+		echo ""
 		echo "##  Configuring composer."
 		cd $webdir/$name
 		curl -sS https://getcomposer.org/installer | php
@@ -332,6 +334,7 @@ case $distro in
 
 		if [ -f "$apachefile" ]
 		then
+		    echo ""
 			echo "    VirtualHost already exists. $apachefile"
 		else
 			echo >> $apachefile ""
@@ -352,6 +355,7 @@ case $distro in
 			echo >> $apachefile "</VirtualHost>"
 		fi
 
+		echo ""
 		echo "##  Setting up hosts file.";
 		if grep -q "127.0.0.1 $hostname $fqdn" "$hosts"; then
 			echo "    Hosts file already setup."
@@ -451,6 +455,7 @@ case $distro in
         then
         	branch=$(git tag | grep -v 'pre' | tail -1)
         fi
+        echo "    Installing version: $branch"
         git checkout -b $branch $branch
 
 		# Make mariaDB start on boot and restart the daemon
@@ -471,6 +476,7 @@ case $distro in
 
 		if [$apachefile]
 		then
+			echo ""
 			echo "    VirtualHost already exists. $apachefile"
 		else
 			echo >> $apachefile ""
@@ -491,6 +497,7 @@ case $distro in
 			echo >> $apachefile "</VirtualHost>"
 		fi
 
+		echo ""
 		echo "##  Setting up hosts file.";
 		if grep -q "127.0.0.1 $hostname $fqdn" "$hosts"; then
 			echo "    Hosts file already setup."
