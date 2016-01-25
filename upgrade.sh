@@ -36,11 +36,19 @@ then
     echo "    http://docs.snipeitapp.com/upgrading.html"
 ##TODO: ask if user would like to procceed anyway and prompt them to backup their files.
 else
-    echo "##  $si install found."
-    echo "##  Beginning the $si update process."
+    cd $webdir/$name
+
+    if [ -z $branch ]
+    then
+        branch=$(git tag | grep -v 'pre' | tail -1)
+    fi
+    currentBranch=$(basename $(git symbolic-ref HEAD))
+
+    echo "##  $si install found. Version: $currentBranch"
+    echo "##  Beginning the $si update process to version: $branch"
     echo ""
 
-    cd $webdir/$name
+
 # until [[ $ans == "yes" ]]; do
 #     echo "  Q. What branch would you like to use to upgrade?"
 #     echo ""
@@ -77,12 +85,6 @@ else
 #             ;;
 #     esac
 # done
-    if [ -z $branch ]
-    then
-        branch=$(git tag | grep -v 'pre' | tail -1)
-    fi
-    currentBranch=$(basename $(git symbolic-ref HEAD))
-
     if [ $currentBranch != $branch ]
     then
         echo "##  Setting up backup directory."
@@ -143,7 +145,7 @@ else
         sudo php artisan migrate
         echo >> $installed "Upgraded $si to version:$branch from:$currentBranch"
 
-        echo " You are now on Version $branch of $si"
+        echo "    You are now on Version $branch of $si"
     else
         echo "    You are already on the latest version."
         echo "    Version: $currentBranch"
