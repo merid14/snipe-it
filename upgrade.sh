@@ -34,7 +34,7 @@ then
     echo "    It appears that you haven't installed $name with the installer."
     echo "    Please upgrade manually by following the instructions in the documentation."
     echo "    http://docs.snipeitapp.com/upgrading.html"
-##TODO: ask if user would like to procceed anyway and promp them to backup their files.
+##TODO: ask if user would like to procceed anyway and prompt them to backup their files.
 else
     echo "##  $si install found."
     echo "##  Beginning the $si update process."
@@ -54,45 +54,59 @@ mysqldump $name > $backup/$name.sql
 
 echo "##  Getting update."
 echo ""
-# echo "    By default we are pulling from the latest release not master."
-# echo "    If you pulled from "
-# echo ""
+echo "    By default we are pulling from the latest release."
+echo "    If you pulled from another branch please upgrade manually."
+echo ""
 cd $webdir/$name
 
-until [[ $ans == "yes" ]]; do
-    echo "  Q. What branch would you like to use to upgrade?"
-    echo ""
-    echo "    1. Latest Release (default)"
-    echo "    2. Master"
-    echo "    3. Develop"
-    echo ""
-    read setbranch
-    echo " setbranch equals $setbranch." ## for debug
-    case $setbranch in
-        1 || '')
-            branch=$(git tag | grep -v 'pre' | tail -1)
-            echo "  Branch has been set to latest release. $branch"
-            ans="yes"
-            ;;
-        2)
-            branch="master"
-            echo "  Branch has been set to $branch."
-            ans="yes"
-            ;;
-        3)
-            branch="develop"
-            echo "  Branch has been set to $branch."
-            ans="yes"
-            ;;
-        *)
-            echo "  Invalid answer. Please select the number for the branch you want."
-            ;;
-    esac
-done
-
+# until [[ $ans == "yes" ]]; do
+#     echo "  Q. What branch would you like to use to upgrade?"
+#     echo ""
+#     echo "    1. Latest Release (default)"
+#     echo "    2. Master"
+#     echo "    3. Develop"
+#     echo ""
+#     read setbranch
+#     echo " setbranch equals $setbranch." ## for debug
+#     case $setbranch in
+#         1 || '')
+#             branch=$(git tag | grep -v 'pre' | tail -1)
+#             echo "  Branch has been set to latest release. $branch"
+#             ans="yes"
+#             ;;
+#         2)
+#             branch="master"
+#             echo "  Branch has been set to $branch."
+#             ans="yes"
+#             ;;
+#         3)
+#             branch="develop"
+#             echo "  Branch has been set to $branch."
+#             ans="yes"
+#             ;;
+#         4)
+#             echo -n "    Please type in the branch you would like to use:"
+#             read branch
+#             echo "  Branch has been set to $branch."
+#             ans="yes"
+#             ;;
+#         *)
+#             echo "  Invalid answer. Please select the number for the branch you want."
+#             ;;
+#     esac
+# done
+branch=$(git tag | grep -v 'pre' | tail -1)
+branch=v2.0.6
 currentBranch=$(basename $(git symbolic-ref HEAD))
-git checkout -b $branch $branch
-echo >> $installed "Upgraded $si to version:$branch from:$currentBranch"
+
+if [ $currentBranch=$branch ]
+then
+    echo "    You are already on the latest version."
+    echo "    Version: $currentBranch"
+else
+    git checkout -b $branch $branch
+    echo >> $installed "Upgraded $si to version:$branch from:$currentBranch"
+fi
 
 echo "##  Cleaning cache and view directories."
 echo ""
