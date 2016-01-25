@@ -104,11 +104,13 @@ else
         echo ""
 
         until [[ $ans1 == "yes" ]]; do
+        echo "  Upgrading to Version: $branch from Version: $currentBranch"
+        echo ""
         echo -n "  Q. Would you like to continue? (y/n) "
         read cont
         case $cont in
                 [yY] | [yY][Ee][Ss] )
-                        echo "  Continuing with the upgrade process."
+                        echo "  Continuing with the upgrade process to version: $branch."
                         ans1="yes"
                         ;;
                 [nN] | [n|N][O|o] )
@@ -121,7 +123,7 @@ else
         done
 
         git add .
-        git commit -m "Upgrading"
+        git commit -m "Upgrading to $branch from $currentBranch"
         git stash
         git checkout -b $branch $branch
         git stash pop
@@ -140,6 +142,8 @@ else
         sudo php composer.phar dump-autoload
         sudo php artisan migrate
         echo >> $installed "Upgraded $si to version:$branch from:$currentBranch"
+
+        echo " You are now on Version $branch of $si"
     else
         echo "    You are already on the latest version."
         echo "    Version: $currentBranch"
