@@ -35,6 +35,10 @@ ans=default
 hosts=/etc/hosts
 file=master.zip
 tmp=/tmp/$name
+date="$(date '+%Y-%b-%d')"
+backup=/opt/$name/backup/$date
+log="$(find /var/log/ -type f -name "snipeit-install.log")"
+
 
 rm -rf $tmp/
 mkdir $tmp
@@ -568,6 +572,7 @@ echo "  ***Open http://$fqdn to login to Snipe-IT.***"
 echo ""
 echo ""
 echo "##  Cleaning up..."
+echo >> $installed "Installed $si to version:$branch $date"
 #rm -f snipeit.sh
 #rm -f install.sh
 rm -rf $tmp/

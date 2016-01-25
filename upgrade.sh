@@ -19,7 +19,6 @@ branch=""
 
 name='snipeit'
 si="Snipe-IT"
-setbranch=1
 date="$(date '+%Y-%b-%d')"
 backup=/opt/$name/backup/$date
 webdir=/var/www/html
@@ -29,7 +28,7 @@ log="$(find /var/log/ -type f -name "snipeit-install.log")"
 echo "##  Checking for previous version of $si."
 echo ""
 
-if [ ! $log ] || [ ! $installed ]
+if [ -z $log ] || [ -z $installed ]
 then
     echo "    It appears that you haven't installed $name with the installer."
     echo "    Please upgrade manually by following the instructions in the documentation."
@@ -49,46 +48,11 @@ else
     echo ""
 
 
-# until [[ $ans == "yes" ]]; do
-#     echo "  Q. What branch would you like to use to upgrade?"
-#     echo ""
-#     echo "    1. Latest Release (default)"
-#     echo "    2. Master"
-#     echo "    3. Develop"
-#     echo ""
-#     read setbranch
-#     echo " setbranch equals $setbranch." ## for debug
-#     case $setbranch in
-#         1 || '')
-#             branch=$(git tag | grep -v 'pre' | tail -1)
-#             echo "  Branch has been set to latest release. $branch"
-#             ans="yes"
-#             ;;
-#         2)
-#             branch="master"
-#             echo "  Branch has been set to $branch."
-#             ans="yes"
-#             ;;
-#         3)
-#             branch="develop"
-#             echo "  Branch has been set to $branch."
-#             ans="yes"
-#             ;;
-#         4)
-#             echo -n "    Please type in the branch you would like to use:"
-#             read branch
-#             echo "  Branch has been set to $branch."
-#             ans="yes"
-#             ;;
-#         *)
-#             echo "  Invalid answer. Please select the number for the branch you want."
-#             ;;
-#     esac
-# done
     if [ $currentBranch != $branch ]
     then
         echo "##  Setting up backup directory."
         echo "    $backup"
+        echo ""
         mkdir -p $backup
 
         echo "##  Backing up app file."
@@ -106,13 +70,14 @@ else
         echo ""
 
         until [[ $ans1 == "yes" ]]; do
-        echo "  Upgrading to Version: $branch from Version: $currentBranch"
+        echo "##  Upgrading to Version: $branch from Version: $currentBranch"
         echo ""
         echo -n "  Q. Would you like to continue? (y/n) "
         read cont
         case $cont in
                 [yY] | [yY][Ee][Ss] )
                         echo "  Continuing with the upgrade process to version: $branch."
+                        echo ""
                         ans1="yes"
                         ;;
                 [nN] | [n|N][O|o] )
@@ -124,14 +89,15 @@ else
         esac
         done
 
-        git add .
-        git commit -m "Upgrading to $branch from $currentBranch"
-        git stash
-        git checkout -b $branch $branch
-        git stash pop
+        set +e
+        git add . >> /var/log/snipeit-install.log 2>&1
+        git commit -m "Upgrading to $branch from $currentBranch" >> /var/log/snipeit-install.log 2>&1
+        git stash >> /var/log/snipeit-install.log 2>&1
+        git checkout -b $branch $branch >> /var/log/snipeit-install.log 2>&1
+        git stash pop >> /var/log/snipeit-install.log 2>&1
+        set -e
 
         echo "##  Cleaning cache and view directories."
-        echo ""
         rm -rf $webdir/$name/app/storage/cache/*
         rm -rf $webdir/$name/app/storage/views/*
 
@@ -145,12 +111,11 @@ else
         sudo php artisan migrate
         echo >> $installed "Upgraded $si to version:$branch from:$currentBranch"
 
-        echo "    You are now on Version $branch of $si"
+        echo ""
+        echo "    You are now on Version $branch of $si."
     else
         echo "    You are already on the latest version."
         echo "    Version: $currentBranch"
         echo ""
     fi
-
-
 fi
