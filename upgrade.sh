@@ -13,7 +13,7 @@ clear
 #  Set this to your github username to pull your changes ** Only for Devs **
 fork="snipe"
 #  Set this to the branch you want to pull  ** Only for Devs ** ##TODO not working yet
-#branch="develop"
+branch=""
 
 ##TODO: Update docs on what the upgrade script is doing
 
@@ -95,8 +95,11 @@ cd $webdir/$name
 #             ;;
 #     esac
 # done
-branch=$(git tag | grep -v 'pre' | tail -1)
-branch=v2.0.6
+if [ -z $branch ]
+then
+    branch=$(git tag | grep -v 'pre' | tail -1)
+fi
+
 currentBranch=$(basename $(git symbolic-ref HEAD))
 
 if [ $currentBranch=$branch ]
@@ -104,12 +107,11 @@ then
     echo "    You are already on the latest version."
     echo "    Version: $currentBranch"
 else
-    git add -p
-    git commit
+    git add .
+    git commit -m "Upgrading"
     git stash
-    git checkout other-branch
-    git stash pop
     git checkout -b $branch $branch
+    git stash pop
     echo >> $installed "Upgraded $si to version:$branch from:$currentBranch"
 fi
 

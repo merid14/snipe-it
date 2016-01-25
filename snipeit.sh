@@ -24,7 +24,7 @@ clear
 #  Set this to your github username to pull your changes ** Only for Devs **
 fork='snipe'
 #  Set this to the branch you want to pull  ** Only for Devs ** ##TODO not working yet
-branch='develop'
+branch=""
 
 name="snipeit"
 si="Snipe-IT"
@@ -165,7 +165,10 @@ case $distro in
 		git clone https://github.com/$fork/snipe-it $webdir/$name >> /var/log/snipeit-install.log 2>&1
         # get latest stable release
         cd $webdir/$name
-        branch=$(git tag | grep -v 'pre' | tail -1)
+        if [ -z $branch ]
+        then
+        	branch=$(git tag | grep -v 'pre' | tail -1)
+        fi
         git checkout -b $branch $branch
 
 ##  TODO make sure apache is set to start on boot and go ahead and start it
@@ -305,7 +308,8 @@ case $distro in
 		git clone https://github.com/$fork/snipe-it $webdir/$name >> /var/log/snipeit-install.log 2>&1
         # get latest stable release
         cd $webdir/$name
-        if [ $branch='' ]; then
+        if [ -z $branch ]
+        then
         	branch=$(git tag | grep -v 'pre' | tail -1)
         fi
         git checkout -b $branch $branch
@@ -443,7 +447,10 @@ case $distro in
 		git clone https://github.com/$fork/snipe-it $webdir/$name >> /var/log/snipeit-install.log 2>&1
         # get latest stable release
         cd $webdir/$name
-        branch=$(git tag | grep -v 'pre' | tail -1)
+        if [ -z $branch ]
+        then
+        	branch=$(git tag | grep -v 'pre' | tail -1)
+        fi
         git checkout -b $branch $branch
 
 		# Make mariaDB start on boot and restart the daemon
