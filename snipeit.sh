@@ -47,6 +47,7 @@ mkdir $tmp
 ####################  Functions Go Here  ######################
 function ShowProgressOf()
 {
+	tput civis
     "$@" >> $log 2>&1 &
     local pid=$!
     local delay=0.5
@@ -59,6 +60,7 @@ function ShowProgressOf()
         printf "\b\b\b\b\b\b"
     done
     printf "    \b\b\b\b\n"
+    tput cnorm
 }
 
 function isinstalled {
