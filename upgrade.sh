@@ -23,7 +23,7 @@ date="$(date '+%Y-%b-%d')"
 backup=/opt/$name/backup/$date
 webdir=/var/www/html
 installed="$webdir/$name/.installed"
-log="$(find /var/log/ -type f -name "snipeit-install.log")"
+log="/var/log/snipeit-install.log"
 git="$(find $webdir/$name -type d -name ".git")"
 
 echo "##  Checking for previous version of $si."
@@ -37,7 +37,7 @@ if [ -z $log ] || [ -z $installed ]; then #If neither log or installer file exis
 elif [ -d $git ]; then # If git directory exists
     cd $webdir/$name
 
-    if [ -z $branch ];then
+    if [ -z $branch ]; then
         branch=$(git tag | grep -v 'pre' | tail -1)
     fi
     currentBranch=$(basename $(git symbolic-ref HEAD))
@@ -47,7 +47,7 @@ elif [ -d $git ]; then # If git directory exists
     echo ""
 
 
-    if [ $currentBranch != $branch ];then
+    if [ $currentBranch != $branch ]; then
         echo "##  Setting up backup directory."
         echo "    $backup"
         echo ""

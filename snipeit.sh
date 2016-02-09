@@ -22,8 +22,8 @@ fi
 clear
 
 #  Set this to your github username to pull your changes ** Only for Devs **
-fork='snipe'
-#  Set this to the branch you want to pull  ** Only for Devs ** ##TODO not working yet
+fork="snipe"
+#  Set this to the branch you want to pull  ** Only for Devs **
 branch=""
 
 name="snipeit"
@@ -37,7 +37,7 @@ file=master.zip
 tmp=/tmp/$name
 date="$(date '+%Y-%b-%d')"
 backup=/opt/$name/backup/$date
-log="$(find /var/log/ -type f -name "snipeit-install.log")"
+log="/var/log/snipeit-install.log"
 
 
 rm -rf $tmp/
@@ -155,37 +155,36 @@ case $distro in
 		echo "##  Updating ubuntu in the background. Please be patient."
 		echo ""
 
-		sudo apt-get update >> /var/log/snipeit-install.log 2>&1
-		sudo apt-get -y upgrade >> /var/log/snipeit-install.log 2>&1
+		sudo apt-get update >> $log 2>&1
+		sudo apt-get -y upgrade >> $log 2>&1
 
 		echo "##  Installing packages."
-		sudo apt-get install -y git unzip php5 php5-mcrypt php5-curl php5-mysql php5-gd php5-ldap >> /var/log/snipeit-install.log 2>&1
+		sudo apt-get install -y git unzip php5 php5-mcrypt php5-curl php5-mysql php5-gd php5-ldap >> $log 2>&1
 		#We already established MySQL root & user PWs, so we dont need to be prompted. Let's go ahead and install Apache, PHP and MySQL.
 		echo "##  Setting up LAMP."
-		sudo DEBIAN_FRONTEND=noninteractive apt-get install -y lamp-server^ >> /var/log/snipeit-install.log 2>&1
+		sudo DEBIAN_FRONTEND=noninteractive apt-get install -y lamp-server^ >> $log 2>&1
 
 		#  Get files and extract to web dir
 		echo ""
 		echo "##  Cloning Snipe-IT from github to the web directory.";
-		git clone https://github.com/$fork/snipe-it $webdir/$name >> /var/log/snipeit-install.log 2>&1
+		git clone https://github.com/$fork/snipe-it $webdir/$name >> $log 2>&1
         # get latest stable release
         cd $webdir/$name
-        if [ -z $branch ]
-        then
+        if [ -z $branch ]; then
         	branch=$(git tag | grep -v 'pre' | tail -1)
         fi
+        echo "    Installing version: $branch"
         git checkout -b $branch $branch
 
 ##  TODO make sure apache is set to start on boot and go ahead and start it
 
 		#Enable mcrypt and rewrite
 		echo "##  Enabling mcrypt and rewrite"
-		sudo php5enmod mcrypt >> /var/log/snipeit-install.log 2>&1
-		sudo a2enmod rewrite >> /var/log/snipeit-install.log 2>&1
-		sudo ls -al /etc/apache2/mods-enabled/rewrite.load >> /var/log/snipeit-install.log 2>&1
+		sudo php5enmod mcrypt >> $log 2>&1
+		sudo a2enmod rewrite >> $log 2>&1
+		sudo ls -al /etc/apache2/mods-enabled/rewrite.load >> $log 2>&1
 
-		if [$apachefile]
-		then
+		if [$apachefile]; then
 			echo "    VirtualHost already exists. $apachefile"
 		else
 			echo >> $apachefile ""
@@ -208,7 +207,7 @@ case $distro in
 			echo "    Hosts file already setup."
 		else
 			echo >> $hosts "127.0.0.1 $hostname $fqdn"
-			a2ensite $name.conf >> /var/log/snipeit-install.log 2>&1
+			a2ensite $name.conf >> $log 2>&1
 		fi
 
 		#Modify the Snipe-It files necessary for a production environment.
@@ -276,8 +275,7 @@ case $distro in
 		echo "##  Adding IUS, epel-release and mariaDB repos.";
 		mariadbRepo=/etc/yum.repos.d/MariaDB.repo
 
-		if [ -f "$mariadbRepo" ]
-		then
+		if [ -f "$mariadbRepo" ]; then
 			echo "    Repo already exists. $apachefile"
 		else
 			touch $mariadbRepo
@@ -289,9 +287,9 @@ case $distro in
 			echo >> $mariadbRepo "enable=1"
 		fi
 
-		yum -y install wget epel-release >> /var/log/snipeit-install.log 2>&1
-		wget -P $tmp/ https://centos6.iuscommunity.org/ius-release.rpm >> /var/log/snipeit-install.log 2>&1
-		rpm -Uvh $tmp/ius-release*.rpm >> /var/log/snipeit-install.log 2>&1
+		yum -y install wget epel-release >> $log 2>&1
+		wget -P $tmp/ https://centos6.iuscommunity.org/ius-release.rpm >> $log 2>&1
+		rpm -Uvh $tmp/ius-release*.rpm >> $log 2>&1
 
 
 		#Install PHP and other needed stuff.
@@ -299,11 +297,11 @@ case $distro in
 		PACKAGES="httpd MariaDB-server git unzip php56u php56u-mysqlnd php56u-bcmath php56u-cli php56u-common php56u-embedded php56u-gd php56u-mbstring php56u-mcrypt php56u-ldap"
 
 		for p in $PACKAGES;do
-			if isinstalled $p;then
+			if isinstalled $p; then
 				echo " ##" $p "Installed"
 			else
 				echo -n " ##" $p "Installing... "
-				yum -y install $p >> /var/log/snipeit-install.log 2>&1
+				yum -y install $p >> $log 2>&1
 				echo "";
 			fi
 		done;
@@ -311,13 +309,13 @@ case $distro in
         echo ""
 		echo "##  Cloning Snipe-IT from github to the web directory.";
 
-		git clone https://github.com/$fork/snipe-it $webdir/$name >> /var/log/snipeit-install.log 2>&1
+		git clone https://github.com/$fork/snipe-it $webdir/$name >> $log 2>&1
         # get latest stable release
         cd $webdir/$name
-        if [ -z $branch ]
-        then
+        if [ -z $branch ]; then
         	branch=$(git tag | grep -v 'pre' | tail -1)
         fi
+        echo "    Installing version: $branch"
         git checkout -b $branch $branch
 
 		# Make mariaDB start on boot and restart the daemon
@@ -336,8 +334,7 @@ case $distro in
 		echo "##  Creating the new virtual host in Apache.";
 		apachefile=/etc/httpd/conf.d/$name.conf
 
-		if [ -f "$apachefile" ]
-		then
+		if [ -f "$apachefile" ]; then
 		    echo ""
 			echo "    VirtualHost already exists. $apachefile"
 		else
@@ -431,20 +428,20 @@ case $distro in
 		#Allow us to get the mysql engine
 		echo ""
 		echo "##  Add IUS, epel-release and mariaDB repos.";
-		yum -y install wget epel-release >> /var/log/snipeit-install.log 2>&1
-		wget -P $tmp/ https://centos7.iuscommunity.org/ius-release.rpm >> /var/log/snipeit-install.log 2>&1
-		rpm -Uvh $tmp/ius-release*.rpm >> /var/log/snipeit-install.log 2>&1
+		yum -y install wget epel-release >> $log 2>&1
+		wget -P $tmp/ https://centos7.iuscommunity.org/ius-release.rpm >> $log 2>&1
+		rpm -Uvh $tmp/ius-release*.rpm >> $log 2>&1
 
 		#Install PHP and other needed stuff.
 		echo "##  Installing PHP and other needed stuff";
 		PACKAGES="httpd mariadb-server git unzip php56u php56u-mysqlnd php56u-bcmath php56u-cli php56u-common php56u-embedded php56u-gd php56u-mbstring php56u-mcrypt php56u-ldap"
 
 		for p in $PACKAGES;do
-			if isinstalled $p;then
+			if isinstalled $p; then
 				echo " ##" $p "Installed"
 			else
 				echo -n " ##" $p "Installing... "
-				yum -y install $p >> /var/log/snipeit-install.log 2>&1
+				yum -y install $p >> $log 2>&1
 			echo "";
 			fi
 		done;
@@ -452,11 +449,10 @@ case $distro in
         echo ""
 		echo "##  Downloading Snipe-IT from github and put it in the web directory.";
 
-		git clone https://github.com/$fork/snipe-it $webdir/$name >> /var/log/snipeit-install.log 2>&1
+		git clone https://github.com/$fork/snipe-it $webdir/$name >> $log 2>&1
         # get latest stable release
         cd $webdir/$name
-        if [ -z $branch ]
-        then
+        if [ -z $branch ]; then
         	branch=$(git tag | grep -v 'pre' | tail -1)
         fi
         echo "    Installing version: $branch"
@@ -478,8 +474,7 @@ case $distro in
 		#Create the new virtual host in Apache and enable rewrite
 		apachefile=/etc/httpd/conf.d/$name.conf
 
-		if [$apachefile]
-		then
+		if [$apachefile]; then
 			echo ""
 			echo "    VirtualHost already exists. $apachefile"
 		else
