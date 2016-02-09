@@ -167,10 +167,10 @@ case $distro in
 
 		#Update/upgrade Debian/Ubuntu repositories, get the latest version of git.
 		echo ""
-		echo -n "##  Updating ubuntu... "
+		echo -n "##  Updating ubuntu..."
 		ShowProgressOf apt-get update
 
-		echo -n "##  Upgrading ubuntu... "
+		echo -n "##  Upgrading ubuntu..."
 		ShowProgressOf apt-get -y upgrade
 
 		echo -n "##  Installing packages..."
@@ -200,7 +200,7 @@ case $distro in
 		sudo a2enmod rewrite >> $log 2>&1
 		sudo ls -al /etc/apache2/mods-enabled/rewrite.load >> $log 2>&1
 
-		if [$apachefile]; then
+		if [ -f $apachefile]; then
 			echo "    VirtualHost already exists. $apachefile"
 		else
 			echo >> $apachefile ""
