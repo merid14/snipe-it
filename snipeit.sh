@@ -39,7 +39,7 @@ date="$(date '+%Y-%b-%d')"
 backup=/opt/$name/backup/$date
 log="/var/log/snipeit-install.log"
 
-echo "--------------  Start Installer  -----------------" >
+echo "--------------  Start Installer  -----------------"
 
 rm -rf $tmp/
 mkdir $tmp
