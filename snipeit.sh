@@ -39,7 +39,7 @@ date="$(date '+%Y-%b-%d')"
 backup=/opt/$name/backup/$date
 log="/var/log/snipeit-install.log"
 
-echo "--------------  Start Installer  -----------------"
+echo "--------------  Start Installer  -----------------" >> $log 2>&1
 
 rm -rf $tmp/
 mkdir $tmp
@@ -58,7 +58,7 @@ function ShowProgressOf()
         sleep $delay
         printf "\b\b\b\b\b\b"
     done
-    printf "    \b\b\b\b"
+    printf "    \b\b\b\b\n"
 }
 
 function isinstalled {
@@ -167,13 +167,13 @@ case $distro in
 
 		#Update/upgrade Debian/Ubuntu repositories, get the latest version of git.
 		echo ""
-		echo "##  Updating ubuntu... "
+		echo -n "##  Updating ubuntu... "
 		ShowProgressOf apt-get update
 
-		echo "##  Upgrading ubuntu... "
+		echo -n "##  Upgrading ubuntu... "
 		ShowProgressOf apt-get -y upgrade
 
-		echo "##  Installing packages..."
+		echo -n "##  Installing packages..."
 		ShowProgressOf sudo apt-get install -y git unzip php5 php5-mcrypt php5-curl php5-mysql php5-gd php5-ldap
 
 		echo "##  Setting up LAMP."
