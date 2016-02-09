@@ -12,7 +12,7 @@ fi
 clear
 #  Set this to your github username to pull your changes ** Only for Devs **
 fork="snipe"
-#  Set this to the branch you want to pull  ** Only for Devs ** ##TODO not working yet
+#  Set this to the branch you want to pull  ** Only for Devs **
 branch=""
 
 ##TODO: Update docs on what the upgrade script is doing

@@ -39,9 +39,27 @@ date="$(date '+%Y-%b-%d')"
 backup=/opt/$name/backup/$date
 log="/var/log/snipeit-install.log"
 
+echo "--------------  Start Installer  -----------------" >
 
 rm -rf $tmp/
 mkdir $tmp
+
+####################  Functions Go Here  ######################
+function ShowProgressOf()
+{
+    "$@" >> $log 2>&1 &
+    local pid=$!
+    local delay=0.5
+    local spinstr='|/-\'
+    while [ "$(ps a | awk '{print $1}' | grep $pid)" ]; do
+        local temp=${spinstr#?}
+        printf " [%c]  " "$spinstr"
+        local spinstr=$temp${spinstr%"$temp"}
+        sleep $delay
+        printf "\b\b\b\b\b\b"
+    done
+    printf "    \b\b\b\b"
+}
 
 function isinstalled {
   if yum list installed "$@" >/dev/null 2>&1; then
@@ -50,7 +68,7 @@ function isinstalled {
     false
   fi
 }
-
+####################  Functions End  ######################
 
 #  Lets find what distro we are using and what version
 distro="$(cat /proc/version)"
@@ -131,13 +149,10 @@ done
 #Snipe says we need a new 32bit key, so let's create one randomly and inject it into the file
 random32="$(echo `< /dev/urandom tr -dc _A-Za-z-0-9 | head -c32`)"
 
-#db_setup.sql will be injected to the database during install.
-#Again, this file should be removed, which will be a prompt at the end of the script.
 dbsetup=$tmp/db_setup.sql
 echo >> $dbsetup "CREATE DATABASE snipeit;"
 echo >> $dbsetup "GRANT ALL PRIVILEGES ON snipeit.* TO snipeit@localhost IDENTIFIED BY '$mysqluserpw';"
 
-#Let us make it so only root can read the file. Again, this isn't best practice, so please remove these after the install.
 chown root:root $dbsetup
 chmod 700 $dbsetup
 
@@ -152,15 +167,15 @@ case $distro in
 
 		#Update/upgrade Debian/Ubuntu repositories, get the latest version of git.
 		echo ""
-		echo "##  Updating ubuntu in the background. Please be patient."
-		echo ""
+		echo "##  Updating ubuntu... "
+		ShowProgressOf apt-get update
 
-		sudo apt-get update >> $log 2>&1
-		sudo apt-get -y upgrade >> $log 2>&1
+		echo "##  Upgrading ubuntu... "
+		ShowProgressOf apt-get -y upgrade
 
-		echo "##  Installing packages."
-		sudo apt-get install -y git unzip php5 php5-mcrypt php5-curl php5-mysql php5-gd php5-ldap >> $log 2>&1
-		#We already established MySQL root & user PWs, so we dont need to be prompted. Let's go ahead and install Apache, PHP and MySQL.
+		echo "##  Installing packages..."
+		ShowProgressOf sudo apt-get install -y git unzip php5 php5-mcrypt php5-curl php5-mysql php5-gd php5-ldap
+
 		echo "##  Setting up LAMP."
 		sudo DEBIAN_FRONTEND=noninteractive apt-get install -y lamp-server^ >> $log 2>&1
 
@@ -168,6 +183,7 @@ case $distro in
 		echo ""
 		echo "##  Cloning Snipe-IT from github to the web directory.";
 		git clone https://github.com/$fork/snipe-it $webdir/$name >> $log 2>&1
+
         # get latest stable release
         cd $webdir/$name
         if [ -z $branch ]; then
