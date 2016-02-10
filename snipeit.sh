@@ -1,18 +1,17 @@
 #!/bin/bash
-
-######################################################
-#           Snipe-It Install Script                  #
-#          Script created by Mike Tucker             #
-#            mtucker6784@gmail.com                   #
-# This script is just to help streamline the         #
-# install process for Debian and CentOS              #
-# based distributions. I assume you will be          #
-# installing as a subdomain on a fresh OS install.   #
-# Right now I'm not going to worry about SMTP setup  #
-#                                                    #
-# Feel free to modify, but please give               #
-# credit where it's due. Thanks!                     #
-######################################################
+# ------------------------------------------------------------------
+#	Snipe-It Install Script
+#	Mike Tucker
+#	mtucker6784@gmail.com
+#
+#	This script is just to help streamline the install
+#	process for Debian and CentOS based distributions. I assume
+#	you will be installing as a subdomain on a fresh OS install.
+#	Right now I'm not going to worry about SMTP setup
+#
+# 	Feel free to modify, but please give
+# 	credit where it's due. Thanks!
+# ------------------------------------------------------------------
 
 # ensure running as root
 if [ "$(id -u)" != "0" ]; then
@@ -50,7 +49,7 @@ function ShowProgressOf()
 	tput civis
     "$@" >> $log 2>&1 &
     local pid=$!
-    local delay=0.5
+    local delay=0.25
     local spinstr='|/-\'
     while [ "$(ps a | awk '{print $1}' | grep $pid)" ]; do
         local temp=${spinstr#?}
@@ -70,19 +69,7 @@ function isinstalled {
     false
   fi
 }
-####################  Functions End  ######################
-
-#  Lets find what distro we are using and what version
-distro="$(cat /proc/version)"
-if grep -q centos <<<$distro; then
-	for f in $(find /etc -type f -maxdepth 1 \( ! -wholename /etc/os-release ! -wholename /etc/lsb-release -wholename /etc/\*release -o -wholename /etc/\*version \) 2> /dev/null);
-	do
-		distro="${f:5:${#f}-13}"
-	done;
-	if [ "$distro" = "centos" ] || [ "$distro" = "redhat" ]; then
-		distro+="$(rpm -q --qf "%{VERSION}" $(rpm -q --whatprovides redhat-release))"
-	fi
-fi
+####################    Functions End     ######################
 
 echo "
 	   _____       _                  __________
@@ -97,6 +84,18 @@ echo ""
 echo ""
 echo "  Welcome to Snipe-IT Inventory Installer for Centos and Debian!"
 echo ""
+
+#  Lets find what distro we are using and what version
+distro="$(cat /proc/version)"
+if grep -q centos <<<$distro; then
+	for f in $(find /etc -type f -maxdepth 1 \( ! -wholename /etc/os-release ! -wholename /etc/lsb-release -wholename /etc/\*release -o -wholename /etc/\*version \) 2> /dev/null);
+	do
+		distro="${f:5:${#f}-13}"
+	done;
+	if [ "$distro" = "centos" ] || [ "$distro" = "redhat" ]; then
+		distro+="$(rpm -q --qf "%{VERSION}" $(rpm -q --whatprovides redhat-release))"
+	fi
+fi
 
 case $distro in
         *Ubuntu*|*Debian*)
@@ -117,8 +116,12 @@ case $distro in
                 ;;
 esac
 
-#Get your FQDN.
+Installed before?
+Which Method?
 
+########################   Begin installer questions   ########################
+#Get your FQDN.
+echo ""
 echo -n "  Q. What is the FQDN of your server? ($fqdn): "
 read fqdn
 if [ -z "$fqdn" ]; then

@@ -24,96 +24,176 @@ backup=/opt/$name/backup/$date
 webdir=/var/www/html
 installed="$webdir/$name/.installed"
 log="/var/log/snipeit-install.log"
-git="$(find $webdir/$name -type d -name ".git")"
+gitDir="$(find $webdir/$name -type d -name ".git")"
 
 echo "##  Checking for previous version of $si."
 echo ""
 
-if [ -z $log ] || [ -z $installed ]; then #If neither log or installer file exists
-    echo "    It appears that you haven't installed $name with the installer."
-    echo "    Please upgrade manually by following the instructions in the documentation."
-    echo "    http://docs.snipeitapp.com/upgrading.html"
-##TODO: ask if user would like to procceed anyway and prompt them to backup their files.
-elif [ -d $git ]; then # If git directory exists
-    cd $webdir/$name
+if [ -f $log ] || [ -f $installed ]; then #If log or installer file exists
+    if [ -d $gitDir ]; then # If git directory exists
 
-    if [ -z $branch ]; then
-        branch=$(git tag | grep -v 'pre' | tail -1)
+        if [ -z $branch ]; then # If branch is empty then get the latest release
+            branch=$(git tag | grep -v 'pre' | tail -1)
+        fi
+        currentBranch=$(basename $(git symbolic-ref HEAD))
+
+        echo "##  $si install found. Version: $currentBranch"
+
+        if [ $currentBranch -ge $branch ]; then ##TODO Strip "v" from version name to allow number calculation
+
+            echo "##  Beginning the $si update process to version: $branch"
+            echo ""
+            echo "    By default we are pulling from the latest release."
+            echo "    If you pulled from another branch please upgrade manually."
+            echo ""
+
+            until [[ $ans1 == "yes" ]]; do
+            echo "##  Upgrading to Version: $branch from Version: $currentBranch"
+            echo ""
+            echo -n "  Q. Would you like to continue? (y/n) "
+            read cont
+            case $cont in
+                    [yY] | [yY][Ee][Ss] )
+                            echo "  Continuing with the upgrade process to version: $branch."
+                            echo ""
+                            ans1="yes"
+                            ;;
+                    [nN] | [n|N][O|o] )
+                            echo "  Exiting now!"
+                            exit
+                            ;;
+                    *)      echo "    Invalid answer. Please type y or n"
+                            ;;
+            esac
+            done
+
+            if [ -z $gitDir ]; then #if dir doesnt exist
+                echo "##  Setting up backup directory."
+                echo "    $backup"
+                echo ""
+                mkdir -p $backup
+            else
+                echo "##  Backup directory already exists, using it."
+                echo "    $backup"
+            fi
+
+            echo "##  Backing up app file."
+            echo ""
+            cp -p $webdir/$name/app/config/app.php $backup/app.php
+
+            echo "##  Backing up database."
+            echo ""
+            mysqldump $name > $backup/$name.sql
+
+            echo "##  Getting update."
+            echo ""
+
+            ## run git update
+            cd $webdir/$name
+            set +e
+            git add . >> /var/log/snipeit-install.log 2>&1
+            git commit -m "Upgrading to $branch from $currentBranch" >> /var/log/snipeit-install.log 2>&1
+            git stash >> /var/log/snipeit-install.log 2>&1
+            git checkout -b $branch $branch >> /var/log/snipeit-install.log 2>&1
+            git stash pop >> /var/log/snipeit-install.log 2>&1
+            set -e
+
+            echo "##  Cleaning cache and view directories."
+            rm -rf $webdir/$name/app/storage/cache/*
+            rm -rf $webdir/$name/app/storage/views/*
+
+            echo "##  ##  Restoring app.php file."
+            cp $backup/app.php $webdir/$name/app/config/app.php
+
+            echo "##  Running composer to apply update."
+            echo ""
+            sudo php composer.phar install --no-dev --prefer-source
+            sudo php composer.phar dump-autoload
+            sudo php artisan migrate
+
+            echo >> $installed "Upgraded $si to version:$branch from:$currentBranch"
+
+            echo ""
+            echo "    You are now on Version $branch of $si."
+        else
+            echo "    You are already on the latest version."
+            echo "    Version: $currentBranch"
+            echo ""
+        fi
+    else  # Must be a file copy install
+        ## TODO Check version file and put into $currentbranch
+        ## TODO git clone the repo into tmp
+        if [ -z $branch ]; then # If branch is empty then get the latest release
+            branch=$(git tag | grep -v 'pre' | tail -1)
+        fi
+        if [ $currentBranch -ge $branch ]; then ##TODO Strip "v" from version name to allow number calculation
+            if [ -z $gitDir ]; then #if dir doesnt exist
+                echo "##  Setting up backup directory."
+                echo "    $backup"
+                echo ""
+                mkdir -p $backup
+            else
+                echo "##  Backup directory already exists, using it."
+                echo "    $backup"
+            fi
+
+            echo "##  Backing up app file."
+            echo ""
+            cp -p $webdir/$name/app/config/app.php $backup/app.php
+
+            echo "##  Backing up $si folder."
+            echo ""
+            cp -Rp $webdir/$name $backup/$name
+            rm -rf $webdir/$name
+
+            echo "##  Backing up database."
+            echo ""
+            mysqldump $name > $backup/$name.sql
+
+            begin modified install
+                clone snipe-it
+
+            echo "##  Downloading Snipe-IT from github and put it in the web directory.";
+            git clone https://github.com/$fork/snipe-it $webdir/$name >> $log 2>&1
+            # get latest stable release
+            cd $webdir/$name
+            if [ -z $branch ]; then
+                branch=$(git tag | grep -v 'pre' | tail -1)
+            fi
+
+            echo "    Installing version: $branch"
+            git checkout -b $branch $branch
+
+            echo "##  Restoring app.php file."
+            cp -p $backup/app.php $webdir/$name/app/config/app.php
+
+            echo "  ##  Restoring bootstrap file."
+            cp -p $backup/$name/bootstrap/start.php $webdir/$name/bootstrap/start.php
+
+            echo "  ##  Restoring database file."
+            cp -p $backup/$name/app/config/production/database.php $webdir/$name/app/config/production/database.php
+## TODO Check if mail file exists
+            echo "  ##  Restoring mail file."
+            cp -p $backup/$name/app/config/production/mail.php $webdir/$name/app/config/production/mail.php
+## TODO Check for ldap file depending on version
+            echo "  ##  Restoring ldap file."
+            cp -p $backup/$name/app/config/production/ldap.php $webdir/$name/app/config/production/ldap.php
+
+            echo "##  Running composer to apply update."
+            echo ""
+            sudo php composer.phar install --no-dev --prefer-source
+            sudo php composer.phar dump-autoload
+            sudo php artisan migrate
+
+            echo ""
+            echo "    You are now on Version $branch of $si."
+        else
+            echo "    You are already on the latest version."
+            echo "    Version: $currentBranch"
+            echo ""
+            exit
+        fi
     fi
-    currentBranch=$(basename $(git symbolic-ref HEAD))
-
-    echo "##  $si install found. Version: $currentBranch"
-    echo "##  Beginning the $si update process to version: $branch"
-    echo ""
-
-
-    if [ $currentBranch != $branch ]; then
-        echo "##  Setting up backup directory."
-        echo "    $backup"
-        echo ""
-        mkdir -p $backup
-
-        echo "##  Backing up app file."
-        echo ""
-        cp $webdir/$name/app/config/app.php $backup/app.php
-
-        echo "##  Backing up database."
-        echo ""
-        mysqldump $name > $backup/$name.sql
-
-        echo "##  Getting update."
-        echo ""
-        echo "    By default we are pulling from the latest release."
-        echo "    If you pulled from another branch please upgrade manually."
-        echo ""
-
-        until [[ $ans1 == "yes" ]]; do
-        echo "##  Upgrading to Version: $branch from Version: $currentBranch"
-        echo ""
-        echo -n "  Q. Would you like to continue? (y/n) "
-        read cont
-        case $cont in
-                [yY] | [yY][Ee][Ss] )
-                        echo "  Continuing with the upgrade process to version: $branch."
-                        echo ""
-                        ans1="yes"
-                        ;;
-                [nN] | [n|N][O|o] )
-                        echo "  Exiting now!"
-                        exit
-                        ;;
-                *)      echo "    Invalid answer. Please type y or n"
-                        ;;
-        esac
-        done
-
-        set +e
-        git add . >> /var/log/snipeit-install.log 2>&1
-        git commit -m "Upgrading to $branch from $currentBranch" >> /var/log/snipeit-install.log 2>&1
-        git stash >> /var/log/snipeit-install.log 2>&1
-        git checkout -b $branch $branch >> /var/log/snipeit-install.log 2>&1
-        git stash pop >> /var/log/snipeit-install.log 2>&1
-        set -e
-
-        echo "##  Cleaning cache and view directories."
-        rm -rf $webdir/$name/app/storage/cache/*
-        rm -rf $webdir/$name/app/storage/views/*
-
-        echo "##  Restoring app.php file."
-        cp $backup/app.php $webdir/$name/app/config/app.php
-
-        echo "##  Running composer to apply update."
-        echo ""
-        sudo php composer.phar install --no-dev --prefer-source
-        sudo php composer.phar dump-autoload
-        sudo php artisan migrate
-        echo >> $installed "Upgraded $si to version:$branch from:$currentBranch"
-
-        echo ""
-        echo "    You are now on Version $branch of $si."
-    else
-        echo "    You are already on the latest version."
-        echo "    Version: $currentBranch"
-        echo ""
-    fi
+else
+    echo " Starting Installer"
 fi
