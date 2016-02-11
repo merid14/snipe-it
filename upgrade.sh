@@ -24,6 +24,7 @@ backup=/opt/$name/backup/$date
 webdir=/var/www/html
 installed="$webdir/$name/.installed"
 log="/var/log/snipeit-install.log"
+tmp=/tmp/$name
 gitDir="$(find $webdir/$name -type d -name ".git")"
 
 echo "##  Checking for previous version of $si."
@@ -37,9 +38,11 @@ if [ -f $log ] || [ -f $installed ]; then #If log or installer file exists
         fi
         currentBranch=$(basename $(git symbolic-ref HEAD))
 
+        $currentVersion="$(echo $branch | sed "s,v,,g")" >> $log 2>&1
+        $newVersion="$(echo $branch | sed "s,v,,g")" >> $log 2>&1
         echo "##  $si install found. Version: $currentBranch"
 
-        if [ $currentBranch -ge $branch ]; then ##TODO Strip "v" from version name to allow number calculation
+        if [ $currentBranch -lt $branch ]; then ##TODO Strip "v" from version name to allow number calculation
 
             echo "##  Beginning the $si update process to version: $branch"
             echo ""
@@ -91,11 +94,11 @@ if [ -f $log ] || [ -f $installed ]; then #If log or installer file exists
             ## run git update
             cd $webdir/$name
             set +e
-            git add . >> /var/log/snipeit-install.log 2>&1
-            git commit -m "Upgrading to $branch from $currentBranch" >> /var/log/snipeit-install.log 2>&1
-            git stash >> /var/log/snipeit-install.log 2>&1
-            git checkout -b $branch $branch >> /var/log/snipeit-install.log 2>&1
-            git stash pop >> /var/log/snipeit-install.log 2>&1
+            git add . >> $log 2>&1
+            git commit -m "Upgrading to $branch from $currentBranch" >> $log 2>&1
+            git stash >> $log 2>&1
+            git checkout -b $branch $branch >> $log 2>&1
+            git stash pop >> $log 2>&1
             set -e
 
             echo "##  Cleaning cache and view directories."
@@ -121,12 +124,16 @@ if [ -f $log ] || [ -f $installed ]; then #If log or installer file exists
             echo ""
         fi
     else  # Must be a file copy install
-        ## TODO Check version file and put into $currentbranch
-        ## TODO git clone the repo into tmp
+        #get the current version
+        $currentVersion="$(cat $webdir/$name/app/config/version.php | grep app | awk -F "'" '{print $4}' | sed "s,v,,g")"
+        #clone to tmp so we can check the latest version
+        git clone https://github.com/$fork/snipe-it $tmp >> $log 2>&1
+        cd $tmp
         if [ -z $branch ]; then # If branch is empty then get the latest release
             branch=$(git tag | grep -v 'pre' | tail -1)
         fi
-        if [ $currentBranch -ge $branch ]; then ##TODO Strip "v" from version name to allow number calculation
+        $newVersion="$(echo $branch | sed "s,v,,g")" >> $log 2>&1
+        if [ $currentVersion -le $newVersion ]; then
             if [ -z $gitDir ]; then #if dir doesnt exist
                 echo "##  Setting up backup directory."
                 echo "    $backup"
