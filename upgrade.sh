@@ -29,7 +29,7 @@ gitDir="$webdir/$name/.git"
 
 compareVersions () {
     if [[ $1 == $2 ]]; then
-        return 0
+        return 2
     fi
     local IFS=.
     local i version1=(${1//[!0-9.]/}) version2=(${2//[!0-9.]/})
@@ -46,10 +46,10 @@ compareVersions () {
             return 1
         fi
         if ((10#${version1[i]} < 10#${version2[i]})); then
-            return 2
+            return 0
         fi
     done
-    return 0
+    return 2
 }
 
 cd $webdir/$name
@@ -94,7 +94,7 @@ if [ -f $log ] || [ -f $installed ]; then #If log or installer file exists
             esac
             done
 
-            if [ -z $gitDir ]; then #if dir doesnt exist
+            if [ -z $backup ]; then #if dir doesnt exist
                 echo "##  Setting up backup directory."
                 echo "    $backup"
                 echo ""
@@ -157,14 +157,14 @@ if [ -f $log ] || [ -f $installed ]; then #If log or installer file exists
             newBranch=$(git tag | grep -v 'pre' | tail -1)
         fi
         if compareVersions $currentVersion $newBranch; then
-            if [ -z $gitDir ]; then #if dir doesnt exist
+            if [ -d $backup ]; then #if dir doesnt exist
+                echo "##  Backup directory already exists, using it."
+                echo "    $backup"
+            else
                 echo "##  Setting up backup directory."
                 echo "    $backup"
                 echo ""
                 mkdir -p $backup
-            else
-                echo "##  Backup directory already exists, using it."
-                echo "    $backup"
             fi
 
             echo "##  Backing up app file."

@@ -248,7 +248,7 @@ case $distro in
 
 		echo "	Setting up app file."
 		cp $webdir/$name/app/config/production/app.example.php $webdir/$name/app/config/production/app.php
-		sed -i "s,production.yourserver.com,$fqdn,g" $webdir/$name/app/config/production/app.php
+		sed -i "s,https://production.yourserver.com,http://$fqdn,g" $webdir/$name/app/config/production/app.php
 		sed -i "s,Change_this_key_or_snipe_will_get_ya,$random32,g" $webdir/$name/app/config/production/app.php
 		sed -i "s,false,true,g" $webdir/$name/app/config/production/app.php
 
@@ -408,7 +408,7 @@ case $distro in
 
 		echo "	Setting up app file."
 		cp $webdir/$name/app/config/production/app.example.php $webdir/$name/app/config/production/app.php
-		sed -i "s,production.yourserver.com,$fqdn,g" $webdir/$name/app/config/production/app.php
+		sed -i "s,https://production.yourserver.com,http://$fqdn,g" $webdir/$name/app/config/production/app.php
 		sed -i "s,Change_this_key_or_snipe_will_get_ya,$random32,g" $webdir/$name/app/config/production/app.php
 		sed -i "s,false,true,g" $webdir/$name/app/config/production/app.php
 
@@ -547,7 +547,7 @@ case $distro in
 
 		echo "	Setting up app file."
 		cp $webdir/$name/app/config/production/app.example.php $webdir/$name/app/config/production/app.php
-		sed -i "s,production.yourserver.com,$fqdn,g" $webdir/$name/app/config/production/app.php
+		sed -i "s,https://production.yourserver.com,http://$fqdn,g" $webdir/$name/app/config/production/app.php
 		sed -i "s,Change_this_key_or_snipe_will_get_ya,$random32,g" $webdir/$name/app/config/production/app.php
 		sed -i "s,false,true,g" $webdir/$name/app/config/production/app.php
 
