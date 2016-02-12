@@ -186,8 +186,8 @@ case $distro in
 
 		#  Get files and extract to web dir
 		echo ""
-		echo "##  Cloning Snipe-IT from github to the web directory.";
-		git clone https://github.com/$fork/snipe-it $webdir/$name >> $log 2>&1
+		echo -n "##  Cloning Snipe-IT from github to the web directory...";
+		ShowProgressOf git clone https://github.com/$fork/snipe-it $webdir/$name
 
         # get latest stable release
         cd $webdir/$name
@@ -328,9 +328,9 @@ case $distro in
 		done;
 
         echo ""
-		echo "##  Cloning Snipe-IT from github to the web directory.";
+		echo -n "##  Cloning Snipe-IT from github to the web directory...";
 
-		git clone https://github.com/$fork/snipe-it $webdir/$name >> $log 2>&1
+		ShowProgressOf git clone https://github.com/$fork/snipe-it $webdir/$name
         # get latest stable release
         cd $webdir/$name
         if [ -z $branch ]; then
@@ -468,9 +468,9 @@ case $distro in
 		done;
 
         echo ""
-		echo "##  Downloading Snipe-IT from github and put it in the web directory.";
+		echo -n "##  Downloading Snipe-IT from github and put it in the web directory.";
 
-		git clone https://github.com/$fork/snipe-it $webdir/$name >> $log 2>&1
+		ShowProgressOf git clone https://github.com/$fork/snipe-it $webdir/$name
         # get latest stable release
         cd $webdir/$name
         if [ -z $branch ]; then
