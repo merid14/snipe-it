@@ -116,9 +116,6 @@ case $distro in
                 ;;
 esac
 
-Installed before?
-Which Method?
-
 ########################   Begin installer questions   ########################
 #Get your FQDN.
 echo ""
@@ -205,7 +202,7 @@ case $distro in
 		sudo a2enmod rewrite >> $log 2>&1
 		sudo ls -al /etc/apache2/mods-enabled/rewrite.load >> $log 2>&1
 
-		if [ -f $apachefile]; then
+		if [ -f $apachefile ]; then
 			echo "    VirtualHost already exists. $apachefile"
 		else
 			echo >> $apachefile ""
