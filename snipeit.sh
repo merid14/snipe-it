@@ -162,8 +162,6 @@ echo >> $dbsetup "GRANT ALL PRIVILEGES ON snipeit.* TO snipeit@localhost IDENTIF
 chown root:root $dbsetup
 chmod 700 $dbsetup
 
-## TODO: Progress tracker on each step
-
 case $distro in
 	debian)
 		#####################################  Install for Debian ##############################################
@@ -307,13 +305,13 @@ case $distro in
 		echo -n "##  Cloning Snipe-IT from github to the web directory...";
 		ShowProgressOf git clone https://github.com/$fork/snipe-it $webdir/$name
 
-        # get latest stable release
-        cd $webdir/$name
-        if [ -z $branch ]; then
-        	branch=$(git tag | grep -v 'pre' | tail -1)
-        fi
-        echo "    Installing version: $branch"
-        git checkout -b $branch $branch
+		# get latest stable release
+		cd $webdir/$name
+		if [ -z $branch ]; then
+			branch=$(git tag | grep -v 'pre' | tail -1)
+		fi
+		echo "    Installing version: $branch"
+		git checkout -b $branch $branch
 
 ##  TODO make sure apache is set to start on boot and go ahead and start it
 
@@ -450,13 +448,13 @@ case $distro in
 		echo -n "##  Cloning Snipe-IT from github to the web directory...";
 
 		ShowProgressOf git clone https://github.com/$fork/snipe-it $webdir/$name
-        # get latest stable release
-        cd $webdir/$name
-        if [ -z $branch ]; then
-        	branch=$(git tag | grep -v 'pre' | tail -1)
-        fi
-        echo "    Installing version: $branch"
-        git checkout -b $branch $branch
+		# get latest stable release
+		cd $webdir/$name
+		if [ -z $branch ]; then
+			branch=$(git tag | grep -v 'pre' | tail -1)
+		fi
+		echo "    Installing version: $branch"
+		git checkout -b $branch $branch
 
 		# Make mariaDB start on boot and restart the daemon
 		echo "##  Starting the mariaDB server.";
@@ -591,13 +589,13 @@ case $distro in
 		echo -n "##  Downloading Snipe-IT from github and put it in the web directory.";
 
 		ShowProgressOf git clone https://github.com/$fork/snipe-it $webdir/$name
-        # get latest stable release
-        cd $webdir/$name
-        if [ -z $branch ]; then
-        	branch=$(git tag | grep -v 'pre' | tail -1)
-        fi
-        echo "    Installing version: $branch"
-        git checkout -b $branch $branch
+		# get latest stable release
+		cd $webdir/$name
+		if [ -z $branch ]; then
+			branch=$(git tag | grep -v 'pre' | tail -1)
+		fi
+		echo "    Installing version: $branch"
+		git checkout -b $branch $branch
 
 		# Make mariaDB start on boot and restart the daemon
 		echo "##  Starting the mariaDB server.";
