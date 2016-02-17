@@ -26,7 +26,7 @@
   <table
   name="models"
   id="table"
-  data-url="{{route('api.models.list')}}"
+  data-url="{{route('api.models.list',array('status'=>Input::get('status')))}}"
   data-cookie="true"
   data-click-to-select="true"
   data-cookie-id-table="modelsTable-{{ Config::get('version.hash_version') }}">
@@ -41,6 +41,7 @@
                 <th data-sortable="false" data-field="depreciation">@lang('general.depreciation')</th>
                 <th data-sortable="false" data-field="category">@lang('general.category')</th>
                 <th data-sortable="true" data-field="eol">@lang('general.eol')</th>
+                <th data-sortable="false" data-field="note">@lang('general.notes')</th>
                 <th data-switchable="false" data-searchable="false" data-sortable="false" data-field="actions">@lang('table.actions')</th>
             </tr>
         </thead>

@@ -43,8 +43,8 @@ class UsersController extends AdminController {
      * @var array
      */
     protected $validationRules = array(
-      'first_name' => 'required|alpha_space|min:2',
-      'last_name' => 'required|alpha_space|min:2',
+      'first_name' => 'required|alpha_space|min:1',
+      'last_name' => 'required|alpha_space|min:1',
       'location_id' => 'numeric',
       'username' => 'required|min:2|unique:users,deleted_at,NULL',
       'email' => 'email|unique:users,email',
@@ -86,7 +86,7 @@ class UsersController extends AdminController {
 
         $location_list = locationsList();
         $manager_list = managerList();
-        $company_list = Company::getSelectList();
+        $company_list = companyList();
 
         /* echo '<pre>';
           print_r($userPermissions);
@@ -284,8 +284,8 @@ class UsersController extends AdminController {
             $permissions = Config::get('permissions');
             $this->encodeAllPermissions($permissions);
 
-            $location_list = array('' => '') + Location::lists('name', 'id');
-            $company_list = Company::getSelectList();
+            $location_list = locationsList();
+            $company_list = companyList();
             $manager_list = array('' => 'Select a User') + DB::table('users')
                             ->select(DB::raw('concat(last_name,", ",first_name," (",email,")") as full_name, id'))
                             ->whereNull('deleted_at')
@@ -371,19 +371,21 @@ class UsersController extends AdminController {
 
         try {
             // Update the user
-            $user->first_name = Input::get('first_name');
-            $user->last_name = Input::get('last_name');
-            $user->username = Input::get('username');
-            $user->email = Input::get('email');
-            $user->employee_num = Input::get('employee_num');
-            $user->activated = Input::get('activated', $user->activated);
-            $user->permissions = Input::get('permissions');
-            $user->jobtitle = Input::get('jobtitle');
-            $user->phone = Input::get('phone');
+            $user->first_name = e(Input::get('first_name'));
+            $user->last_name = e(Input::get('last_name'));
+            $user->username = e(Input::get('username'));
+            $user->email = e(Input::get('email'));
+            $user->employee_num = e(Input::get('employee_num'));
+            $user->activated = e(Input::get('activated', $user->activated));
+            if (Sentry::getUser()->hasAccess('superuser')) {
+              $user->permissions = Input::get('permissions');
+            }
+            $user->jobtitle = e(Input::get('jobtitle'));
+            $user->phone = e(Input::get('phone'));
             $user->location_id = Input::get('location_id');
             $user->company_id = Company::getIdForUser(Input::get('company_id'));
             $user->manager_id = Input::get('manager_id');
-            $user->notes = Input::get('notes');
+            $user->notes = e(Input::get('notes'));
 
             if ($user->manager_id == "") {
                 $user->manager_id = NULL;
@@ -401,7 +403,7 @@ class UsersController extends AdminController {
 
             // Do we want to update the user email?
             if (!Config::get('app.lock_passwords')) {
-                $user->email = Input::get('email');
+                $user->email = e(Input::get('email'));
             }
 
             // Get the current user groups
@@ -437,7 +439,7 @@ class UsersController extends AdminController {
                 $success = Lang::get('admin/users/message.success.update');
 
                 // Redirect to the user page
-                return Redirect::route('view/user', $id)->with('success', $success);
+                return Redirect::route('users')->with('success', $success);
             }
 
             // Prepare the error message
@@ -735,7 +737,7 @@ class UsersController extends AdminController {
             $this->encodeAllPermissions($permissions);
 
             $location_list = array('' => '') + Location::lists('name', 'id');
-            $company_list = Company::getSelectList();
+            $company_list = companyList();
             $manager_list = array('' => 'Select a User') + DB::table('users')
                             ->select(DB::raw('concat(last_name,", ",first_name," (",email,")") as full_name, id'))
                             ->whereNull('deleted_at')
@@ -810,7 +812,15 @@ class UsersController extends AdminController {
                     $activated = '0';
                 }
 
-                $pass = substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 10);
+                $pass = substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 15);
+
+                // Location
+          			if (array_key_exists('4',$row)) {
+          				$user_location_id = trim($row[4]);
+                  if ($user_location_id=='') {
+                    $user_location_id = null;
+                  }
+          			}
 
 
 
@@ -828,8 +838,11 @@ class UsersController extends AdminController {
                             'email' => $row[3],
                             'password' => $pass,
                             'activated' => $activated,
-                            'location_id' => $row[4],
-                            //'company_id' => Company::getIdForUser($row[5]),
+                            'location_id' => $user_location_id,
+                            'phone' => $row[5],
+                            'jobtitle' => $row[6],
+                            'employee_num' => $row[7],
+                            //'company_id' => Company::getIdForUser($row[8]),
                             'permissions' => '{"user":1}',
                             'notes' => 'Imported user'
                         );
@@ -894,7 +907,7 @@ class UsersController extends AdminController {
             $sort = e(Input::get('sort'));
         }
 
-        $users = User::select(array('users.id','users.employee_num','users.email','users.username','users.location_id','users.manager_id','users.first_name','users.last_name','users.created_at','users.notes','users.company_id', 'users.deleted_at'))
+        $users = User::select(array('users.id','users.employee_num','users.email','users.username','users.location_id','users.manager_id','users.first_name','users.last_name','users.created_at','users.notes','users.company_id', 'users.deleted_at','users.activated'))
         ->with('assets','accessories','consumables','licenses','manager','sentryThrottle','groups','userloc','company');
         $users = Company::scopeCompanyables($users);
 
@@ -922,7 +935,7 @@ class UsersController extends AdminController {
                 $allowed_columns =
                 [
                   'last_name','first_name','email','username','employee_num',
-                  'assets','accessories', 'consumables','licenses','groups'
+                  'assets','accessories', 'consumables','licenses','groups','activated'
                 ];
 
                 $sort = in_array($sort, $allowed_columns) ? $sort : 'first_name';
@@ -942,7 +955,7 @@ class UsersController extends AdminController {
             $actions = '<nobr>';
 
             foreach ($user->groups as $group) {
-                $group_names .= '<a href="' . Config::get('app.url') . '/admin/groups/' . $group->id . '/edit" class="label  label-default">' . $group->name . '</a> ';
+                $group_names .= '<a href="' . Config::get('app.url') . '/admin/groups/' . $group->id . '/edit" class="label  label-default">' . e($group->name) . '</a> ';
             }
 
 
@@ -970,19 +983,20 @@ class UsersController extends AdminController {
                 'checkbox'      =>'<div class="text-center hidden-xs hidden-sm"><input type="checkbox" name="edit_user['.$user->id.']" class="one_required"></div>',
                 'name'          => '<a title="'.$user->fullName().'" href="../admin/users/'.$user->id.'/view">'.$user->fullName().'</a>',
                 'email'         => ($user->email!='') ?
-                            '<a href="mailto:'.$user->email.'" class="hidden-md hidden-lg">'.$user->email.'</a>'
-                            .'<a href="mailto:'.$user->email.'" class="hidden-xs hidden-sm"><i class="fa fa-envelope"></i></a>'
+                            '<a href="mailto:'.e($user->email).'" class="hidden-md hidden-lg">'.e($user->email).'</a>'
+                            .'<a href="mailto:'.e($user->email).'" class="hidden-xs hidden-sm"><i class="fa fa-envelope"></i></a>'
                             .'</span>' : '',
-                'username'         => $user->username,
-                'location'      => ($user->userloc) ? $user->userloc->name : '',
-                'manager'         => ($user->manager) ? '<a title="' . $user->manager->fullName() . '" href="users/' . $user->manager->id . '/view">' . $user->manager->fullName() . '</a>' : '',
+                'username'         => e($user->username),
+                'location'      => ($user->userloc) ? e($user->userloc->name) : '',
+                'manager'         => ($user->manager) ? '<a title="' . e($user->manager->fullName()) . '" href="users/' . $user->manager->id . '/view">' . e($user->manager->fullName()) . '</a>' : '',
                 'assets'        => $user->assets->count(),
-                'employee_num'  => $user->employee_num,
+                'employee_num'  => e($user->employee_num),
                 'licenses'        => $user->licenses->count(),
                 'accessories'        => $user->accessories->count(),
                 'consumables'        => $user->consumables->count(),
                 'groups'        => $group_names,
-                'notes'         => $user->notes,
+                'notes'         => e($user->notes),
+                'activated'      => ($user->activated=='1') ? '<i class="fa fa-check"></i>' : '<i class="fa fa-times"></i>',
                 'actions'       => ($actions) ? $actions : '',
                 'companyName'   => is_null($user->company) ? '' : e($user->company->name)
             );
@@ -1158,7 +1172,7 @@ class UsersController extends AdminController {
     protected $ldapValidationRules = array(
         'firstname' => 'required|alpha_space|min:2',
         'lastname' => 'required|alpha_space|min:2',
-        'employee_number' => 'numeric',
+        'employee_number' => 'alpha_space',
         'username' => 'required|min:2|unique:users,username',
         'email' => 'email|unique:users,email',
     );
@@ -1201,7 +1215,7 @@ class UsersController extends AdminController {
         $ldap_result_first_name = Setting::getSettings()->ldap_fname_field;
 
         $ldap_result_active_flag = Setting::getSettings()->ldap_active_flag_field;
-        $ldap_result_emp_num = Setting::getSettings()->ldap_emp_num_field;
+        $ldap_result_emp_num = Setting::getSettings()->ldap_emp_num;
         $ldap_result_email = Setting::getSettings()->ldap_email;
         $ldap_server_cert_ignore = Setting::getSettings()->ldap_server_cert_ignore;
 

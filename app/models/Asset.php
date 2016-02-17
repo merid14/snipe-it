@@ -78,6 +78,7 @@ class Asset extends Depreciable
             $data['expected_checkin'] = $expected_checkin;
             $data['item_tag'] = $this->asset_tag;
             $data['note'] = $note;
+            $data['item_serial'] = $this->serial;
             $data['require_acceptance'] = $this->requireAcceptance();
 
             if ((($this->requireAcceptance()=='1')  || ($this->getEula())) && (!Config::get('app.lock_passwords'))) {
@@ -382,10 +383,12 @@ return false;
   public function eol_date()
   {
 
-      if (( $this->purchase_date ) && ( $this->model )) {
+      if (( $this->purchase_date ) && ( $this->model->eol !='' ) && ( $this->model->eol > 0 )) {
           $date = date_create( $this->purchase_date );
           date_add( $date, date_interval_create_from_date_string( $this->model->eol . ' months' ));
           return date_format( $date, 'Y-m-d' );
+      } else {
+	      return false;
       }
 
   }
@@ -641,7 +644,7 @@ return false;
 	*/
 	public function scopeTextSearch($query, $search)
 	{
-		$search = explode(' ', $search);
+		$search = explode(' OR ', $search);
 
 		return $query->where(function($query) use ($search)
 		{
