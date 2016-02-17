@@ -68,7 +68,7 @@ class AssetsController extends AdminController
         $manufacturer_list = manufacturerList();
         $category_list = categoryList();
         $supplier_list = suppliersList();
-        $company_list = Company::getSelectList();
+        $company_list = companyList();
         $assigned_to = usersList();
         $statuslabel_types = statusTypeList();
 
@@ -253,7 +253,7 @@ class AssetsController extends AdminController
         $manufacturer_list = manufacturerList();
         $category_list = categoryList();
         $supplier_list = suppliersList();
-        $company_list = Company::getSelectList();
+        $company_list = companyList();
         $assigned_to = usersList();
         $statuslabel_types = statusTypeList();
 
@@ -358,6 +358,13 @@ class AssetsController extends AdminController
             } else {
                 $asset->rtd_location_id     = e(Input::get('rtd_location_id'));
             }
+
+            if (Input::has('image_delete')) {
+                unlink(public_path().'/uploads/assets/'.$asset->image);
+                $asset->image = '';
+            }
+
+
 
             $checkModel = Config::get('app.url').'/api/models/'.e(Input::get('model_id')).'/check';
             //$asset->mac_address = ($checkModel == true) ? e(Input::get('mac_address')) : NULL;
@@ -539,8 +546,8 @@ class AssetsController extends AdminController
         else if (!Company::isCurrentUserHasAccess($asset)) {
             return Redirect::to('hardware')->with('error', Lang::get('general.insufficient_permissions'));
         }
-
-        return View::make('backend/hardware/checkin', compact('asset'))->with('backto', $backto);
+        $statusLabel_list = statusLabelList();
+        return View::make('backend/hardware/checkin', compact('asset'))->with('statusLabel_list',$statusLabel_list)->with('backto', $backto);
     }
 
 
@@ -582,6 +589,9 @@ class AssetsController extends AdminController
         $asset->expected_checkin = NULL;
         $asset->last_checkout = NULL;
 
+        if (Input::has('status_id')) {
+          $asset->status_id =  e(Input::get('status_id'));
+        }
         // Was the asset updated?
         if($asset->save()) {
 
@@ -640,6 +650,7 @@ class AssetsController extends AdminController
             $data['item_name'] = $asset->showAssetName();
             $data['checkin_date'] = $logaction->created_at;
             $data['item_tag'] = $asset->asset_tag;
+            $data['item_serial'] = $asset->serial;
             $data['note'] = $logaction->note;
 
             if ((($asset->checkin_email()=='1')) && ($user) && (!Config::get('app.lock_passwords'))) {
@@ -842,7 +853,7 @@ class AssetsController extends AdminController
         file_put_contents($file, $display_output);
 
 
-        return View::make('backend/hardware/import-status');
+        return Redirect::to('hardware')->with('success','Your file has been imported');
 
     }
 
@@ -872,7 +883,7 @@ class AssetsController extends AdminController
         $supplier_list = suppliersList();
         $assigned_to = usersList();
         $statuslabel_types = statusTypeList();
-        $company_list = Company::getSelectList();
+        $company_list = companyList();
 
         $asset = clone $asset_to_clone;
         $asset->id = null;
@@ -1226,10 +1237,8 @@ class AssetsController extends AdminController
 						$update_array['status_id'] = e(Input::get('status_id'));
 					}
 
-          if (Input::get('requestable')=='1') {
-						$update_array['requestable'] =  1;
-					} else {
-            $update_array['requestable'] =  0;
+          if (Input::has('requestable')) {
+            $update_array['requestable'] = e(Input::get('requestable'));
           }
 
 

@@ -53,7 +53,7 @@
  {{ Form::open([
       'method' => 'POST',
       'route' => ['hardware/bulkedit'],
-	  'class' => 'form-horizontal' ]) }}
+	    'class' => 'form-horizontal' ]) }}
 
     {{-- <div id="toolbar" class="pull-left" style="padding-top: 10px;">
         <select class="form-control">
@@ -69,7 +69,7 @@
     data-url="{{route('api.hardware.list', array(''=>Input::get('status'),'order_number'=>Input::get('order_number')))}}"
     data-cookie="true"
     data-click-to-select="true"
-    data-cookie-id-table="assetTable-{{ Config::get('version.hash_version') }}">
+    data-cookie-id-table="{{ Input::get('status') }}assetTable-{{ Config::get('version.hash_version') }}">
         <thead>
             <tr>
                 <th data-class="hidden-xs" data-switchable="false" data-searchable="false" data-sortable="false" data-field="checkbox"><div class="text-center"><input type="checkbox" id="checkAll" style="padding-left: 0px;"></div></th>
@@ -89,7 +89,7 @@
                 <th data-sortable="true" data-searchable="true" data-field="last_checkout">@lang('admin/hardware/table.checkout_date')</th>
                 <th data-sortable="true" data-field="expected_checkin" data-searchable="true">@lang('admin/hardware/form.expected_checkin')</th>
                 @foreach(CustomField::all() AS $field)
-                  <th data-sortable="true" data-field="{{$field->db_column_name()}}">{{{$field->name}}}</th>
+                  <th data-sortable="true" data-visible="false" data-field="{{$field->db_column_name()}}">{{{$field->name}}}</th>
                 @endforeach
                 <th data-switchable="false" data-searchable="false" data-sortable="false" data-field="change">@lang('admin/hardware/table.change')</th>
                 <th data-switchable="false" data-searchable="false" data-sortable="false" data-field="actions" >@lang('table.actions')</th>
@@ -144,7 +144,7 @@
         paginationLastText: "@lang('general.last')",
         paginationPreText: "@lang('general.previous')",
         paginationNextText: "@lang('general.next')",
-        pageList: ['10','25','50','100','150','200'],
+        pageList: ['10','25','50','100','150','200','500','1000'],
         icons: {
             paginationSwitchDown: 'fa-caret-square-o-down',
             paginationSwitchUp: 'fa-caret-square-o-up',

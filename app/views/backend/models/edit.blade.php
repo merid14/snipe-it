@@ -117,13 +117,24 @@
               </div>
             </div>
 
+            <!-- Notes -->
+            <div class="form-group {{ $errors->has('note') ? ' has-error' : '' }}">
+                <label for="note" class="col-md-2 control-label">@lang('admin/hardware/form.notes')</label>
+                <div class="col-md-7 col-sm-12">
+                    <textarea class="col-md-6 form-control" id="note" name="note">{{{ Input::old('note', $model->note) }}}</textarea>
+                    <p class="help-block">@lang('general.markdown') </p>
+
+                    {{ $errors->first('note', '<br><span class="alert-msg"><i class="fa fa-times"></i> :message</span>') }}
+                </div>
+            </div>
+
             <!-- Image -->
             @if ($model->image)
                 <div class="form-group {{ $errors->has('image_delete') ? 'has-error' : '' }}">
                     <label class="col-md-2 control-label" for="image_delete">@lang('general.image_delete')</label>
                     <div class="col-md-5">
                         {{ Form::checkbox('image_delete') }}
-                        <img src="/uploads/models/{{{ $model->image }}}" />
+                        <img src="{{ Config::get('app.url') }}/uploads/models/{{{ $model->image }}}" />
                         {{ $errors->first('image_delete', '<br><span class="alert-msg">:message</span>') }}
                     </div>
                 </div>
