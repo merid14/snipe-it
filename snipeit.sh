@@ -645,6 +645,6 @@ echo ""
 echo "##  Cleaning up..."
 #rm -f snipeit.sh
 #rm -f install.sh
-rm -rf $tmp/
+rm -rf "${tmp:?}/"
 echo "##  Done!"
 sleep 1
