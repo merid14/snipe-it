@@ -348,7 +348,7 @@ case $distro in
 		echo "##  Installing and configuring composer"
 		curl -sS https://getcomposer.org/installer | php
 		mv composer.phar /usr/local/bin/composer
-		cd $webdir/$name/
+		cd $webdir/$name/ || exit
 		composer install --no-dev --prefer-source
 		php artisan app:install --env=production
 
@@ -382,7 +382,7 @@ case $distro in
 		ShowProgressOf git clone https://github.com/$fork/snipe-it $webdir/$name
 
 		# get latest stable release
-		cd $webdir/$name
+		cd $webdir/$name || exit
 		if [ -z $branch ]; then
 			branch=$(git tag | grep -v 'pre' | tail -1)
 		fi
@@ -463,7 +463,7 @@ case $distro in
 		# Install / configure composer
 		echo ""
 		echo "##  Configuring composer."
-		cd $webdir/$name
+		cd $webdir/$name || exit
 		curl -sS https://getcomposer.org/installer | php
 		php composer.phar install --no-dev --prefer-source
 
@@ -527,7 +527,7 @@ case $distro in
 
 		ShowProgressOf git clone https://github.com/$fork/snipe-it $webdir/$name
 		# get latest stable release
-		cd $webdir/$name
+		cd $webdir/$name || exit
 		if [ -z $branch ]; then
 			branch=$(git tag | grep -v 'pre' | tail -1)
 		fi
@@ -614,7 +614,7 @@ case $distro in
 
 		# Install / configure composer
 		echo "##  Configuring composer."
-		cd $webdir/$name
+		cd $webdir/$name || exit
 		curl -sS https://getcomposer.org/installer | php
 		php composer.phar install --no-dev --prefer-source
 
@@ -669,7 +669,7 @@ case $distro in
 
 		ShowProgressOf git clone https://github.com/$fork/snipe-it $webdir/$name
 		# get latest stable release
-		cd $webdir/$name
+		cd $webdir/$name || exit
 		if [ -z $branch ]; then
 			branch=$(git tag | grep -v 'pre' | tail -1)
 		fi
@@ -754,7 +754,7 @@ case $distro in
 
 		# Install / configure composer
 		echo "##  Configuring composer."
-		cd $webdir/$name
+		cd $webdir/$name || exit
 		curl -sS https://getcomposer.org/installer | php
 		php composer.phar install --no-dev --prefer-source
 
