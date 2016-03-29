@@ -789,6 +789,6 @@ echo "##  Cleaning up..."
 echo >> $installed "Installed $si to version:$branch $date"
 #rm -f snipeit.sh
 #rm -f install.sh
-rm -rf $tmp/
+rm -rf "${tmp:?}/"
 echo "##  Done!"
 sleep 1
