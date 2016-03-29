@@ -68,7 +68,7 @@ if grep -q centos <<<"$distro"; then
 		distro="${f:5:${#f}-13}"
 	done;
 	if [ "$distro" = "centos" ] || [ "$distro" = "redhat" ]; then
-		distro+="$(rpm -q --qf "%{VERSION}" $(rpm -q --whatprovides redhat-release))"
+		distro+="$(rpm -q --qf "%{VERSION}" "$(rpm -q --whatprovides redhat-release)")"
 	fi
 fi
 
