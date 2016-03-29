@@ -248,14 +248,17 @@ case $distro in
 		echo "##  Updating Debian packages in the background. Please be patient."
 		echo ""
 		apachefile=/etc/apache2/sites-available/$name.conf
-		apt-get update >> /var/log/snipeit-install.log 2>&1
-		apt-get -y upgrade >> /var/log/snipeit-install.log 2>&1
+
+		export DEBIAN_FRONTEND=noninteractive
+		apt-get update -q >> /var/log/snipeit-install.log 2>&1
+		apt-get upgrade -q -y >> /var/log/snipeit-install.log 2>&1
 
 		echo "##  Installing packages."
-		apt-get -y install mariadb-server mariadb-client
 		echo "## Going to suppress more messages that you don't need to worry about. Please wait."
-		apt-get -y install apache2 >> /var/log/snipeit-install.log 2>&1
-		apt-get install -y git unzip php5 php5-mcrypt php5-curl php5-mysql php5-gd php5-ldap libapache2-mod-php5 curl >> /var/log/snipeit-install.log 2>&1
+		apt-get install -q -y apache2 >> /var/log/snipeit-install.log 2>&1
+		apt-get install -q -y git unzip php5 php5-mcrypt php5-curl php5-mysql php5-gd php5-ldap libapache2-mod-php5 curl debconf-utils >> /var/log/snipeit-install.log 2>&1
+
+		apt-get install -q -y mariadb-server mariadb-client
 		service apache2 restart
 
 		#We already established MySQL root & user PWs, so we dont need to be prompted. Let's go ahead and install Apache, PHP and MySQL.
@@ -293,9 +296,10 @@ case $distro in
 		echo >> $apachefile "        CustomLog /var/log/apache2/access.log combined"
 		echo >> $apachefile "</VirtualHost>"
 
-		echo "##  Setting up hosts file."
-		echo >> $hosts "127.0.0.1 $hostname $fqdn"
-		a2ensite $name.conf >> /var/log/snipeit-install.log 2>&1
+		## Merid14: I dont think this is necessary anymore
+		# echo "##  Setting up hosts file."
+		# echo >> $hosts "127.0.0.1 $hostname $fqdn"
+		# a2ensite $name.conf >> /var/log/snipeit-install.log 2>&1
 
 		#Modify the Snipe-It files necessary for a production environment.
 		echo "##  Modify the Snipe-It files necessary for a production environment."
@@ -361,7 +365,7 @@ case $distro in
 
 		webdir=/var/www
 		apachefile=/etc/apache2/sites-available/$name.conf
-
+		export DEBIAN_FRONTEND=noninteractive
 		#Update/upgrade Debian/Ubuntu repositories, get the latest version of git.
 		echo ""
 		echo -n "##  Updating ubuntu..."
@@ -415,13 +419,15 @@ case $distro in
 			echo >> $apachefile "</VirtualHost>"
 		fi
 
-		echo "##  Setting up hosts file.";
-		if grep -q "127.0.0.1 $hostname $fqdn" "$hosts"; then
-			echo "    Hosts file already setup."
-		else
-			echo >> $hosts "127.0.0.1 $hostname $fqdn"
-			a2ensite $name.conf >> "$log" 2>&1
-		fi
+
+		## Merid14: I dont think this is necessary anymore
+		# echo "##  Setting up hosts file.";
+		# if grep -q "127.0.0.1 $hostname $fqdn" "$hosts"; then
+		# 	echo "    Hosts file already setup."
+		# else
+		# 	echo >> $hosts "127.0.0.1 $hostname $fqdn"
+		# 	a2ensite $name.conf >> "$log" 2>&1
+		# fi
 
 		#Modify the Snipe-It files necessary for a production environment.
 		echo "##  Modify the Snipe-It files necessary for a production environment."
@@ -503,7 +509,7 @@ case $distro in
 			echo >> $mariadbRepo "enable=1"
 		fi
 
-		yum -y install wget epel-release >> "$log" 2>&1
+		yum -y -q install wget epel-release >> "$log" 2>&1
 		wget -P $tmp/ https://centos6.iuscommunity.org/ius-release.rpm >> "$log" 2>&1
 		rpm -Uvh $tmp/ius-release*.rpm >> "$log" 2>&1
 
@@ -517,7 +523,7 @@ case $distro in
 				echo " ##" $p "Installed"
 			else
 				echo -n " ##" $p "Installing... "
-				yum -y install $p >> "$log" 2>&1
+				yum -y -q install $p >> "$log" 2>&1
 				echo "";
 			fi
 		done;
@@ -573,13 +579,14 @@ case $distro in
 			echo >> $apachefile "</VirtualHost>"
 		fi
 
-		echo ""
-		echo "##  Setting up hosts file.";
-		if grep -q "127.0.0.1 $hostname $fqdn" "$hosts"; then
-			echo "    Hosts file already setup."
-		else
-			echo >> $hosts "127.0.0.1 $hostname $fqdn"
-		fi
+		## Merid14: I dont think this is necessary anymore
+		# echo ""
+		# echo "##  Setting up hosts file.";
+		# if grep -q "127.0.0.1 $hostname $fqdn" "$hosts"; then
+		# 	echo "    Hosts file already setup."
+		# else
+		# 	echo >> $hosts "127.0.0.1 $hostname $fqdn"
+		# fi
 
 
 		# Make apache start on boot and restart the daemon
@@ -646,7 +653,7 @@ case $distro in
 		#Allow us to get the mysql engine
 		echo ""
 		echo "##  Add IUS, epel-release and mariaDB repos.";
-		yum -y install wget epel-release >> "$log" 2>&1
+		yum -y -q install wget epel-release >> "$log" 2>&1
 		wget -P $tmp/ https://centos7.iuscommunity.org/ius-release.rpm >> "$log" 2>&1
 		rpm -Uvh $tmp/ius-release*.rpm >> "$log" 2>&1
 
@@ -659,7 +666,7 @@ case $distro in
 				echo " ##" $p "Installed"
 			else
 				echo -n " ##" $p "Installing... "
-				yum -y install $p >> "$log" 2>&1
+				yum -y -q install $p >> "$log" 2>&1
 			echo "";
 			fi
 		done;
@@ -715,13 +722,14 @@ case $distro in
 			echo >> $apachefile "</VirtualHost>"
 		fi
 
-		echo ""
-		echo "##  Setting up hosts file.";
-		if grep -q "127.0.0.1 $hostname $fqdn" "$hosts"; then
-			echo "    Hosts file already setup."
-		else
-			echo >> $hosts "127.0.0.1 $hostname $fqdn"
-		fi
+		## Merid14: I dont think this is necessary anymore
+		# echo ""
+		# echo "##  Setting up hosts file.";
+		# if grep -q "127.0.0.1 $hostname $fqdn" "$hosts"; then
+		# 	echo "    Hosts file already setup."
+		# else
+		# 	echo >> $hosts "127.0.0.1 $hostname $fqdn"
+		# fi
 
 		echo "##  Starting the apache server.";
 		# Make apache start on boot and restart the daemon
