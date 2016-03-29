@@ -49,11 +49,11 @@ function ShowProgressOf()
 
 function isinstalled
 {
-  if yum list installed "$@" >/dev/null 2>&1; then
-    true
-  else
-    false
-  fi
+    if yum list installed "$@" >/dev/null 2>&1; then
+        true
+    else
+        false
+    fi
 }
 
 function compareVersions ()

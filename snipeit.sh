@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2086,SC2024
 # ------------------------------------------------------------------
 #	Snipe-It Install Script
 #	Mike Tucker
@@ -17,37 +18,120 @@
 if [ "$(id -u)" != "0" ]; then
   exec sudo "$0" "$@"
 fi
+# Function Definition
+#
+function logvar()
+# ------------------------------------------------------------------
+#	Function Definition
+#
+#	Function takes Variable assigntment as argument
+#		Executes the variable assignment then pulls out the variable
+#		name and it's contents to put into the log file.
+#
+#	Example:
+# 	logvar hostname="$(hostname)"
+#
+# ------------------------------------------------------------------
+{
+	eval "$1"
+	var_name=$(echo "$1" | gawk -F'[=]+' ' {print $1}')
+	var_cmd='$'$var_name
+	eval echo "$var_name: $var_cmd"  >> "$log" 2>&1
+}
 
 clear
-
-#  Set this to your github username to pull your changes ** Only for Devs **
-fork="snipe"
-#  Set this to the branch you want to pull  ** Only for Devs **
-branch=""
-
-name="snipeit"
-si="Snipe-IT"
-hostname="$(hostname)"
-fqdn="$(hostname --fqdn)"
-installed="$webdir/$name/.installed"
-ans=default
-hosts=/etc/hosts
-file=master.zip
-tmp=/tmp/$name
-date="$(date '+%Y-%b-%d')"
-backup=/opt/$name/backup/$date
 log="/var/log/snipeit-install.log"
 
-echo "--------------  Start Installer  -----------------" >> $log 2>&1
+echo "--------------  Collect info for log  -----------------" >> "$log" 2>&1
+arch=$(uname -m)
+kernel=$(uname -r)
+if [ -f /etc/lsb-release ]; then
+        os=$(lsb_release -s -d)
+elif [ -f /etc/debian_version ]; then
+        os="Debian $(cat /etc/debian_version)"
+elif [ -f /etc/redhat-release ]; then
+        os=$(cat /etc/redhat-release)
+else
+        os="$(uname -s) $(uname -r)"
+fi
 
-rm -rf $tmp/
-mkdir $tmp
+logvar os="OS: $os"
+logvar arch="arch: $arch"
+logvar kernel="kernel: $kernel"
+
+
+#  Lets find what distro we are using and what version
+logvar distro="$(cat /proc/version)"
+if grep -q centos <<<"$distro"; then
+	for f in $(find /etc -type f -maxdepth 1 \( ! -wholename /etc/os-release ! -wholename /etc/lsb-release -wholename /etc/\*release -o -wholename /etc/\*version \) 2> /dev/null);
+	do
+		distro="${f:5:${#f}-13}"
+	done;
+	if [ "$distro" = "centos" ] || [ "$distro" = "redhat" ]; then
+		distro+="$(rpm -q --qf "%{VERSION}" $(rpm -q --whatprovides redhat-release))"
+	fi
+fi
+
+echo "--------------  Declare Variables  -----------------" >> "$log" 2>&1
+#  Set this to your github username to pull your changes ** Only for Devs **
+logvar fork="snipe"
+#  Set this to the branch you want to pull  ** Only for Devs **
+logvar branch=""
+
+case $os in
+    *Ubuntu*)
+		echo "  The installer has detected Ubuntu as the OS."
+		distro=ubuntu
+		webdir=/var/www
+		apachefile=/etc/apache2/sites-available/$name.conf
+		;;
+    *Debian*)
+		echo "  The installer has detected Debian as the OS."
+		webdir=/var/www
+		;;
+    *centos6*|*redhat6*)
+        echo "  The installer has detected $distro as the OS."
+        distro=centos6
+        webdir=/var/www/html
+            ;;
+    *centos7*|*redhat7*)
+        echo "  The installer has detected $distro as the OS."
+        distro=centos7
+        webdir=/var/www/html
+            ;;
+    *)
+        echo "  The installer has detected $distro as the OS."
+        echo "  Unfortunately this installer doesn't work on your os."
+        echo "  Please see snipeit docs for manual install: ."
+        echo "      http://docs.snipeitapp.com/installation/downloading.html."
+        exit
+        ;;
+esac
+
+logvar name="snipeit"
+logvar si="Snipe-IT"
+logvar hostname="$(hostname)"
+logvar fqdn="$(hostname --fqdn)"
+logvar installed="$webdir/$name/.installed"
+logvar ans=default
+logvar hosts=/etc/hosts
+logvar file=master.zip
+logvar tmp=/tmp/"$name"
+logvar todaysdate="$(date '+%Y-%b-%d')"
+logvar backup=/opt/"$name"/backup/"$(date '+%Y-%b-%d')"
+
+
+
+echo "--------------  Start Installer  -----------------" >> "$log" 2>&1
+
+rm -rf "${$tmp:?}/"
+mkdir "$tmp"
 
 ####################  Functions Go Here  ######################
 function ShowProgressOf()
 {
 	tput civis
-    "$@" >> $log 2>&1 &
+    "$@" >> "$log" 2>&1 &
     local pid=$!
     local delay=0.25
     local spinstr='|/-\'
@@ -85,24 +169,12 @@ echo ""
 echo "  Welcome to Snipe-IT Inventory Installer for Centos and Debian!"
 echo ""
 
-#  Lets find what distro we are using and what version
-distro="$(cat /proc/version)"
-if grep -q centos <<<$distro; then
-	for f in $(find /etc -type f -maxdepth 1 \( ! -wholename /etc/os-release ! -wholename /etc/lsb-release -wholename /etc/\*release -o -wholename /etc/\*version \) 2> /dev/null);
-	do
-		distro="${f:5:${#f}-13}"
-	done;
-	if [ "$distro" = "centos" ] || [ "$distro" = "redhat" ]; then
-		distro+="$(rpm -q --qf "%{VERSION}" $(rpm -q --whatprovides redhat-release))"
-	fi
-fi
-
 case $distro in
         *Ubuntu*)
                 echo "  The installer has detected Ubuntu as the OS."
                 distro=ubuntu
                 ;;
-	*Debian*)
+        *Debian*)
                 echo "  The installer has detected Debian as the OS."
                 distro=debian
                 ;;
@@ -115,7 +187,10 @@ case $distro in
                 distro=centos7
                 ;;
         *)
-                echo "  The installer was unable to determine your OS. Exiting for safety."
+                echo "  The installer has detected $distro as the OS."
+                echo "  Unfortunately this installer doesn't work on your os."
+                echo "  Please see snipeit docs for manual install: ."
+                echo "      http://docs.snipeitapp.com/installation/downloading.html."
                 exit
                 ;;
 esac
@@ -124,7 +199,7 @@ esac
 #Get your FQDN.
 echo ""
 echo -n "  Q. What is the FQDN of your server? ($fqdn): "
-read fqdn
+read -r fqdn
 if [ -z "$fqdn" ]; then
         fqdn="$(hostname --fqdn)"
 fi
@@ -134,16 +209,16 @@ echo ""
 #Do you want to set your own passwords, or have me generate random ones?
 until [[ $ans == "yes" ]] || [[ $ans == "no" ]]; do
 echo -n "  Q. Do you want to automatically create the snipe database user password? (y/n) "
-read setpw
+read -r setpw
 
 case $setpw in
         [yY] | [yY][Ee][Ss] )
-                mysqluserpw="$(echo `< /dev/urandom tr -dc _A-Za-z-0-9 | head -c16`)"
+                mysqluserpw="$(< /dev/urandom tr -dc _A-Za-z-0-9 | head -c16)"
                 ans="yes"
                 ;;
         [nN] | [n|N][O|o] )
                 echo -n  "    Q. What do you want your snipeit user password to be?"
-                read -s mysqluserpw
+                read -sr mysqluserpw
                 echo ""
 				ans="no"
                 ;;
@@ -153,14 +228,14 @@ esac
 done
 
 #Snipe says we need a new 32bit key, so let's create one randomly and inject it into the file
-random32="$(echo `< /dev/urandom tr -dc _A-Za-z-0-9 | head -c32`)"
+random32="$(< /dev/urandom tr -dc _A-Za-z-0-9 | head -c32)"
 
 dbsetup=$tmp/db_setup.sql
-echo >> $dbsetup "CREATE DATABASE snipeit;"
-echo >> $dbsetup "GRANT ALL PRIVILEGES ON snipeit.* TO snipeit@localhost IDENTIFIED BY '$mysqluserpw';"
+echo >> "$dbsetup" "CREATE DATABASE snipeit;"
+echo >> "$dbsetup" "GRANT ALL PRIVILEGES ON snipeit.* TO snipeit@localhost IDENTIFIED BY '$mysqluserpw';"
 
-chown root:root $dbsetup
-chmod 700 $dbsetup
+chown root:root "$dbsetup"
+chmod 700 "$dbsetup"
 
 case $distro in
 	debian)
@@ -173,34 +248,34 @@ case $distro in
 		echo "##  Updating Debian packages in the background. Please be patient."
 		echo ""
 		apachefile=/etc/apache2/sites-available/$name.conf
-		sudo apt-get update >> /var/log/snipeit-install.log 2>&1
-		sudo apt-get -y upgrade >> /var/log/snipeit-install.log 2>&1
+		apt-get update >> /var/log/snipeit-install.log 2>&1
+		apt-get -y upgrade >> /var/log/snipeit-install.log 2>&1
 
 		echo "##  Installing packages."
-		sudo apt-get -y install mariadb-server mariadb-client
+		apt-get -y install mariadb-server mariadb-client
 		echo "## Going to suppress more messages that you don't need to worry about. Please wait."
-		sudo apt-get -y install apache2 >> /var/log/snipeit-install.log 2>&1
-		sudo apt-get install -y git unzip php5 php5-mcrypt php5-curl php5-mysql php5-gd php5-ldap libapache2-mod-php5 curl >> /var/log/snipeit-install.log 2>&1
-		sudo service apache2 restart
+		apt-get -y install apache2 >> /var/log/snipeit-install.log 2>&1
+		apt-get install -y git unzip php5 php5-mcrypt php5-curl php5-mysql php5-gd php5-ldap libapache2-mod-php5 curl >> /var/log/snipeit-install.log 2>&1
+		service apache2 restart
 
 		#We already established MySQL root & user PWs, so we dont need to be prompted. Let's go ahead and install Apache, PHP and MySQL.
 		echo "##  Setting up LAMP."
-		#sudo DEBIAN_FRONTEND=noninteractive apt-get install -y lamp-server^ >> /var/log/snipeit-install.log 2>&1
+		#DEBIAN_FRONTEND=noninteractive apt-get install -y lamp-server^ >> /var/log/snipeit-install.log 2>&1
 
 		#  Get files and extract to web dir
 		echo ""
 		echo "##  Downloading snipeit and extract to web directory."
-		wget -P $tmp/ https://github.com/snipe/snipe-it/archive/$file >> /var/log/snipeit-install.log 2>&1
-		unzip -qo $tmp/$file -d $tmp/
-		cp -R $tmp/snipe-it-master $webdir/$name
+		wget -P "$tmp"/ https://github.com/snipe/snipe-it/archive/"$file" >> /var/log/snipeit-install.log 2>&1
+		unzip -qo "$tmp"/"$file" -d "$tmp"/
+		cp -R "$tmp"/snipe-it-master "$webdir"/"$name"
 
 		##  TODO make sure apache is set to start on boot and go ahead and start it
 
 		#Enable mcrypt and rewrite
 		echo "##  Enabling mcrypt and rewrite"
-		sudo php5enmod mcrypt >> /var/log/snipeit-install.log 2>&1
-		sudo a2enmod rewrite >> /var/log/snipeit-install.log 2>&1
-		sudo ls -al /etc/apache2/mods-enabled/rewrite.load >> /var/log/snipeit-install.log 2>&1
+		php5enmod mcrypt >> /var/log/snipeit-install.log 2>&1
+		a2enmod rewrite >> /var/log/snipeit-install.log 2>&1
+		ls -al /etc/apache2/mods-enabled/rewrite.load >> /var/log/snipeit-install.log 2>&1
 
 		#Create a new virtual host for Apache.
 		echo "##  Create Virtual host for apache."
@@ -250,16 +325,17 @@ case $distro in
 		##  TODO make sure mysql is set to start on boot and go ahead and start it
 
 		#Change permissions on directories
-		echo "##  Seting permissions on web directory."
-		sudo chmod -R 755 $webdir/$name/app/storage
-		sudo chmod -R 755 $webdir/$name/app/private_uploads
-		sudo chmod -R 755 $webdir/$name/public/uploads
-		sudo chown -R www-data:www-data /var/www/
+		echo "##  Setting permissions on web directory."
+		chmod -R 755 $webdir/$name/app/storage
+		chmod -R 755 $webdir/$name/app/private_uploads
+		chmod -R 755 $webdir/$name/public/uploads
+		chown -R www-data:www-data /var/www/
 		# echo "##  Finished permission changes."
 
-		echo "##  Input your MySQL/MariaDB root password: "
+		echo "##  Setting up your database."
+		echo "##  Input your MySQL/MariaDB root password (blank if this is a fresh install): "
 		echo ""
-		sudo mysql -u root -p < $dbsetup
+		mysql -u root -p < $dbsetup
 		echo ""
 
 		echo "##  Securing Mysql"
@@ -295,10 +371,10 @@ case $distro in
 		ShowProgressOf apt-get -y upgrade
 
 		echo -n "##  Installing packages..."
-		ShowProgressOf sudo apt-get install -y git unzip php5 php5-mcrypt php5-curl php5-mysql php5-gd php5-ldap
+		ShowProgressOf apt-get install -y git unzip php5 php5-mcrypt php5-curl php5-mysql php5-gd php5-ldap
 
 		echo "##  Setting up LAMP."
-		sudo DEBIAN_FRONTEND=noninteractive apt-get install -y lamp-server^ >> $log 2>&1
+		DEBIAN_FRONTEND=noninteractive apt-get install -y lamp-server^ >> "$log" 2>&1
 
 		#  Get files and extract to web dir
 		echo ""
@@ -317,9 +393,9 @@ case $distro in
 
 		#Enable mcrypt and rewrite
 		echo "##  Enabling mcrypt and rewrite"
-		sudo php5enmod mcrypt >> $log 2>&1
-		sudo a2enmod rewrite >> $log 2>&1
-		sudo ls -al /etc/apache2/mods-enabled/rewrite.load >> $log 2>&1
+		php5enmod mcrypt >> "$log" 2>&1
+		a2enmod rewrite >> "$log" 2>&1
+		ls -al /etc/apache2/mods-enabled/rewrite.load >> "$log" 2>&1
 
 		if [ -f $apachefile ]; then
 			echo "    VirtualHost already exists. $apachefile"
@@ -344,7 +420,7 @@ case $distro in
 			echo "    Hosts file already setup."
 		else
 			echo >> $hosts "127.0.0.1 $hostname $fqdn"
-			a2ensite $name.conf >> $log 2>&1
+			a2ensite $name.conf >> "$log" 2>&1
 		fi
 
 		#Modify the Snipe-It files necessary for a production environment.
@@ -373,8 +449,10 @@ case $distro in
 		cp $webdir/$name/app/config/production/mail.example.php $webdir/$name/app/config/production/mail.php
 
 ##  TODO make sure mysql is set to start on boot and go ahead and start it
+
+		echo "##  Setting up your database."
 		echo "##  Input your MySQL/MariaDB root password (blank if this is a fresh install): "
-		sudo mysql -u root -p < $dbsetup
+		mysql -u root -p < $dbsetup
 
 		echo "##  Securing Mysql."
 
@@ -391,10 +469,10 @@ case $distro in
 
 		#Change permissions on directories
 		echo "##  Setting permissions on web directory."
-		sudo chmod -R 755 $webdir/$name/app/storage
-		sudo chmod -R 755 $webdir/$name/app/private_uploads
-		sudo chmod -R 755 $webdir/$name/public/uploads
-		sudo chown -R www-data:www-data /var/www/
+		chmod -R 755 $webdir/$name/app/storage
+		chmod -R 755 $webdir/$name/app/private_uploads
+		chmod -R 755 $webdir/$name/public/uploads
+		chown -R www-data:www-data /var/www/
 		# echo "##  Finished permission changes."
 
 		echo "##  Installing Snipe-IT."
@@ -425,13 +503,13 @@ case $distro in
 			echo >> $mariadbRepo "enable=1"
 		fi
 
-		yum -y install wget epel-release >> $log 2>&1
-		wget -P $tmp/ https://centos6.iuscommunity.org/ius-release.rpm >> $log 2>&1
-		rpm -Uvh $tmp/ius-release*.rpm >> $log 2>&1
+		yum -y install wget epel-release >> "$log" 2>&1
+		wget -P $tmp/ https://centos6.iuscommunity.org/ius-release.rpm >> "$log" 2>&1
+		rpm -Uvh $tmp/ius-release*.rpm >> "$log" 2>&1
 
 
 		#Install PHP and other needed stuff.
-		echo "##  Installing PHP and other needed stuff";
+		echo "##  Installing PHP and other packages.";
 		PACKAGES="httpd MariaDB-server git unzip php56u php56u-mysqlnd php56u-bcmath php56u-cli php56u-common php56u-embedded php56u-gd php56u-mbstring php56u-mcrypt php56u-ldap"
 
 		for p in $PACKAGES;do
@@ -439,7 +517,7 @@ case $distro in
 				echo " ##" $p "Installed"
 			else
 				echo -n " ##" $p "Installing... "
-				yum -y install $p >> $log 2>&1
+				yum -y install $p >> "$log" 2>&1
 				echo "";
 			fi
 		done;
@@ -461,7 +539,8 @@ case $distro in
 		chkconfig mysql on
 		/sbin/service mysql start
 
-		echo "##  Input your MySQL/MariaDB root password: "
+		echo "##  Setting up your database."
+		echo "##  Input your MySQL/MariaDB root password  (blank if this is a fresh install): "
 		mysql -u root < $dbsetup
 
 		echo "##  Securing mariaDB server.";
@@ -541,10 +620,10 @@ case $distro in
 
 		# Change permissions on directories
 		echo "##  Setting permissions on web directory."
-		sudo chmod -R 755 $webdir/$name/app/storage
-		sudo chmod -R 755 $webdir/$name/app/private_uploads
-		sudo chmod -R 755 $webdir/$name/public/uploads
-		sudo chown -R apache:apache $webdir/$name
+		chmod -R 755 $webdir/$name/app/storage
+		chmod -R 755 $webdir/$name/app/private_uploads
+		chmod -R 755 $webdir/$name/public/uploads
+		chown -R apache:apache $webdir/$name
 
 		echo "##  Installing Snipe-IT."
 		php artisan app:install --env=production
@@ -567,12 +646,12 @@ case $distro in
 		#Allow us to get the mysql engine
 		echo ""
 		echo "##  Add IUS, epel-release and mariaDB repos.";
-		yum -y install wget epel-release >> $log 2>&1
-		wget -P $tmp/ https://centos7.iuscommunity.org/ius-release.rpm >> $log 2>&1
-		rpm -Uvh $tmp/ius-release*.rpm >> $log 2>&1
+		yum -y install wget epel-release >> "$log" 2>&1
+		wget -P $tmp/ https://centos7.iuscommunity.org/ius-release.rpm >> "$log" 2>&1
+		rpm -Uvh $tmp/ius-release*.rpm >> "$log" 2>&1
 
 		#Install PHP and other needed stuff.
-		echo "##  Installing PHP and other needed stuff";
+		echo "##  Installing PHP and other packages.";
 		PACKAGES="httpd mariadb-server git unzip php56u php56u-mysqlnd php56u-bcmath php56u-cli php56u-common php56u-embedded php56u-gd php56u-mbstring php56u-mcrypt php56u-ldap"
 
 		for p in $PACKAGES;do
@@ -580,7 +659,7 @@ case $distro in
 				echo " ##" $p "Installed"
 			else
 				echo -n " ##" $p "Installing... "
-				yum -y install $p >> $log 2>&1
+				yum -y install $p >> "$log" 2>&1
 			echo "";
 			fi
 		done;
@@ -602,7 +681,8 @@ case $distro in
 		systemctl enable mariadb.service
 		systemctl start mariadb.service
 
-		echo "##  Input your MySQL/MariaDB root password "
+		echo "##  Setting up your database."
+		echo "##  Input your MySQL/MariaDB root password  (blank if this is a fresh install):"
 		mysql -u root -p < $dbsetup
 
 		echo "##  Securing mariaDB server.";
@@ -613,7 +693,7 @@ case $distro in
 		#Create the new virtual host in Apache and enable rewrite
 		apachefile=/etc/httpd/conf.d/$name.conf
 
-		if [$apachefile]; then
+		if [ $apachefile ]; then
 			echo ""
 			echo "    VirtualHost already exists. $apachefile"
 		else
@@ -680,10 +760,10 @@ case $distro in
 
 		# Change permissions on directories
 		echo "##  Setting permissions on web directory."
-		sudo chmod -R 755 $webdir/$name/app/storage
-		sudo chmod -R 755 $webdir/$name/app/private_uploads
-		sudo chmod -R 755 $webdir/$name/public/uploads
-		sudo chown -R apache:apache $webdir/$name
+		chmod -R 755 $webdir/$name/app/storage
+		chmod -R 755 $webdir/$name/app/private_uploads
+		chmod -R 755 $webdir/$name/public/uploads
+		chown -R apache:apache $webdir/$name
 
 		echo "##  Installing Snipe-IT."
 		php artisan app:install --env=production
