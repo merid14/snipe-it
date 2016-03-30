@@ -26,7 +26,7 @@ installed="$webdir/$name/.installed"
 log="/var/log/snipeit-install.log"
 tmp=/tmp/$name
 gitDir="$webdir/$name/.git"
-newBranch=$branch
+newBranch="$branch"
 
 ####################  Functions Go Here  ######################
 function ShowProgressOf()
@@ -58,7 +58,7 @@ function isinstalled
 
 function compareVersions ()
 {
-    if [[ $1 == $2 ]]; then
+    if [[ "$1" == "$2" ]]; then
         return 2
     fi
     local IFS=.
@@ -83,21 +83,21 @@ function compareVersions ()
 }
 ####################    Functions End     ######################
 
-cd $webdir/$name
-echo "##  Checking for previous version of $si."
+cd $webdir/$name || exit
+echo "##  Checking for  previous version of $si."
 echo ""
 
 if [ -f $log ] || [ -f $installed ]; then #If log or installer file exists
     if [ -d $gitDir ]; then # If git directory exists
 
-        if [ -z $newBranch ]; then # If newBranch is empty then get the latest release
+        if [ -z "$newBranch" ]; then # If newBranch is empty then get the latest release
             newBranch=$(git tag | grep -v 'pre' | tail -1)
         fi
-        currentBranch=$(basename $(git symbolic-ref HEAD))
+        currentBranch="$(basename "$(git symbolic-ref HEAD)")"
 
         echo "##  $si install found. Version: $currentBranch"
 
-        if compareVersions $currentBranch $newBranch; then ##TODO Strip "v" from version name to allow number calculation
+        if compareVersions "$currentBranch" "$newBranch"; then ##TODO Strip "v" from version name to allow number calculation
 
             echo "##  Beginning the $si update process to version: $newBranch"
             echo ""
@@ -109,7 +109,7 @@ if [ -f $log ] || [ -f $installed ]; then #If log or installer file exists
             echo "##  Upgrading to Version: $newBranch from Version: $currentBranch"
             echo ""
             echo -n "  Q. Would you like to continue? (y/n) "
-            read cont
+            read -r cont
             case $cont in
                     [yY] | [yY][Ee][Ss] )
                             echo "  Continuing with the upgrade process to version: $newBranch."
@@ -125,34 +125,34 @@ if [ -f $log ] || [ -f $installed ]; then #If log or installer file exists
             esac
             done
 
-            if [ -d $backup ]; then #if dir doesnt exist
+            if [ -d "$backup" ]; then #if dir doesnt exist
                 echo "##  Backup directory already exists, using it."
                 echo "    $backup"
             else
                 echo "##  Setting up backup directory."
                 echo "    $backup"
                 echo ""
-                mkdir -p $backup
+                mkdir -p "$backup"
             fi
 
             echo "##  Backing up app file."
             echo ""
-            cp -p $webdir/$name/app/config/app.php $backup/
+            cp -p $webdir/$name/app/config/app.php "$backup"/
 
             echo "##  Backing up database."
             echo ""
-            mysqldump $name > $backup/$name.sql
+            mysqldump $name > "$backup"/$name.sql
 
             echo "##  Getting update."
             echo ""
 
             ## run git update
-            cd $webdir/$name
+            cd $webdir/$name || exit
             set +e
             git add . >> $log 2>&1
             git commit -m "Upgrading to $newBranch from $currentBranch" >> $log 2>&1
             git stash >> $log 2>&1
-            git checkout -b $newBranch $newBranch >> $log 2>&1
+            git checkout -b "$newBranch" "$newBranch" >> $log 2>&1
             git stash pop >> $log 2>&1
             set -e
 
@@ -161,7 +161,7 @@ if [ -f $log ] || [ -f $installed ]; then #If log or installer file exists
             rm -rf $webdir/$name/app/storage/views/*
 
             echo "##  ##  Restoring app.php file."
-            cp $backup/app.php $webdir/$name/app/config/
+            cp "$backup"/app.php $webdir/$name/app/config/
 
 
         else
@@ -181,17 +181,17 @@ if [ -f $log ] || [ -f $installed ]; then #If log or installer file exists
         fi
 
         ShowProgressOf git clone https://github.com/$fork/snipe-it $tmp
-        cd $tmp
+        cd $tmp || exit
 
-        if [ -z $newBranch ]; then # If newBranch is empty then get the latest release
+        if [ -z "$newBranch" ]; then # If newBranch is empty then get the latest release
             newBranch=$(git tag | grep -v 'pre' | tail -1)
         fi
-        if compareVersions $currentVersion $newBranch; then
+        if compareVersions "$currentVersion" "$newBranch"; then
             until [[ $ans1 == "yes" ]]; do
             echo "##  Upgrading to Version: $newBranch from Version: $currentVersion"
             echo ""
             echo -n "  Q. Would you like to continue? (y/n) "
-            read cont
+            read -r cont
             case $cont in
                     [yY] | [yY][Ee][Ss] )
                             echo "    Continuing with the upgrade process to version: $newBranch."
@@ -207,70 +207,70 @@ if [ -f $log ] || [ -f $installed ]; then #If log or installer file exists
             esac
             done
 
-            if [ -d $backup ]; then #if dir does exist
+            if [ -d "$backup" ]; then #if dir does exist
                 echo "##  Backup directory already exists, using it."
                 echo "    $backup"
             else
                 echo "##  Setting up backup directory."
                 echo "    $backup"
                 echo ""
-                mkdir -p $backup
+                mkdir -p "$backup"
             fi
 
             echo "##  Backing up app file."
-            cp $webdir/$name/app/config/app.php $backup
+            cp $webdir/$name/app/config/app.php "$backup"
 
             echo "##  Backing up $si folder."
-            cp -R $webdir/$name $backup/$name
-            rm -rf $webdir/$name
+            cp -R $webdir/$name "$backup"/$name
+            rm -rf "${webdir:?}"/"${name:?}"
 
             echo "##  Backing up database."
-            mysqldump $name > $backup/$name.sql
+            mysqldump $name > "$backup"/$name.sql
 
             echo -n "##  Downloading Snipe-IT from github and put it in the web directory...";
             ShowProgressOf git clone https://github.com/$fork/snipe-it $webdir/$name
             # get latest stable release
-            cd $webdir/$name
-            if [ -z $newBranch ]; then
+            cd $webdir/$name || exit
+            if [ -z "$newBranch" ]; then
                 newBranch=$(git tag | grep -v 'pre' | tail -1)
             fi
 
             echo "    Installing version: $newBranch"
-            git checkout -b $newBranch $newBranch >> $log 2>&1
+            git checkout -b "$newBranch" "$newBranch" >> $log 2>&1
 
             echo "##  Restoring files."
             echo "      Restoring app config file."
-            if [ -e $backup/app.php ]; then
-                cp $backup/app.php $webdir/$name/app/config/
+            if [ -e "$backup"/app.php ]; then
+                cp "$backup"/app.php $webdir/$name/app/config/
             fi
             echo "      Restoring app production file."
-            if [ -e $backup/$name/app/config/production/app.php ]; then
-                cp $backup/$name/app/config/production/app.php $webdir/$name/app/config/production/
+            if [ -e "$backup"/$name/app/config/production/app.php ]; then
+                cp "$backup"/$name/app/config/production/app.php $webdir/$name/app/config/production/
             fi
             echo "      Restoring bootstrap file."
-            if [ -e $backup/$name/bootstrap/start.php ]; then
-                cp $backup/$name/bootstrap/start.php $webdir/$name/bootstrap/
+            if [ -e "$backup"/$name/bootstrap/start.php ]; then
+                cp "$backup"/$name/bootstrap/start.php $webdir/$name/bootstrap/
             fi
             echo "      Restoring database file."
-            if [ -e $backup/$name/app/config/production/database.php ]; then
-                cp $backup/$name/app/config/production/database.php $webdir/$name/app/config/production/
+            if [ -e "$backup"/$name/app/config/production/database.php ]; then
+                cp "$backup"/$name/app/config/production/database.php $webdir/$name/app/config/production/
             fi
             echo "      Restoring mail file."
-            if [ -e $backup/$name/app/config/production/mail.php ]; then
-                cp $backup/$name/app/config/production/mail.php $webdir/$name/app/config/production/
+            if [ -e "$backup"/$name/app/config/production/mail.php ]; then
+                cp "$backup"/$name/app/config/production/mail.php $webdir/$name/app/config/production/
             fi
-            if compareVersions $currentVersion 2.1.0; then
+            if compareVersions "$currentVersion" 2.1.0; then
                 echo "      Restoring ldap file."
-                if [ -e $backup/$name/app/config/production/ldap.php ]; then
-                    cp $backup/$name/app/config/production/ldap.php $webdir/$name/app/config/production/
+                if [ -e "$backup"/$name/app/config/production/ldap.php ]; then
+                    cp "$backup"/$name/app/config/production/ldap.php $webdir/$name/app/config/production/
                 fi
             fi
             echo "      Restoring composer files."
-            if [ -e $backup/$name/composer.phar ]; then
-                cp $backup/$name/composer.phar $webdir/$name
+            if [ -e "$backup"/$name/composer.phar ]; then
+                cp "$backup"/$name/composer.phar $webdir/$name
             fi
-            if [ -d $backup/$name/vendor ]; then
-                cp -r $backup/$name/vendor $webdir/$name
+            if [ -d "$backup"/$name/vendor ]; then
+                cp -r "$backup"/$name/vendor $webdir/$name
             fi
         else
             echo "    You are already on the latest version."
@@ -286,8 +286,8 @@ if [ -f $log ] || [ -f $installed ]; then #If log or installer file exists
             chmod -R 755 $webdir/$name/public/uploads
             chown -R apache:apache $webdir/$name
 
-            chmod -R 750 $backup
-            chown -R root:root $backup
+            chmod -R 750 "$backup"
+            chown -R root:root "$backup"
 
             echo "##  Running composer to apply update."
             echo ""
