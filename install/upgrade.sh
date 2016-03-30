@@ -25,7 +25,7 @@ webdir=/var/www/html
 installed="$webdir/$name/.installed"
 log="/var/log/snipeit-install.log"
 tmp=/tmp/$name
-gitdir="$webdir/$name/.git"
+gitDir="$webdir/$name/.git"
 newBranch="$branch"
 
 ####################  Functions Go Here  ######################
@@ -88,7 +88,7 @@ echo "##  Checking for  previous version of $si."
 echo ""
 
 if [ -f $log ] || [ -f $installed ]; then #If log or installer file exists
-    if [ -d $gitdir ]; then # If git directory exists
+    if [ -d $gitDir ]; then # If git directory exists
 
         if [ -z "$newBranch" ]; then # If newBranch is empty then get the latest release
             newBranch=$(git tag | grep -v 'pre' | tail -1)
