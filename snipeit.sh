@@ -16,6 +16,7 @@
 if [ "$(id -u)" != "0" ]; then
   exec sudo "$0" "$@"
 fi
+#include functions
 . "$tmpinstall"/functions.sh
 
 clear
