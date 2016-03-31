@@ -18,7 +18,7 @@ if [ "$(id -u)" != "0" ]; then
   exec sudo "$0" "$@"
 fi
 #include functions
-tmp=/tmp/"$name" && echo "$tmp" >> "$log" 2>&1
+tmp=/tmp/snipeit && echo "$tmp" >> "$log" 2>&1
 tmpinstall=/tmp/snipeit/install/ && echo "$tmpinstall" >> "$log" 2>&1
 . "$tmpinstall"/functions.sh
 clear
@@ -68,7 +68,7 @@ case "$distro" in
         installed="$webdir/$name/.installed" && echo "$installed" >> "$log" 2>&1
         gitdir="$webdir/$name/.git" && echo "$gitdir" >> "$log" 2>&1
         apachefile=/etc/apache2/sites-available/"$name".conf && echo "$apachefile" >> "$log" 2>&1
-        tzone="$(cat /etc/timezone)"; && echo "$tzone" >> "$log" 2>&1
+        tzone="$(cat /etc/timezone)" && echo "$tzone" >> "$log" 2>&1
         apacheuser="www-data:www-data" && echo "$apacheuser" >> "$log" 2>&1
         apachelog="/var/log/apache2" && echo "$apachelog" >> "$log" 2>&1
         ;;
@@ -79,7 +79,7 @@ case "$distro" in
         installed="$webdir/$name/.installed" && echo "$installed" >> "$log" 2>&1
         gitdir="$webdir/$name/.git" && echo "$gitdir" >> "$log" 2>&1
         apachefile=/etc/httpd/conf.d/"$name".conf && echo "$apachefile" >> "$log" 2>&1
-        tzone="$(grep ZONE /etc/sysconfig/clock | tr -d '"' | sed 's/ZONE=//g')"; && echo "$tzone" >> "$log" 2>&1
+        tzone="$(grep ZONE /etc/sysconfig/clock | tr -d '"' | sed 's/ZONE=//g')" && echo "$tzone" >> "$log" 2>&1
         apacheuser="apache:apache" && echo "$apacheuser" >> "$log" 2>&1
         apachelog="/var/log/httpd" && echo "$apachelog" >> "$log" 2>&1
         ;;
@@ -90,7 +90,7 @@ case "$distro" in
         installed="$webdir/$name/.installed" && echo "$installed" >> "$log" 2>&1
         gitdir="$webdir/$name/.git" && echo "$gitdir" >> "$log" 2>&1
         apachefile=/etc/httpd/conf.d/"$name".conf && echo "$apachefile" >> "$log" 2>&1
-        tzone="$(timedatectl | gawk -F'[: ]+' ' $2 ~ /Timezone/ {print $3}')"; && echo "$tzone" >> "$log" 2>&1
+        tzone="$(timedatectl | gawk -F'[: ]+' ' $2 ~ /Timezone/ {print $3}')" && echo "$tzone" >> "$log" 2>&1
         apacheuser="apache:apache" && echo "$apacheuser" >> "$log" 2>&1
         apachelog="/var/log/httpd" && echo "$apachelog" >> "$log" 2>&1
         ;;

@@ -3,8 +3,8 @@
 #  This is a script to upgrade snipeit
 #  Written by: Walter Wahlstedt (merid14)
 
-set -e
 
+ans=""
 cd "$webdir"/"$name" || exit
 echo "##  Checking for  previous version of $si."
 echo
@@ -36,7 +36,7 @@ if [ -f "$log" ] || [ -f "$installed" ]; then #If log or installer file exists
                     y | yes )
                         echo "  Continuing with the upgrade process to version: $newBranch."
                         echo
-                        ans1="yes"
+                        ans="yes"
                         ;;
                     n | no )
                         echo "  Exiting now!"
@@ -219,7 +219,7 @@ if [ -f "$log" ] || [ -f "$installed" ]; then #If log or installer file exists
 
         echo
         echo "    You are now on Version $newBranch of $si."
-
+        exit
 else
     echo "    No previous version of $si found."
 fi

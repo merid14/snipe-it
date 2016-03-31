@@ -145,7 +145,7 @@ echo "
 "
 echo ""
 echo ""
-echo "  Welcome to Snipe-IT Inventory Installer for $supportedOS!"
+echo "  Welcome to Snipe-IT Inventory Installer for $supportedos!"
 echo ""
 }
 
