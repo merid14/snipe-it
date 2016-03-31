@@ -19,7 +19,7 @@ fi
 . "$tmpinstall"/functions.sh
 
 clear
-log="/var/log/snipeit-install.log"
+
 
 echo "--------------  Collect info for log  -----------------" >> "$log" 2>&1
 getOSinfo
@@ -30,6 +30,7 @@ logvar os="OS: $os"
 logvar arch="Arch: $arch"
 logvar kernel="Kernel: $kernel"
 logvar supportedos="Redhat/CentOS 6+ and Debian/Ubuntu 10.04+"
+logvar log="/var/log/snipeit-install.log"
 logvar name="snipeit"
 logvar si="Snipe-IT"
 logvar hostname="$(hostname)"
