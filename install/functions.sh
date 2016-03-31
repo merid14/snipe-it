@@ -426,16 +426,17 @@ function setupSnipeit()
     php artisan app:install --env=production
 }
 
-function setupSELinux()
-{
-    #Stub for implementation
-    #TODO detect if SELinux and firewall are enabled to decide what to do
-        #Add SELinux and firewall exception/rules.
-        # Youll have to allow 443 if you want ssl connectivity.
-        # chcon -R -h -t httpd_sys_script_rw_t "$webdir"/"$name"/
-        # firewall-cmd --zone=public --add-port=80/tcp --permanent
-        # firewall-cmd --reload
-}
+# function setupSELinux()
+# {
+#     #Stub for implementation
+
+#     #TODO detect if SELinux and firewall are enabled to decide what to do
+#         #Add SELinux and firewall exception/rules.
+#         # Youll have to allow 443 if you want ssl connectivity.
+#         # chcon -R -h -t httpd_sys_script_rw_t "$webdir"/"$name"/
+#         # firewall-cmd --zone=public --add-port=80/tcp --permanent
+#         # firewall-cmd --reload
+# }
 
 #####   End Setup Functions   ####
 
