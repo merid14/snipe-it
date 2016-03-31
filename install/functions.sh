@@ -1,27 +1,7 @@
 #!/bin/bash
 # shellcheck disable=SC2154,SC2034
-# Function Definition
-#
-function logvar()
-# ------------------------------------------------------------------
-#   Function Definition
-#
-#   Function takes Variable assigntment as argument
-#       Executes the variable assignment then pulls out the variable
-#       name and it's contents to put into the log file.
-#
-#   Example:
-#   logvar hostname="$(hostname)"
-#
-# ------------------------------------------------------------------
-{
-    eval "$1"
-    var_name=$(echo "$1" | gawk -F'[=]+' ' {print $1}')
-    var_cmd='$'$var_name
-    eval echo "$var_name: $var_cmd"  >> "$log" 2>&1
-}
 
-function ShowProgressOf()
+function ShowProgressOf ()
 {
     tput civis
     "$@" >> "$log" 2>&1 &
@@ -39,7 +19,8 @@ function ShowProgressOf()
     tput cnorm
 }
 
-function isinstalled {
+function isinstalled ()
+{
   if yum list installed "$@" >/dev/null 2>&1; then
     true
   else
@@ -74,7 +55,7 @@ function compareVersions ()
     return 2
 }
 
-function getOSinfo()
+function getOSinfo ()
 {
     arch=$(uname -m)
     kernel=$(uname -r)
@@ -93,7 +74,7 @@ function getOSinfo()
     # fi
 }
 
-function getDistro()
+function getDistro ()
 {
     distro="$(cat /proc/version)"
     if grep -q -i 'centos\|redhat' <<<"$distro"; then
@@ -107,7 +88,7 @@ function getDistro()
     fi
 }
 
-function startApache()
+function startApache ()
 {
 echo "##  Starting the apache server.";
 shopt -s nocasematch
@@ -130,7 +111,7 @@ case "$distro" in
 esac
 }
 
-function startMariadb()
+function startMariadb ()
 {
 shopt -s nocasematch
 case "$distro" in
@@ -152,7 +133,7 @@ case "$distro" in
 esac
 }
 
-function showBanner()
+function showBanner ()
 {
 echo "
        _____       _                  __________
@@ -168,7 +149,7 @@ echo "  Welcome to Snipe-IT Inventory Installer for $supportedOS!"
 echo ""
 }
 
-function askFQDN()
+function askFQDN ()
 {
     echo ""
     echo -n "  Q. What is the FQDN of your server? ($fqdn): "
@@ -180,7 +161,7 @@ function askFQDN()
     echo ""
 }
 
-function askDBuserpw()
+function askDBuserpw ()
 {
     until [[ $ans == "yes" ]] || [[ $ans == "no" ]]; do
     echo -n "  Q. Do you want to automatically create the snipe database user password? (y/n) "
@@ -207,7 +188,7 @@ function askDBuserpw()
 
 #####   Start Setup Functions   ####
 
-function setupRepos()
+function setupRepos ()
 {
     echo
     echo "##  Adding IUS, epel-release and mariaDB repos.";
@@ -230,7 +211,7 @@ function setupRepos()
 
 }
 
-function setupPackages()
+function setupPackages ()
 {
 shopt -s nocasematch
 case "$distro" in
@@ -283,7 +264,7 @@ esac
 
 }
 
-function setupGitSnipeit()
+function setupGitSnipeit ()
 {
     echo
     echo -n "##  Cloning Snipe-IT from github to the web directory...";
@@ -298,22 +279,22 @@ function setupGitSnipeit()
     git checkout -b "$branch" "$branch"
 }
 
-function setupApacheMods()
+function setupApacheMods ()
 {
     echo "##  Enabling mcrypt and rewrite"
     php5enmod mcrypt >> "$log" 2>&1
     a2enmod rewrite >> "$log" 2>&1
     ls -al /etc/apache2/mods-enabled/rewrite.load >> "$log" 2>&1
 }
-function setupApacheHost()
+function setupApacheHost ()
 {
 shopt -s nocasematch
 case "$distro" in
     *Ubuntu*|*Debian*)
-        logvar apacheversion="$(/usr/sbin/apache2 -v | grep 2.4)"
+        apacheversion="$(/usr/sbin/apache2 -v | grep 2.4)"
         ;;
     *centos*|*redhat*)
-        logvar apacheversion="$(apachectl -v | grep 2.4)"
+        apacheversion="$(apachectl -v | grep 2.4)"
         ;;
     *)
         echo -e "\e[31m  Failed to find the apache version.\e[0m"
@@ -350,7 +331,7 @@ esac
     fi
 }
 
-function setupFiles()
+function setupFiles ()
 {
     echo "##  Modifying the $si files necessary for a production environment."
     echo "  Setting up Timezone."
@@ -379,7 +360,7 @@ function setupFiles()
     # cp "$webdir"/"$name"/app/config/production/mail.example.php "$webdir"/"$name"/app/config/production/mail.php
 }
 
-function setupDB()
+function setupDB ()
 {
     echo "##  Setting up your database."
 #store dbsetup in var instead of file
@@ -400,7 +381,7 @@ echo >> "$dbsetup" "GRANT ALL PRIVILEGES ON snipeit.* TO snipeit@localhost IDENT
     /usr/bin/mysql_secure_installation
 }
 
-function setupPermissions()
+function setupPermissions ()
 {
     echo "##  Setting permissions on web directory."
     chmod -R 755 "$webdir"/"$name"/app/storage
@@ -409,7 +390,7 @@ function setupPermissions()
     chown -R "$apacheuser" "$webdir"
 }
 
-function setupComposer()
+function setupComposer ()
 {
     echo "##  Installing and configuring composer"
     cd "$webdir"/"$name" || exit
@@ -420,13 +401,13 @@ function setupComposer()
     php artisan app:install --env=production
 }
 
-function setupSnipeit()
+function setupSnipeit ()
 {
     echo "##  Installing Snipe-IT."
     php artisan app:install --env=production
 }
 
-# function setupSELinux()
+# function setupSELinux ()
 # {
 #     #Stub for implementation
 
@@ -440,7 +421,7 @@ function setupSnipeit()
 
 #####   End Setup Functions   ####
 
-function UpgradeSnipeit()
+function UpgradeSnipeit ()
 {
     . "$tmpinstall"/upgrade.sh
 }

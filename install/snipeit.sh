@@ -11,14 +11,16 @@
 #
 #   Feel free to modify, but please givecredit where it's due. Thanks!
 # -----------------------------------------------------------------------------
+set -o nounset errexit pipefail
 
 # ensure running as root
 if [ "$(id -u)" != "0" ]; then
   exec sudo "$0" "$@"
 fi
 #include functions
+tmp=/tmp/"$name" && echo "$tmp" >> "$log" 2>&1
+tmpinstall=/tmp/snipeit/install/ && echo "$tmpinstall" >> "$log" 2>&1
 . "$tmpinstall"/functions.sh
-
 clear
 
 
@@ -26,25 +28,9 @@ echo "--------------  Collect info for log  -----------------" >> "$log" 2>&1
 getOSinfo
 
 echo "--------------  Declare Variables  -----------------" >> "$log" 2>&1
-logvar distro="$os"
-logvar os="OS: $os"
-logvar arch="Arch: $arch"
-logvar kernel="Kernel: $kernel"
-logvar supportedos="Redhat/CentOS 6+ and Debian/Ubuntu 10.04+"
-logvar log="/var/log/snipeit-install.log"
-logvar name="snipeit"
-logvar si="Snipe-IT"
-logvar hostname="$(hostname)"
-logvar fqdn="$(hostname --fqdn)"
-logvar installed="$webdir/$name/.installed"
-logvar tmp=/tmp/"$name"
-logvar date="$(date '+%Y-%b-%d')"
-logvar backup=/opt/"$name"/backup/"$date"
-logvar newBranch="$branch"
-logvar appkey="$(< /dev/urandom tr -dc _A-Za-z-0-9 | head -c32)"
-logvar dbsetup="$tmp"/db_setup.sql
-logvar mariadbRepo=/etc/yum.repos.d/MariaDB.repo
 
+name="snipeit"
+si="Snipe-IT"
 webdir=""
 apachefile=""
 tzone=""
@@ -52,6 +38,23 @@ apacheuser=""
 apachelog=""
 apacheversion=""
 
+distro="$os" && echo "$distro" >> "$log" 2>&1
+os="OS: $os" && echo "$os" >> "$log" 2>&1
+arch="Arch: $arch" && echo "$arch" >> "$log" 2>&1
+kernel="Kernel: $kernel" && echo "$kernel" >> "$log" 2>&1
+supportedos="Redhat/CentOS 6+ and Debian/Ubuntu 10.04+" && echo "$supportedos" >> "$log" 2>&1
+log="/var/log/snipeit-install.log" && echo "$log" >> "$log" 2>&1
+hostname="$(hostname)" && echo "$hostname" >> "$log" 2>&1
+fqdn="$(hostname --fqdn)" && echo "$fqdn" >> "$log" 2>&1
+installed="$webdir/$name/.installed" && echo "$installed" >> "$log" 2>&1
+tmp=/tmp/"$name" && echo "$tmp" >> "$tmp" 2>&1
+tmpinstall=/tmp/snipeit/install/ && echo "$tmpinstall" >> "$log" 2>&1
+date="$(date '+%Y-%b-%d')" && echo "$date" >> "$log" 2>&1
+backup=/opt/"$name"/backup/"$date" && echo "$backup" >> "$log" 2>&1
+newBranch="$branch" && echo "$newBranch" >> "$log" 2>&1
+appkey="$(< /dev/urandom tr -dc _A-Za-z-0-9 | head -c32)" && echo "$appkey" >> "$log" 2>&1
+dbsetup="$tmp"/db_setup.sql && echo "$dbsetup" >> "$log" 2>&1
+mariadbRepo=/etc/yum.repos.d/MariaDB.repo && echo "$mariadbRepo" >> "$log" 2>&1
 
 echo "--------------  Start Installer  -----------------" >> "$log" 2>&1
 showBanner
@@ -60,34 +63,36 @@ shopt -s nocasematch
 case "$distro" in
     *Ubuntu*|*Debian*)
         echo "  The installer has detected Ubuntu/Debian as the OS."
-        logvar distro=ubuntu
-        logvar webdir=/var/www
-        logvar installed="$webdir/$name/.installed"
-        logvar gitdir="$webdir/$name/.git"
-        logvar apachefile=/etc/apache2/sites-available/"$name".conf
-        logvar tzone="$(cat /etc/timezone)";
-        logvar apacheuser="www-data:www-data"
-        logvar apachelog="/var/log/apache2"
+        distro=ubuntu && echo "$distro" >> "$log" 2>&1
+        webdir=/var/www && echo "$webdir" >> "$log" 2>&1
+        installed="$webdir/$name/.installed" && echo "$installed" >> "$log" 2>&1
+        gitdir="$webdir/$name/.git" && echo "$gitdir" >> "$log" 2>&1
+        apachefile=/etc/apache2/sites-available/"$name".conf && echo "$apachefile" >> "$log" 2>&1
+        tzone="$(cat /etc/timezone)"; && echo "$tzone" >> "$log" 2>&1
+        apacheuser="www-data:www-data" && echo "$apacheuser" >> "$log" 2>&1
+        apachelog="/var/log/apache2" && echo "$apachelog" >> "$log" 2>&1
         ;;
     *centos*6*|*redhat*6*)
         echo "  The installer has detected redhat/centos 6 as the OS."
-        logvar distro=centos6
-        logvar webdir=/var/www/html
-        logvar installed="$webdir/$name/.installed"
-        logvar gitdir="$webdir/$name/.git"
-        logvar apachefile=/etc/httpd/conf.d/"$name".conf
-        logvar tzone="$(grep ZONE /etc/sysconfig/clock | tr -d '"' | sed 's/ZONE=//g')";
-        logvar apacheuser="apache:apache"
-        logvar apachelog="/var/log/httpd"
+        distro=centos6 && echo "$distro" >> "$log" 2>&1
+        webdir=/var/www/html && echo "$webdir" >> "$log" 2>&1
+        installed="$webdir/$name/.installed" && echo "$installed" >> "$log" 2>&1
+        gitdir="$webdir/$name/.git" && echo "$gitdir" >> "$log" 2>&1
+        apachefile=/etc/httpd/conf.d/"$name".conf && echo "$apachefile" >> "$log" 2>&1
+        tzone="$(grep ZONE /etc/sysconfig/clock | tr -d '"' | sed 's/ZONE=//g')"; && echo "$tzone" >> "$log" 2>&1
+        apacheuser="apache:apache" && echo "$apacheuser" >> "$log" 2>&1
+        apachelog="/var/log/httpd" && echo "$apachelog" >> "$log" 2>&1
         ;;
     *centos*7*|*redhat*7*)
         echo "  The installer has detected redhat/centos 7 as the OS."
-        logvar distro=centos7
-        logvar webdir=/var/www/html
-        logvar apachefile=/etc/httpd/conf.d/"$name".conf
-        logvar tzone="$(timedatectl | gawk -F'[: ]+' ' $2 ~ /Timezone/ {print $3}')";
-        logvar apacheuser="apache:apache"
-        logvar apachelog="/var/log/httpd"
+        distro=centos7 && echo "$distro" >> "$log" 2>&1
+        webdir=/var/www/html && echo "$webdir" >> "$log" 2>&1
+        installed="$webdir/$name/.installed" && echo "$installed" >> "$log" 2>&1
+        gitdir="$webdir/$name/.git" && echo "$gitdir" >> "$log" 2>&1
+        apachefile=/etc/httpd/conf.d/"$name".conf && echo "$apachefile" >> "$log" 2>&1
+        tzone="$(timedatectl | gawk -F'[: ]+' ' $2 ~ /Timezone/ {print $3}')"; && echo "$tzone" >> "$log" 2>&1
+        apacheuser="apache:apache" && echo "$apacheuser" >> "$log" 2>&1
+        apachelog="/var/log/httpd" && echo "$apachelog" >> "$log" 2>&1
         ;;
     *)
         echo -e "\e[31m  The installer has detected $distro as the OS.\e[0m"
