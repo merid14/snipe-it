@@ -1,3 +1,4 @@
+#!/bin/bash
 # ensure running as root
 if [ "$(id -u)" != "0" ]; then
   exec sudo "$0" "$@"
@@ -11,12 +12,12 @@ tmp=/tmp/snipeit/
 tmpinstall=/tmp/snipeit/install/
 log="/var/log/snipeit-install.log"
 
-rm -rf "${$tmp:?}"
+rm -rf "${tmp:?}"
 mkdir -p "$tmpinstall"
 
 wget "$link"/snipeit.sh -P "$tmpinstall" 2>&1 | grep -i "failed\|error"
 wget "$link"/upgrade.sh -P "$tmpinstall" 2>&1 | grep -i "failed\|error"
 wget "$link"/functions.sh -P "$tmpinstall" 2>&1 | grep -i "failed\|error"
 
-chmod -R 744 "$tmpinstall"
+chmod -R 755 "$tmpinstall"
 . "$tmpinstall"/snipeit.sh 2>&1 | sudo tee -a /var/log/snipeit-install.log

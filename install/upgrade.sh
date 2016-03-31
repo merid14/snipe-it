@@ -103,7 +103,7 @@ if [ -f "$log" ] || [ -f "$installed" ]; then #If log or installer file exists
         currentVersion="$(cat "$webdir"/"$name"/app/config/version.php | grep app | awk -F "'" '{print $4}' | cut -f1 -d"-")"
 
         #clone to tmp so we can check the latest version
-        rm -rf "${$tmp:?}/"
+        rm -rf "${tmp:?}/"
 
         ShowProgressOf git clone https://github.com/"$fork"/snipe-it "$tmp"
         cd "$tmp" || exit
