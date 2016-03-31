@@ -441,5 +441,5 @@ function setupSELinux()
 
 function UpgradeSnipeit()
 {
-    . /install/upgrade.sh
+    . "$tmpinstall"/upgrade.sh
 }

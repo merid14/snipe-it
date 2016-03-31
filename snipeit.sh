@@ -16,18 +16,13 @@
 if [ "$(id -u)" != "0" ]; then
   exec sudo "$0" "$@"
 fi
-. /install/functions.sh
+. "$tmpinstall"/functions.sh
 
 clear
 log="/var/log/snipeit-install.log"
 
 echo "--------------  Collect info for log  -----------------" >> "$log" 2>&1
 getOSinfo
-
-#  Set this to your github username to pull your changes ** Only for Devs **
-logvar fork="snipe"
-#  Set this to the branch you want to pull  ** Only for Devs **
-logvar branch=""
 
 echo "--------------  Declare Variables  -----------------" >> "$log" 2>&1
 logvar distro="$os"
@@ -49,7 +44,7 @@ logvar dbsetup="$tmp"/db_setup.sql
 logvar mariadbRepo=/etc/yum.repos.d/MariaDB.repo
 
 webdir=""
-apachefile""
+apachefile=""
 tzone=""
 apacheuser=""
 apachelog=""
@@ -101,9 +96,6 @@ case "$distro" in
         exit
         ;;
 esac
-
-rm -rf "${$tmp:?}/"
-mkdir "$tmp"
 
 UpgradeSnipeit
 
