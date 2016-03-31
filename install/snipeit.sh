@@ -47,15 +47,13 @@ log="/var/log/snipeit-install.log" && echo "$log" >> "$log" 2>&1
 hostname="$(hostname)" && echo "$hostname" >> "$log" 2>&1
 fqdn="$(hostname --fqdn)" && echo "$fqdn" >> "$log" 2>&1
 installed="$webdir/$name/.installed" && echo "$installed" >> "$log" 2>&1
-tmp=/tmp/"$name" && echo "$tmp" >> "$tmp" 2>&1
-tmpinstall=/tmp/snipeit/install/ && echo "$tmpinstall" >> "$log" 2>&1
 date="$(date '+%Y-%b-%d')" && echo "$date" >> "$log" 2>&1
 backup=/opt/"$name"/backup/"$date" && echo "$backup" >> "$log" 2>&1
 newBranch="$branch" && echo "$newBranch" >> "$log" 2>&1
 appkey="$(< /dev/urandom tr -dc _A-Za-z-0-9 | head -c32)" && echo "$appkey" >> "$log" 2>&1
 dbsetup="$tmp"/db_setup.sql && echo "$dbsetup" >> "$log" 2>&1
 mariadbRepo=/etc/yum.repos.d/MariaDB.repo && echo "$mariadbRepo" >> "$log" 2>&1
-
+. "$tmpinstall"/functions.sh
 echo "--------------  Start Installer  -----------------" >> "$log" 2>&1
 showBanner
 
@@ -103,7 +101,7 @@ case "$distro" in
         exit
         ;;
 esac
-
+. "$tmpinstall"/functions.sh
 UpgradeSnipeit
 
 askFQDN
