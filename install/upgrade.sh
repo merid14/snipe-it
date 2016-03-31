@@ -4,92 +4,13 @@
 #  Written by: Walter Wahlstedt (merid14)
 
 set -e
-# ensure running as root
-if [ "$(id -u)" != "0" ]; then
-  exec sudo "$0" "$@"
-fi
-
-clear
-#  Set this to your github username to pull your changes ** Only for Devs **
-fork="snipe"
-#  Set this to the branch you want to pull  ** Only for Devs **
-branch=""
-
-##TODO: Update docs on what the upgrade script is doing
-
-name='snipeit'
-si="Snipe-IT"
-date="$(date '+%Y-%b-%d')"
-backup=/opt/$name/backup/$date
-webdir=/var/www/html
-installed="$webdir/$name/.installed"
-log="/var/log/snipeit-install.log"
-tmp=/tmp/$name
-gitDir="$webdir/$name/.git"
-newBranch="$branch"
-
-####################  Functions Go Here  ######################
-function ShowProgressOf()
-{
-    tput civis
-    "$@" >> $log 2>&1 &
-    local pid=$!
-    local delay=0.25
-    local spinstr='|/-\'
-    while [ "$(ps a | awk '{print $1}' | grep $pid)" ]; do
-        local temp=${spinstr#?}
-        printf " [%c]  " "$spinstr"
-        local spinstr=$temp${spinstr%"$temp"}
-        sleep $delay
-        printf "\b\b\b\b\b\b"
-    done
-    printf "    \b\b\b\b\n"
-    tput cnorm
-}
-
-function isinstalled
-{
-    if yum list installed "$@" >/dev/null 2>&1; then
-        true
-    else
-        false
-    fi
-}
-
-function compareVersions ()
-{
-    if [[ "$1" == "$2" ]]; then
-        return 2
-    fi
-    local IFS=.
-    local i version1=(${1//[!0-9.]/}) version2=(${2//[!0-9.]/})
-    # fill empty fields in version1 with zeros
-    for ((i=${#version1[@]}; i<${#version2[@]}; i++)); do
-        version1[i]=0
-    done
-    for ((i=0; i<${#version1[@]}; i++)); do
-        if [[ -z ${version2[i]} ]]; then
-            # fill empty fields in version2 with zeros
-            version2[i]=0
-        fi
-        if ((10#${version1[i]} > 10#${version2[i]})); then
-            return 1
-        fi
-        if ((10#${version1[i]} < 10#${version2[i]})); then
-            return 0
-        fi
-    done
-    return 2
-}
-####################    Functions End     ######################
 
 cd $webdir/$name || exit
 echo "##  Checking for  previous version of $si."
-echo ""
+echo
 
 if [ -f $log ] || [ -f $installed ]; then #If log or installer file exists
-    if [ -d $gitDir ]; then # If git directory exists
-
+    if [ -d $gitdir ]; then # If git directory exists
         if [ -z "$newBranch" ]; then # If newBranch is empty then get the latest release
             newBranch=$(git tag | grep -v 'pre' | tail -1)
         fi
@@ -103,26 +24,28 @@ if [ -f $log ] || [ -f $installed ]; then #If log or installer file exists
             echo ""
             echo "    By default we are pulling from the latest release."
             echo "    If you pulled from another branch please upgrade manually."
-            echo ""
+            echo
 
-            until [[ $ans1 == "yes" ]]; do
-            echo "##  Upgrading to Version: $newBranch from Version: $currentBranch"
-            echo ""
-            echo -n "  Q. Would you like to continue? (y/n) "
-            read -r cont
-            case $cont in
-                    [yY] | [yY][Ee][Ss] )
-                            echo "  Continuing with the upgrade process to version: $newBranch."
-                            echo ""
-                            ans1="yes"
-                            ;;
-                    [nN] | [n|N][O|o] )
-                            echo "  Exiting now!"
-                            exit
-                            ;;
-                    *)      echo "    Invalid answer. Please type y or n"
-                            ;;
-            esac
+            until [[ $ans == "yes" ]]; do
+                echo "##  Upgrading to Version: $newBranch from Version: $currentBranch"
+                echo ""
+                echo -n "  Q. Would you like to continue? (y/n) "
+                read -r cont
+                shopt -s nocasematch
+                case $cont in
+                    y | yes )
+                        echo "  Continuing with the upgrade process to version: $newBranch."
+                        echo
+                        ans1="yes"
+                        ;;
+                    n | no )
+                        echo "  Exiting now!"
+                        exit
+                        ;;
+                    *)
+                        echo "    Invalid answer. Please type y or n"
+                        ;;
+                esac
             done
 
             if [ -d "$backup" ]; then #if dir doesnt exist
@@ -131,12 +54,12 @@ if [ -f $log ] || [ -f $installed ]; then #If log or installer file exists
             else
                 echo "##  Setting up backup directory."
                 echo "    $backup"
-                echo ""
+                echo
                 mkdir -p "$backup"
             fi
 
             echo "##  Backing up app file."
-            echo ""
+            echo
             cp -p $webdir/$name/app/config/app.php "$backup"/
 
             echo "##  Backing up database."
@@ -144,7 +67,7 @@ if [ -f $log ] || [ -f $installed ]; then #If log or installer file exists
             mysqldump $name > "$backup"/$name.sql
 
             echo "##  Getting update."
-            echo ""
+            echo
 
             ## run git update
             cd $webdir/$name || exit
@@ -160,6 +83,10 @@ if [ -f $log ] || [ -f $installed ]; then #If log or installer file exists
             rm -rf $webdir/$name/app/storage/cache/*
             rm -rf $webdir/$name/app/storage/views/*
 
+            # rm -rf "${$webdir:?}"/"${$name:?}"/app/storage/cache/*
+            # rm -rf "${$webdir:?}"/"${$name:?}"/app/storage/views/*
+
+
             echo "##  ##  Restoring app.php file."
             cp "$backup"/app.php $webdir/$name/app/config/
 
@@ -167,7 +94,7 @@ if [ -f $log ] || [ -f $installed ]; then #If log or installer file exists
         else
             echo "    You are already on the latest version."
             echo "    Version: $currentBranch"
-            echo ""
+            echo
             exit
         fi
     else  # Must be a file copy install
@@ -176,9 +103,7 @@ if [ -f $log ] || [ -f $installed ]; then #If log or installer file exists
         currentVersion="$(cat $webdir/$name/app/config/version.php | grep app | awk -F "'" '{print $4}' | cut -f1 -d"-")"
 
         #clone to tmp so we can check the latest version
-        if [ -d $tmp ]; then # If directory already exists
-            rm -rf $tmp
-        fi
+        rm -rf "${$tmp:?}/"
 
         ShowProgressOf git clone https://github.com/$fork/snipe-it $tmp
         cd $tmp || exit
@@ -189,21 +114,23 @@ if [ -f $log ] || [ -f $installed ]; then #If log or installer file exists
         if compareVersions "$currentVersion" "$newBranch"; then
             until [[ $ans1 == "yes" ]]; do
             echo "##  Upgrading to Version: $newBranch from Version: $currentVersion"
-            echo ""
+            echo
             echo -n "  Q. Would you like to continue? (y/n) "
             read -r cont
+            shopt -s nocasematch
             case $cont in
-                    [yY] | [yY][Ee][Ss] )
-                            echo "    Continuing with the upgrade process to version: $newBranch."
-                            echo ""
-                            ans1="yes"
-                            ;;
-                    [nN] | [n|N][O|o] )
-                            echo "  Exiting now!"
-                            exit
-                            ;;
-                    *)      echo "    Invalid answer. Please type y or n"
-                            ;;
+                    y | yes )
+                        echo "    Continuing with the upgrade process to version: $newBranch."
+                        echo
+                        ans1="yes"
+                        ;;
+                    n | no )
+                        echo "  Exiting now!"
+                        exit
+                        ;;
+                    *)
+                        echo "    Invalid answer. Please type y or n"
+                        ;;
             esac
             done
 
@@ -213,7 +140,7 @@ if [ -f $log ] || [ -f $installed ]; then #If log or installer file exists
             else
                 echo "##  Setting up backup directory."
                 echo "    $backup"
-                echo ""
+                echo
                 mkdir -p "$backup"
             fi
 
@@ -275,30 +202,24 @@ if [ -f $log ] || [ -f $installed ]; then #If log or installer file exists
         else
             echo "    You are already on the latest version."
             echo "    Version: $currentBranch"
-            echo ""
+            echo
             exit
         fi
     fi
-            # Change permissions on directories
-            echo "##  Setting permissions on web directory."
-            chmod -R 755 $webdir/$name/app/storage
-            chmod -R 755 $webdir/$name/app/private_uploads
-            chmod -R 755 $webdir/$name/public/uploads
-            chown -R apache:apache $webdir/$name
+        # Change permissions on directories
+        setupPermissions
 
-            chmod -R 750 "$backup"
-            chown -R root:root "$backup"
+        echo "##  Running composer to apply update."
+        echo
+        php composer.phar install --no-dev --prefer-source
+        php composer.phar dump-autoload
+        php artisan migrate
 
-            echo "##  Running composer to apply update."
-            echo ""
-            php composer.phar install --no-dev --prefer-source
-            php composer.phar dump-autoload
-            php artisan migrate
+        echo >> $installed "Upgraded $si to version:$newBranch from:$currentBranch"
 
-            echo >> $installed "Upgraded $si to version:$newBranch from:$currentBranch"
+        echo
+        echo "    You are now on Version $newBranch of $si."
 
-            echo ""
-            echo "    You are now on Version $newBranch of $si."
 else
-    echo " Starting Installer"
+    echo "    No previous version of $si found."
 fi

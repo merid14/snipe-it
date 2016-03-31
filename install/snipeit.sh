@@ -16,6 +16,8 @@
 if [ "$(id -u)" != "0" ]; then
   exec sudo "$0" "$@"
 fi
+. /install/functions.sh
+
 clear
 log="/var/log/snipeit-install.log"
 
@@ -41,7 +43,7 @@ logvar installed="$webdir/$name/.installed"
 logvar tmp=/tmp/"$name"
 logvar date="$(date '+%Y-%b-%d')"
 logvar backup=/opt/"$name"/backup/"$date"
-logvar gitdir="$webdir/$name/.git"
+
 logvar newBranch="$branch"
 logvar appkey="$(< /dev/urandom tr -dc _A-Za-z-0-9 | head -c32)"
 logvar dbsetup=$tmp/db_setup.sql
@@ -64,6 +66,8 @@ case $distro in
         echo "  The installer has detected Ubuntu/Debian as the OS."
         logvar distro=ubuntu
         logvar webdir=/var/www
+        logvar installed="$webdir/$name/.installed"
+        logvar gitdir="$webdir/$name/.git"
         logvar apachefile=/etc/apache2/sites-available/$name.conf
         logvar tzone=$(cat /etc/timezone);
         logvar apacheuser="www-data:www-data"
@@ -73,6 +77,8 @@ case $distro in
         echo "  The installer has detected redhat/centos 6 as the OS."
         logvar distro=centos6
         logvar webdir=/var/www/html
+        logvar installed="$webdir/$name/.installed"
+        logvar gitdir="$webdir/$name/.git"
         logvar apachefile=/etc/httpd/conf.d/$name.conf
         logvar tzone=$(grep ZONE /etc/sysconfig/clock | tr -d '"' | sed 's/ZONE=//g');
         logvar apacheuser="apache:apache"
@@ -99,6 +105,8 @@ esac
 
 rm -rf "${$tmp:?}/"
 mkdir "$tmp"
+
+UpgradeSnipeit
 
 askFQDN
 askDBuserpw

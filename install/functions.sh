@@ -105,8 +105,6 @@ function getDistro()
     fi
 }
 
-
-
 function startApache()
 {
 echo "##  Starting the apache server.";
@@ -203,6 +201,9 @@ function askDBuserpw()
     esac
     done
 }
+
+
+#####   Start Setup Functions   ####
 
 function setupRepos()
 {
@@ -415,6 +416,7 @@ function setupComposer()
     echo "##  Installing Snipe-IT."
     php artisan app:install --env=production
 }
+
 function setupSnipeit()
 {
     echo "##  Installing Snipe-IT."
@@ -426,8 +428,16 @@ function setupSELinux()
     #Stub for implementation
 
     #TODO detect if SELinux and firewall are enabled to decide what to do
-        #Add SELinux and firewall exception/rules. Youll have to allow 443 if you want ssl connectivity.
+        #Add SELinux and firewall exception/rules.
+        # Youll have to allow 443 if you want ssl connectivity.
         # chcon -R -h -t httpd_sys_script_rw_t $webdir/$name/
         # firewall-cmd --zone=public --add-port=80/tcp --permanent
         # firewall-cmd --reload
+}
+
+#####   End Setup Functions   ####
+
+function UpgradeSnipeit()
+{
+    . /install/upgrade.sh
 }
