@@ -5,11 +5,12 @@
 
 
 ans=""
-cd "$webdir"/"$name" || exit
+cd "$webdir"/"$name" || break
 echo "##  Checking for  previous version of $si."
 echo
 
 if [ -f "$log" ] || [ -f "$installed" ]; then #If log or installer file exists
+    cd "$webdir"/"$name" || break
     if [ -d "$gitdir" ]; then # If git directory exists
         if [ -z "$newBranch" ]; then # If newBranch is empty then get the latest release
             newBranch=$(git tag | grep -v 'pre' | tail -1)
