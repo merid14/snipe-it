@@ -1,27 +1,29 @@
+#!/bin/bash
+# shellcheck disable=SC2154,SC2034
 # Function Definition
 #
 function logvar()
 # ------------------------------------------------------------------
-#	Function Definition
+#   Function Definition
 #
-#	Function takes Variable assigntment as argument
-#		Executes the variable assignment then pulls out the variable
-#		name and it's contents to put into the log file.
+#   Function takes Variable assigntment as argument
+#       Executes the variable assignment then pulls out the variable
+#       name and it's contents to put into the log file.
 #
-#	Example:
-# 	logvar hostname="$(hostname)"
+#   Example:
+#   logvar hostname="$(hostname)"
 #
 # ------------------------------------------------------------------
 {
-	eval "$1"
-	var_name=$(echo "$1" | gawk -F'[=]+' ' {print $1}')
-	var_cmd='$'$var_name
-	eval echo "$var_name: $var_cmd"  >> "$log" 2>&1
+    eval "$1"
+    var_name=$(echo "$1" | gawk -F'[=]+' ' {print $1}')
+    var_cmd='$'$var_name
+    eval echo "$var_name: $var_cmd"  >> "$log" 2>&1
 }
 
 function ShowProgressOf()
 {
-	tput civis
+    tput civis
     "$@" >> "$log" 2>&1 &
     local pid=$!
     local delay=0.25
@@ -109,7 +111,7 @@ function startApache()
 {
 echo "##  Starting the apache server.";
 shopt -s nocasematch
-case $distro in
+case "$distro" in
     *Ubuntu*|*Debian*)
         service apache2 restart
         ;;
@@ -131,7 +133,7 @@ esac
 function startMariadb()
 {
 shopt -s nocasematch
-case $distro in
+case "$distro" in
     *Ubuntu*|*Debian*)
         service mysql restart
         ;;
@@ -213,13 +215,13 @@ function setupRepos()
     if [ -f "$mariadbRepo" ]; then
         echo "    Repo already exists. $apachefile"
     else
-        touch $mariadbRepo
-        echo >> $mariadbRepo "[mariadb]"
-        echo >> $mariadbRepo "name = MariaDB"
-        echo >> $mariadbRepo "baseurl = http://yum.mariadb.org/10.0/$distro-amd64"
-        echo >> $mariadbRepo "gpgkey=https://yum.mariadb.org/RPM-GPG-KEY-MariaDB"
-        echo >> $mariadbRepo "gpgcheck=1"
-        echo >> $mariadbRepo "enable=1"
+        touch "$mariadbRepo"
+        echo >> "$mariadbRepo" "[mariadb]"
+        echo >> "$mariadbRepo" "name = MariaDB"
+        echo >> "$mariadbRepo" "baseurl = http://yum.mariadb.org/10.0/$distro-amd64"
+        echo >> "$mariadbRepo" "gpgkey=https://yum.mariadb.org/RPM-GPG-KEY-MariaDB"
+        echo >> "$mariadbRepo" "gpgcheck=1"
+        echo >> "$mariadbRepo" "enable=1"
     fi
 
     ShowProgressOf yum -y -q install wget epel-release
@@ -231,7 +233,7 @@ function setupRepos()
 function setupPackages()
 {
 shopt -s nocasematch
-case $distro in
+case "$distro" in
     *Ubuntu*|*Debian*)
         echo
         echo -n "##  Updating..."
@@ -246,11 +248,11 @@ case $distro in
                 MariaDB-server MariaDB-client"
 
         for p in $PACKAGES;do
-        if isinstalled $p; then
-            echo " ##" $p "Installed"
+        if isinstalled "$p"; then
+            echo " ##" "$p" "Installed"
         else
-            echo -n " ##" $p "Installing... "
-            ShowProgressOf DEBIAN_FRONTEND=noninteractive apt-get install -q -y $p
+            echo -n " ##" "$p" "Installing... "
+            ShowProgressOf DEBIAN_FRONTEND=noninteractive apt-get install -q -y "$p"
             echo
         fi
         done;
@@ -262,11 +264,11 @@ case $distro in
                 php56u-gd php56u-mbstring php56u-mcrypt php56u-ldap"
 
         for p in $PACKAGES;do
-        if isinstalled $p; then
-            echo " ##" $p "Installed"
+        if isinstalled "$p"; then
+            echo " ##" "$p" "Installed"
         else
-            echo -n " ##" $p "Installing... "
-            ShowProgressOf yum -y -q install $p
+            echo -n " ##" "$p" "Installing... "
+            ShowProgressOf yum -y -q install "$p"
             echo
         fi
         done;
@@ -285,15 +287,15 @@ function setupGitSnipeit()
 {
     echo
     echo -n "##  Cloning Snipe-IT from github to the web directory...";
-    ShowProgressOf git clone https://github.com/$fork/snipe-it $webdir/$name
+    ShowProgressOf git clone https://github.com/"$fork"/snipe-it "$webdir"/"$name"
 
     # get latest stable release
-    cd $webdir/$name || exit
-    if [ -z $branch ]; then
+    cd "$webdir"/"$name" || exit
+    if [ -z "$branch" ]; then
         branch="$(git tag | grep -v 'pre' | tail -1)"
     fi
     echo "    Installing version: $branch"
-    git checkout -b $branch $branch
+    git checkout -b "$branch" "$branch"
 }
 
 function setupApacheMods()
@@ -306,7 +308,7 @@ function setupApacheMods()
 function setupApacheHost()
 {
 shopt -s nocasematch
-case $distro in
+case "$distro" in
     *Ubuntu*|*Debian*)
         logvar apacheversion="$(/usr/sbin/apache2 -v | grep 2.4)"
         ;;
@@ -318,33 +320,34 @@ case $distro in
         exit
         ;;
 esac
-    if [ $apacheversion ]; then
+    if [ "$apacheversion" ]; then
         apacheaccess="Require all granted"
     else
         apacheaccess="Allow From All"
     fi
 
     echo "##  Creating the new virtual host in Apache.";
-    if [ -f $apachefile ]; then
+    if [ -f "$apachefile" ]; then
         echo "    VirtualHost already exists. $apachefile"
-    elif [  ]; then
+    else
         echo "##  Setting up $si virtual host."
-        echo >> $apachefile ""
-        echo >> $apachefile ""
+        echo >> "$apachefile" ""
+        echo >> "$apachefile" ""
 ##TODO Grep if exists        echo >> $apachefile "LoadModule rewrite_module modules/mod_rewrite.so"
-        echo >> $apachefile ""
-        echo >> $apachefile "<VirtualHost *:80>"
-        echo >> $apachefile "ServerAdmin webmaster@localhost"
-        echo >> $apachefile "    <Directory $webdir/$name/public>"
-        echo >> $apachefile "        $apacheaccess"
-        echo >> $apachefile "        AllowOverride All"
-        echo >> $apachefile "        Options +Indexes"
-        echo >> $apachefile "   </Directory>"
-        echo >> $apachefile "    DocumentRoot $webdir/$name/public"
-        echo >> $apachefile "    ServerName $fqdn"
-        echo >> $apachefile "        ErrorLog $apachelog/snipeIT.error.log"
-        echo >> $apachefile "        CustomLog $apachelog/snipeit-access.log combined"
-        echo >> $apachefile "</VirtualHost>"
+        echo >> "$apachefile" ""
+        echo >> "$apachefile" "<VirtualHost *:80>"
+        echo >> "$apachefile" "ServerAdmin webmaster@localhost"
+        echo >> "$apachefile" "    <Directory $webdir/$name/public>"
+        echo >> "$apachefile" "        $apacheaccess"
+        echo >> "$apachefile" "        AllowOverride All"
+        echo >> "$apachefile" "        Options +Indexes"
+        echo >> "$apachefile" "   </Directory>"
+        echo >> "$apachefile" "    DocumentRoot $webdir/$name/public"
+        echo >> "$apachefile" "    ServerName $fqdn"
+        echo >> "$apachefile" "        ErrorLog $apachelog/snipeIT.error.log"
+        echo >> "$apachefile" "        CustomLog $apachelog/snipeit-access.log combined"
+        echo >> "$apachefile" "</VirtualHost>"
+    fi
 }
 
 function setupFiles()
@@ -352,28 +355,28 @@ function setupFiles()
     echo "##  Modifying the $si files necessary for a production environment."
     echo "  Setting up Timezone."
 
-    sed -i "s,UTC,$tzone,g" $webdir/$name/app/config/app.php
+    sed -i "s,UTC,$tzone,g" "$webdir"/"$name"/app/config/app.php
 
     echo "  Setting up bootstrap file."
-    sed -i "s,www.yourserver.com,$hostname,g" $webdir/$name/bootstrap/start.php
+    sed -i "s,www.yourserver.com,$hostname,g" "$webdir"/"$name"/bootstrap/start.php
 
     echo "  Setting up database file."
-    cp $webdir/$name/app/config/production/database.example.php $webdir/$name/app/config/production/database.php
-    sed -i "s,snipeit_laravel,snipeit,g" $webdir/$name/app/config/production/database.php
-    sed -i "s,travis,snipeit,g" $webdir/$name/app/config/production/database.php
-    sed -i "s,password'  => '',password'  => '$mysqluserpw',g" $webdir/$name/app/config/production/database.php
+    cp "$webdir"/"$name"/app/config/production/database.example.php "$webdir"/"$name"/app/config/production/database.php
+    sed -i "s,snipeit_laravel,snipeit,g" "$webdir"/"$name"/app/config/production/database.php
+    sed -i "s,travis,snipeit,g" "$webdir"/"$name"/app/config/production/database.php
+    sed -i "s,password'  => '',password'  => '$mysqluserpw',g" "$webdir"/"$name"/app/config/production/database.php
 
     echo "  Setting up app file."
-    cp $webdir/$name/app/config/production/app.example.php $webdir/$name/app/config/production/app.php
-    sed -i "s,https://production.yourserver.com,http://$fqdn,g" $webdir/$name/app/config/production/app.php
-    sed -i "s,Change_this_key_or_snipe_will_get_ya,$appkey,g" $webdir/$name/app/config/production/app.php
+    cp "$webdir"/"$name"/app/config/production/app.example.php "$webdir"/"$name"/app/config/production/app.php
+    sed -i "s,https://production.yourserver.com,http://$fqdn,g" "$webdir"/"$name"/app/config/production/app.php
+    sed -i "s,Change_this_key_or_snipe_will_get_ya,$appkey,g" "$webdir"/"$name"/app/config/production/app.php
 
     # uncomment to enable debug
-    #sed -i "s,false,true,g" $webdir/$name/app/config/production/app.php
+    #sed -i "s,false,true,g" "$webdir"/"$name"/app/config/production/app.php
 
     # we dont need to do this right now, will implement mail config later
     # echo "  Setting up mail file."
-    # cp $webdir/$name/app/config/production/mail.example.php $webdir/$name/app/config/production/mail.php
+    # cp "$webdir"/"$name"/app/config/production/mail.example.php "$webdir"/"$name"/app/config/production/mail.php
 }
 
 function setupDB()
@@ -391,7 +394,7 @@ echo >> "$dbsetup" "GRANT ALL PRIVILEGES ON snipeit.* TO snipeit@localhost IDENT
 
     echo "##  Input your MySQL/MariaDB root password  (blank if this is a fresh install): "
 ##  TODO add try fail without -p and then add -p
-    mysql -u root -p < $dbsetup
+    mysql -u root -p < "$dbsetup"
 
     echo "##  Securing mariaDB server.";
     /usr/bin/mysql_secure_installation
@@ -400,16 +403,16 @@ echo >> "$dbsetup" "GRANT ALL PRIVILEGES ON snipeit.* TO snipeit@localhost IDENT
 function setupPermissions()
 {
     echo "##  Setting permissions on web directory."
-    chmod -R 755 $webdir/$name/app/storage
-    chmod -R 755 $webdir/$name/app/private_uploads
-    chmod -R 755 $webdir/$name/public/uploads
-    chown -R $apacheuser $webdir
+    chmod -R 755 "$webdir"/"$name"/app/storage
+    chmod -R 755 "$webdir"/"$name"/app/private_uploads
+    chmod -R 755 "$webdir"/"$name"/public/uploads
+    chown -R "$apacheuser" "$webdir"
 }
 
 function setupComposer()
 {
     echo "##  Installing and configuring composer"
-    cd $webdir/$name || exit
+    cd "$webdir"/"$name" || exit
     curl -sS https://getcomposer.org/installer | php
     php composer.phar install --no-dev --prefer-source
 
@@ -426,11 +429,10 @@ function setupSnipeit()
 function setupSELinux()
 {
     #Stub for implementation
-
     #TODO detect if SELinux and firewall are enabled to decide what to do
         #Add SELinux and firewall exception/rules.
         # Youll have to allow 443 if you want ssl connectivity.
-        # chcon -R -h -t httpd_sys_script_rw_t $webdir/$name/
+        # chcon -R -h -t httpd_sys_script_rw_t "$webdir"/"$name"/
         # firewall-cmd --zone=public --add-port=80/tcp --permanent
         # firewall-cmd --reload
 }
