@@ -63,7 +63,6 @@ case "$distro" in
         echo "  The installer has detected Ubuntu/Debian as the OS."
         distro=ubuntu && echo "$distro" >> "$log" 2>&1
         webdir=/var/www/"$name"/ && echo "$webdir" >> "$log" 2>&1
-        installed="$webdir/.installed" && echo "$installed" >> "$log" 2>&1
         gitdir="$webdir/.git" && echo "$gitdir" >> "$log" 2>&1
         apachefile=/etc/apache2/sites-available/"$name".conf && echo "$apachefile" >> "$log" 2>&1
         tzone="$(cat /etc/timezone)" && echo "$tzone" >> "$log" 2>&1
@@ -74,7 +73,6 @@ case "$distro" in
         echo "  The installer has detected redhat/centos 6 as the OS."
         distro=centos6 && echo "$distro" >> "$log" 2>&1
         webdir=/var/www/html/"$name"/ && echo "$webdir" >> "$log" 2>&1
-        installed="$webdir/.installed" && echo "$installed" >> "$log" 2>&1
         gitdir="$webdir/.git" && echo "$gitdir" >> "$log" 2>&1
         apachefile=/etc/httpd/conf.d/"$name".conf && echo "$apachefile" >> "$log" 2>&1
         tzone="$(grep ZONE /etc/sysconfig/clock | tr -d '"' | sed 's/ZONE=//g')" && echo "$tzone" >> "$log" 2>&1
@@ -85,7 +83,6 @@ case "$distro" in
         echo "  The installer has detected redhat/centos 7 as the OS."
         distro=centos7 && echo "$distro" >> "$log" 2>&1
         webdir=/var/www/html/"$name"/ && echo "$webdir" >> "$log" 2>&1
-        installed="$webdir/.installed" && echo "$installed" >> "$log" 2>&1
         gitdir="$webdir/.git" && echo "$gitdir" >> "$log" 2>&1
         apachefile=/etc/httpd/conf.d/"$name".conf && echo "$apachefile" >> "$log" 2>&1
         tzone="$(timedatectl | gawk -F'[: ]+' ' $2 ~ /Timezone/ {print $3}')" && echo "$tzone" >> "$log" 2>&1
@@ -141,7 +138,7 @@ esac
 echo "##  Cleaning up..."
 rm -rf "${tmp:?}/"
 echo
-echo >> "$installed" "Installed $si to version:$branch $date"
+# echo >> "$installed" "Installed $si to version:$branch $date"
 echo
 echo -e "\e[31m The mail configuration has not been setup.\e[0m"
 echo -e "\e[31m   To setup follow the docs here:\e[0m"
