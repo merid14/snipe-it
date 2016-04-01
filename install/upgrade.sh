@@ -49,7 +49,7 @@ if [ -d "$webdir" ] || [ -f "$installed" ]; then #If log or installer file exist
                 esac
             done
 
-            if [ -d "$backup" ]; then #if dir doesnt exist
+            if [ -d "$backup" ]; then #if dir exists else create it
                 echo "##  Backup directory already exists, using it."
                 echo "    $backup"
             else

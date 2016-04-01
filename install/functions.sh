@@ -271,7 +271,7 @@ function setupGitSnipeit ()
     ShowProgressOf git clone https://github.com/"$fork"/snipe-it "$webdir"
 
     # get latest stable release
-    if [ -d "$webdir" ]; then
+    if [ ! -d "$webdir" ]; then
         mkdir -p "$webdir"
     fi
     cd "$webdir" || exit
