@@ -9,7 +9,7 @@ ans=""
 echo "##  Checking for  previous version of $si."
 echo
 
-if [ -d "$webdir" ] || [ -f "$installed" ]; then #If log or installer file exists
+if [ -d "$webdir" ]; then #If webdir exists
     cd "$webdir" || exit
     if [ -d "$gitdir" ]; then # If git directory exists
         if [ -z "$newBranch" ]; then # If newBranch is empty then get the latest release
