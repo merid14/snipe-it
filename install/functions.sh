@@ -143,22 +143,22 @@ echo "
     /____/_/ /_/_/ .___/\___/     /___/ /_/
                 /_/
 "
-echo ""
-echo ""
+echo
+echo
 echo "  Welcome to Snipe-IT Inventory Installer for $supportedos!"
-echo ""
+echo
 }
 
 function askFQDN ()
 {
-    echo ""
+    echo
     echo -n "  Q. What is the FQDN of your server? ($fqdn): "
     read -r fqdn
     if [ -z "$fqdn" ]; then
             fqdn="$(hostname --fqdn)"
     fi
     echo "     Setting to $fqdn"
-    echo ""
+    echo
 }
 
 function askDBuserpw ()
@@ -176,7 +176,7 @@ function askDBuserpw ()
         n | no )
             echo -n  "    Q. What do you want your snipeit user password to be?"
             read -sr mysqluserpw
-            echo ""
+            echo
             ans="no"
             ;;
         *)      echo "    Invalid answer. Please type y or n"
@@ -271,6 +271,9 @@ function setupGitSnipeit ()
     ShowProgressOf git clone https://github.com/"$fork"/snipe-it "$webdir"
 
     # get latest stable release
+    if [ -d "$webdir" ]; then
+        mkdir -p "$webdir"
+    fi
     cd "$webdir" || exit
     if [ -z "$branch" ]; then
         branch="$(git tag | grep -v 'pre' | tail -1)"
