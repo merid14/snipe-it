@@ -223,16 +223,16 @@ case "$distro" in
         echo -n "##  Upgrading..."
         ShowProgressOf apt-get -q -y upgrade
 
-        echo -n "##  Installing packages..."
+        echo "##  Installing packages..."
         PACKAGES="git unzip php5 php5-mcrypt php5-curl php5-mysql php5-gd
                 php5-ldap libapache2-mod-php5 curl debconf-utils apache2
                 MariaDB-server MariaDB-client"
 
         for p in $PACKAGES;do
         if isinstalled "$p"; then
-            echo " ##" "$p" "Installed"
+            echo " ## $p Installed"
         else
-            echo -n " ##" "$p" "Installing... "
+            echo -n " ## $p Installing... "
             ShowProgressOf DEBIAN_FRONTEND=noninteractive apt-get install -q -y "$p"
             echo
         fi
@@ -246,9 +246,9 @@ case "$distro" in
 
         for p in $PACKAGES;do
         if isinstalled "$p"; then
-            echo " ##" "$p" "Installed"
+            echo " ## $p Installed"
         else
-            echo -n " ##" "$p" "Installing... "
+            echo -n " ## $p Installing... "
             ShowProgressOf yum -y -q install "$p"
             echo
         fi
