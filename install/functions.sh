@@ -216,6 +216,7 @@ function setupPackages ()
 shopt -s nocasematch
 case "$distro" in
     *Ubuntu*|*Debian*)
+        export DEBIAN_FRONTEND=noninteractive
         echo
         echo -n "##  Updating..."
         ShowProgressOf apt-get update
@@ -233,7 +234,7 @@ case "$distro" in
             echo " ## $p Installed"
         else
             echo -n " ## $p Installing... "
-            ShowProgressOf DEBIAN_FRONTEND=noninteractive apt-get install -q -y "$p"
+            ShowProgressOf apt-get install -q -y "$p"
             echo
         fi
         done;
