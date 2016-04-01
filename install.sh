@@ -10,13 +10,7 @@ branch="master"
 link="https://raw.githubusercontent.com/$fork/snipe-it/$branch/install/"
 tmp=/tmp/snipeit/
 tmpinstall=/tmp/snipeit/install/
-islog="false"
 log="/var/log/snipeit-install.log"
-if [ -f "$log" ];then
-    echo "log is already here: $log"
-    islog="true"
-fi
-
 
 rm -rf "${tmp:?}"
 mkdir -p "$tmpinstall"
