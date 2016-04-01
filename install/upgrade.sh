@@ -5,7 +5,7 @@
 
 
 ans=""
-cd "$webdir"/"$name" ##TODO this needs to check if the dir exists first cant exit wihout breaking the script
+#cd "$webdir"/"$name" ##TODO this needs to check if the dir exists first cant exit wihout breaking the script
 echo "##  Checking for  previous version of $si."
 echo
 
