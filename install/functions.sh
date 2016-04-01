@@ -268,10 +268,10 @@ function setupGitSnipeit ()
 {
     echo
     echo -n "##  Cloning Snipe-IT from github to the web directory...";
-    ShowProgressOf git clone https://github.com/"$fork"/snipe-it "$webdir"/"$name"
+    ShowProgressOf git clone https://github.com/"$fork"/snipe-it "$webdir"
 
     # get latest stable release
-    cd "$webdir"/"$name" || exit
+    cd "$webdir" || exit
     if [ -z "$branch" ]; then
         branch="$(git tag | grep -v 'pre' | tail -1)"
     fi
@@ -318,12 +318,12 @@ esac
         echo >> "$apachefile" ""
         echo >> "$apachefile" "<VirtualHost *:80>"
         echo >> "$apachefile" "ServerAdmin webmaster@localhost"
-        echo >> "$apachefile" "    <Directory $webdir/$name/public>"
+        echo >> "$apachefile" "    <Directory $webdir/public>"
         echo >> "$apachefile" "        $apacheaccess"
         echo >> "$apachefile" "        AllowOverride All"
         echo >> "$apachefile" "        Options +Indexes"
         echo >> "$apachefile" "   </Directory>"
-        echo >> "$apachefile" "    DocumentRoot $webdir/$name/public"
+        echo >> "$apachefile" "    DocumentRoot $webdir/public"
         echo >> "$apachefile" "    ServerName $fqdn"
         echo >> "$apachefile" "        ErrorLog $apachelog/snipeIT.error.log"
         echo >> "$apachefile" "        CustomLog $apachelog/snipeit-access.log combined"
@@ -336,28 +336,28 @@ function setupFiles ()
     echo "##  Modifying the $si files necessary for a production environment."
     echo "  Setting up Timezone."
 
-    sed -i "s,UTC,$tzone,g" "$webdir"/"$name"/app/config/app.php
+    sed -i "s,UTC,$tzone,g" "$webdir"/app/config/app.php
 
     echo "  Setting up bootstrap file."
-    sed -i "s,www.yourserver.com,$hostname,g" "$webdir"/"$name"/bootstrap/start.php
+    sed -i "s,www.yourserver.com,$hostname,g" "$webdir"/bootstrap/start.php
 
     echo "  Setting up database file."
-    cp "$webdir"/"$name"/app/config/production/database.example.php "$webdir"/"$name"/app/config/production/database.php
-    sed -i "s,snipeit_laravel,snipeit,g" "$webdir"/"$name"/app/config/production/database.php
-    sed -i "s,travis,snipeit,g" "$webdir"/"$name"/app/config/production/database.php
-    sed -i "s,password'  => '',password'  => '$mysqluserpw',g" "$webdir"/"$name"/app/config/production/database.php
+    cp "$webdir"/app/config/production/database.example.php "$webdir"/app/config/production/database.php
+    sed -i "s,snipeit_laravel,snipeit,g" "$webdir"/app/config/production/database.php
+    sed -i "s,travis,snipeit,g" "$webdir"/app/config/production/database.php
+    sed -i "s,password'  => '',password'  => '$mysqluserpw',g" "$webdir"/app/config/production/database.php
 
     echo "  Setting up app file."
-    cp "$webdir"/"$name"/app/config/production/app.example.php "$webdir"/"$name"/app/config/production/app.php
-    sed -i "s,https://production.yourserver.com,http://$fqdn,g" "$webdir"/"$name"/app/config/production/app.php
-    sed -i "s,Change_this_key_or_snipe_will_get_ya,$appkey,g" "$webdir"/"$name"/app/config/production/app.php
+    cp "$webdir"/app/config/production/app.example.php "$webdir"/app/config/production/app.php
+    sed -i "s,https://production.yourserver.com,http://$fqdn,g" "$webdir"/app/config/production/app.php
+    sed -i "s,Change_this_key_or_snipe_will_get_ya,$appkey,g" "$webdir"/app/config/production/app.php
 
     # uncomment to enable debug
-    #sed -i "s,false,true,g" "$webdir"/"$name"/app/config/production/app.php
+    #sed -i "s,false,true,g" "$webdir"/app/config/production/app.php
 
     # we dont need to do this right now, will implement mail config later
     # echo "  Setting up mail file."
-    # cp "$webdir"/"$name"/app/config/production/mail.example.php "$webdir"/"$name"/app/config/production/mail.php
+    # cp "$webdir"/app/config/production/mail.example.php "$webdir"/app/config/production/mail.php
 }
 
 function setupDB ()
@@ -384,16 +384,16 @@ echo >> "$dbsetup" "GRANT ALL PRIVILEGES ON snipeit.* TO snipeit@localhost IDENT
 function setupPermissions ()
 {
     echo "##  Setting permissions on web directory."
-    chmod -R 755 "$webdir"/"$name"/app/storage
-    chmod -R 755 "$webdir"/"$name"/app/private_uploads
-    chmod -R 755 "$webdir"/"$name"/public/uploads
+    chmod -R 755 "$webdir"/app/storage
+    chmod -R 755 "$webdir"/app/private_uploads
+    chmod -R 755 "$webdir"/public/uploads
     chown -R "$apacheuser" "$webdir"
 }
 
 function setupComposer ()
 {
     echo "##  Installing and configuring composer"
-    cd "$webdir"/"$name" || exit
+    cd "$webdir" || exit
     curl -sS https://getcomposer.org/installer | php
     php composer.phar install --no-dev --prefer-source
 
@@ -414,7 +414,7 @@ function setupSnipeit ()
 #     #TODO detect if SELinux and firewall are enabled to decide what to do
 #         #Add SELinux and firewall exception/rules.
 #         # Youll have to allow 443 if you want ssl connectivity.
-#         # chcon -R -h -t httpd_sys_script_rw_t "$webdir"/"$name"/
+#         # chcon -R -h -t httpd_sys_script_rw_t "$webdir"/
 #         # firewall-cmd --zone=public --add-port=80/tcp --permanent
 #         # firewall-cmd --reload
 # }
