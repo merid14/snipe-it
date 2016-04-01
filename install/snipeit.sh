@@ -27,7 +27,7 @@ clear
 echo "--------------  Collect info for log  -----------------" >> "$log" 2>&1
 getOSinfo
 
-echo "--------------  Declare Variables  -----------------" >> "$log" 2>&1
+echo "--------------  Declare Variables  ---------------------" >> "$log" 2>&1
 
 name="snipeit"
 si="Snipe-IT"
@@ -46,7 +46,7 @@ supportedos="Redhat/CentOS 6+ and Debian/Ubuntu 10.04+" && echo "$supportedos" >
 log="/var/log/snipeit-install.log" && echo "$log" >> "$log" 2>&1
 hostname="$(hostname)" && echo "$hostname" >> "$log" 2>&1
 fqdn="$(hostname --fqdn)" && echo "$fqdn" >> "$log" 2>&1
-installed="$webdir/$name/.installed" && echo "$installed" >> "$log" 2>&1
+#installed="$webdir/.installed" && echo "$installed" >> "$log" 2>&1
 date="$(date '+%Y-%b-%d')" && echo "$date" >> "$log" 2>&1
 backup=/opt/"$name"/backup/"$date" && echo "$backup" >> "$log" 2>&1
 newBranch="$branch" && echo "$newBranch" >> "$log" 2>&1
@@ -62,9 +62,9 @@ case "$distro" in
     *Ubuntu*|*Debian*)
         echo "  The installer has detected Ubuntu/Debian as the OS."
         distro=ubuntu && echo "$distro" >> "$log" 2>&1
-        webdir=/var/www && echo "$webdir" >> "$log" 2>&1
-        installed="$webdir/$name/.installed" && echo "$installed" >> "$log" 2>&1
-        gitdir="$webdir/$name/.git" && echo "$gitdir" >> "$log" 2>&1
+        webdir=/var/www/"$name"/ && echo "$webdir" >> "$log" 2>&1
+        installed="$webdir/.installed" && echo "$installed" >> "$log" 2>&1
+        gitdir="$webdir/.git" && echo "$gitdir" >> "$log" 2>&1
         apachefile=/etc/apache2/sites-available/"$name".conf && echo "$apachefile" >> "$log" 2>&1
         tzone="$(cat /etc/timezone)" && echo "$tzone" >> "$log" 2>&1
         apacheuser="www-data:www-data" && echo "$apacheuser" >> "$log" 2>&1
@@ -73,9 +73,9 @@ case "$distro" in
     *centos*6*|*redhat*6*)
         echo "  The installer has detected redhat/centos 6 as the OS."
         distro=centos6 && echo "$distro" >> "$log" 2>&1
-        webdir=/var/www/html && echo "$webdir" >> "$log" 2>&1
-        installed="$webdir/$name/.installed" && echo "$installed" >> "$log" 2>&1
-        gitdir="$webdir/$name/.git" && echo "$gitdir" >> "$log" 2>&1
+        webdir=/var/www/html/"$name"/ && echo "$webdir" >> "$log" 2>&1
+        installed="$webdir/.installed" && echo "$installed" >> "$log" 2>&1
+        gitdir="$webdir/.git" && echo "$gitdir" >> "$log" 2>&1
         apachefile=/etc/httpd/conf.d/"$name".conf && echo "$apachefile" >> "$log" 2>&1
         tzone="$(grep ZONE /etc/sysconfig/clock | tr -d '"' | sed 's/ZONE=//g')" && echo "$tzone" >> "$log" 2>&1
         apacheuser="apache:apache" && echo "$apacheuser" >> "$log" 2>&1
@@ -84,9 +84,9 @@ case "$distro" in
     *centos*7*|*redhat*7*)
         echo "  The installer has detected redhat/centos 7 as the OS."
         distro=centos7 && echo "$distro" >> "$log" 2>&1
-        webdir=/var/www/html && echo "$webdir" >> "$log" 2>&1
-        installed="$webdir/$name/.installed" && echo "$installed" >> "$log" 2>&1
-        gitdir="$webdir/$name/.git" && echo "$gitdir" >> "$log" 2>&1
+        webdir=/var/www/html/"$name"/ && echo "$webdir" >> "$log" 2>&1
+        installed="$webdir/.installed" && echo "$installed" >> "$log" 2>&1
+        gitdir="$webdir/.git" && echo "$gitdir" >> "$log" 2>&1
         apachefile=/etc/httpd/conf.d/"$name".conf && echo "$apachefile" >> "$log" 2>&1
         tzone="$(timedatectl | gawk -F'[: ]+' ' $2 ~ /Timezone/ {print $3}')" && echo "$tzone" >> "$log" 2>&1
         apacheuser="apache:apache" && echo "$apacheuser" >> "$log" 2>&1
