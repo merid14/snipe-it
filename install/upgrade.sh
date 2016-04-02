@@ -8,7 +8,7 @@ ans=""
 #cd "$webdir" ##TODO this needs to check if the dir exists first cant exit wihout breaking the script
 echo
 echo "##  Checking for  previous version of $si."
-echo
+
 
 if [ -d "$webdir" ]; then #If webdir exists
     cd "$webdir" || exit
@@ -223,5 +223,5 @@ if [ -d "$webdir" ]; then #If webdir exists
         echo "    You are now on Version $newBranch of $si."
         exit
 else
-    echo "    No previous version of $si found."
+    echo "  ## No previous version of $si found."
 fi
