@@ -291,11 +291,11 @@ function setupGitSnipeit ()
     #     mkdir -p "$webdir"
     # fi
     cd "$webdir" || exit
-    if [ -z "$branch" ]; then
-        branch="$(git tag | grep -v 'pre' | tail -1)"
+    if [ -z "$tag" ]; then
+        tag="$(git tag | grep -v 'pre' | tail -1)"
     fi
-    echo "    Installing version: $branch"
-    git checkout -b "$branch" origin/"$branch"
+    echo "    Installing version: $tag"
+    git checkout -b "$tag" origin/"$tag"
 }
 
 function setupApacheMods ()
