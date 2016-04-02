@@ -45,7 +45,7 @@ esac
 
 }
 
-
+## TODO: add handleing of word based branches.
 function compareVersions ()
 {
     if [[ "$1" == "$2" ]]; then

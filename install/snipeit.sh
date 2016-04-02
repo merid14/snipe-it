@@ -138,7 +138,7 @@ esac
 echo "##  Cleaning up..."
 rm -rf "${tmp:?}/"
 echo
-# echo >> "$installed" "Installed $si to version:$branch $date"
+echo "Installed $si to version:$branch $date" >> "$log" 2>&1
 echo
 echo -e "\e[31m The mail configuration has not been setup.\e[0m"
 echo -e "\e[31m   To setup follow the docs here:\e[0m"
@@ -149,3 +149,4 @@ echo "     http://docs.snipeitapp.com/installation/server/linux-osx.html"
 echo
 echo
 echo "  ***Open http://$fqdn to login to Snipe-IT.***"
+exit
