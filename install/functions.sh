@@ -21,11 +21,28 @@ function ShowProgressOf ()
 
 function isinstalled ()
 {
-  if yum list installed "$@" >/dev/null 2>&1; then
-    true
-  else
-    false
-  fi
+shopt -s nocasematch
+case "$distro" in
+    *Ubuntu*|*Debian*)
+        if [ $(dpkg-query -W -f='${Status}' "$@" 2>/dev/null | grep -c "ok installed") -eq 0 ]; then
+            true
+        else
+            false
+        fi
+        ;;
+    *centos*|*redhat*)
+        if yum list installed "$@" >/dev/null 2>&1; then
+            true
+        else
+            false
+        fi
+        ;;
+    *)
+        echo -e "\e[31m  Failed to find the OS.\e[0m"
+        exit
+        ;;
+esac
+
 }
 
 
@@ -260,27 +277,25 @@ case "$distro" in
         exit
         ;;
 esac
-
-
-
 }
 
 function setupGitSnipeit ()
 {
     echo
     echo -n "##  Cloning Snipe-IT from github to the web directory...";
+
     ShowProgressOf git clone https://github.com/"$fork"/snipe-it "$webdir"
 
     # get latest stable release
-    if [ ! -d "$webdir" ]; then
-        mkdir -p "$webdir"
-    fi
+    # if [ ! -d "$webdir" ]; then
+    #     mkdir -p "$webdir"
+    # fi
     cd "$webdir" || exit
     if [ -z "$branch" ]; then
         branch="$(git tag | grep -v 'pre' | tail -1)"
     fi
     echo "    Installing version: $branch"
-    git checkout -b "$branch" "$branch"
+    git checkout -b "$branch" origin/"$branch"
 }
 
 function setupApacheMods ()
@@ -400,9 +415,6 @@ function setupComposer ()
     cd "$webdir" || exit
     curl -sS https://getcomposer.org/installer | php
     php composer.phar install --no-dev --prefer-source
-
-    echo "##  Installing Snipe-IT."
-    php artisan app:install --env=production
 }
 
 function setupSnipeit ()

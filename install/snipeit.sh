@@ -112,8 +112,8 @@ case "$distro" in
         setupGitSnipeit
         setupApacheMods
         setupApacheHost
-        setupFiles
         setupDB
+        setupFiles
         setupComposer
         setupPermissions
         setupSnipeit
