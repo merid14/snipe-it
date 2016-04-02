@@ -49,7 +49,7 @@ fqdn="$(hostname --fqdn)" && echo "$fqdn" >> "$log" 2>&1
 #installed="$webdir/.installed" && echo "$installed" >> "$log" 2>&1
 date="$(date '+%Y-%b-%d')" && echo "$date" >> "$log" 2>&1
 backup=/opt/"$name"/backup/"$date" && echo "$backup" >> "$log" 2>&1
-newBranch="$branch" && echo "$newBranch" >> "$log" 2>&1
+newtag="$tag" && echo "$newtag" >> "$log" 2>&1
 appkey="$(< /dev/urandom tr -dc _A-Za-z-0-9 | head -c32)" && echo "$appkey" >> "$log" 2>&1
 dbsetup="$tmp"/db_setup.sql && echo "$dbsetup" >> "$log" 2>&1
 mariadbRepo=/etc/yum.repos.d/MariaDB.repo && echo "$mariadbRepo" >> "$log" 2>&1
@@ -138,7 +138,7 @@ esac
 echo "##  Cleaning up..."
 rm -rf "${tmp:?}/"
 echo
-echo "Installed $si to version:$branch $date" >> "$log" 2>&1
+echo "Installed $si to version:$tag $date" >> "$log" 2>&1
 echo
 echo -e "\e[31m The mail configuration has not been setup.\e[0m"
 echo -e "\e[31m   To setup follow the docs here:\e[0m"

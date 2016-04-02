@@ -13,30 +13,30 @@ echo "##  Checking for  previous version of $si."
 if [ -d "$webdir" ]; then #If webdir exists
     cd "$webdir" || exit
     if [ -d "$gitdir" ]; then # If git directory exists
-        if [ -z "$newBranch" ]; then # If newBranch is empty then get the latest release
-            newBranch=$(git tag | grep -v 'pre' | tail -1)
+        if [ -z "$newtag" ]; then # If newtag is empty then get the latest release
+            newtag=$(git tag | grep -v 'pre' | tail -1)
         fi
-        currentBranch="$(basename "$(git symbolic-ref HEAD)")"
+        currenttag="$(basename "$(git symbolic-ref HEAD)")"
 
-        echo "##  $si install found. Version: $currentBranch"
+        echo "##  $si install found. Version: $currenttag"
 
-        if compareVersions "$currentBranch" "$newBranch"; then ##TODO Strip "v" from version name to allow number calculation
+        if compareVersions "$currenttag" "$newtag"; then ##TODO Strip "v" from version name to allow number calculation
 
-            echo "##  Beginning the $si update process to version: $newBranch"
+            echo "##  Beginning the $si update process to version: $newtag"
             echo ""
             echo "    By default we are pulling from the latest release."
-            echo "    If you pulled from another branch please upgrade manually."
+            echo "    If you pulled from another branch/tag please upgrade manually."
             echo
 
             until [[ $ans == "yes" ]]; do
-                echo "##  Upgrading to Version: $newBranch from Version: $currentBranch"
+                echo "##  Upgrading to Version: $newtag from Version: $currenttag"
                 echo ""
                 echo -n "  Q. Would you like to continue? (y/n) "
                 read -r cont
                 shopt -s nocasematch
                 case $cont in
                     y | yes )
-                        echo "  Continuing with the upgrade process to version: $newBranch."
+                        echo "  Continuing with the upgrade process to version: $newtag."
                         echo
                         ans="yes"
                         ;;
@@ -71,9 +71,9 @@ if [ -d "$webdir" ]; then #If webdir exists
             cd "$webdir" || exit
             set +e
             git add . >> "$log" 2>&1
-            git commit -m "Upgrading to $newBranch from $currentBranch" >> "$log" 2>&1
+            git commit -m "Upgrading to $newtag from $currenttag" >> "$log" 2>&1
             git stash >> "$log" 2>&1
-            git checkout -b "$newBranch" "$newBranch" >> "$log" 2>&1
+            git checkout -b "$newtag" "$newtag" >> "$log" 2>&1
             git stash pop >> "$log" 2>&1
             set -e
 
@@ -91,7 +91,7 @@ if [ -d "$webdir" ]; then #If webdir exists
 
         else
             echo "    You are already on the latest version."
-            echo "    Version: $currentBranch"
+            echo "    Version: $currenttag"
             echo
             exit
         fi
@@ -106,19 +106,19 @@ if [ -d "$webdir" ]; then #If webdir exists
         ShowProgressOf git clone https://github.com/"$fork"/snipe-it "$tmp"
         cd "$tmp" || exit
 
-        if [ -z "$newBranch" ]; then # If newBranch is empty then get the latest release
-            newBranch=$(git tag | grep -v 'pre' | tail -1)
+        if [ -z "$newtag" ]; then # If newtag is empty then get the latest release
+            newtag=$(git tag | grep -v 'pre' | tail -1)
         fi
-        if compareVersions "$currentVersion" "$newBranch"; then
+        if compareVersions "$currentVersion" "$newtag"; then
             until [[ $ans1 == "yes" ]]; do
-            echo "##  Upgrading to Version: $newBranch from Version: $currentVersion"
+            echo "##  Upgrading to Version: $newtag from Version: $currentVersion"
             echo
             echo -n "  Q. Would you like to continue? (y/n) "
             read -r cont
             shopt -s nocasematch
             case $cont in
                     y | yes )
-                        echo "    Continuing with the upgrade process to version: $newBranch."
+                        echo "    Continuing with the upgrade process to version: $newtag."
                         echo
                         ans1="yes"
                         ;;
@@ -155,12 +155,12 @@ if [ -d "$webdir" ]; then #If webdir exists
             ShowProgressOf git clone https://github.com/"$fork"/snipe-it "$webdir"
             # get latest stable release
             cd "$webdir" || exit
-            if [ -z "$newBranch" ]; then
-                newBranch=$(git tag | grep -v 'pre' | tail -1)
+            if [ -z "$newtag" ]; then
+                newtag=$(git tag | grep -v 'pre' | tail -1)
             fi
 
-            echo "    Installing version: $newBranch"
-            git checkout -b "$newBranch" "$newBranch" >> "$log" 2>&1
+            echo "    Installing version: $newtag"
+            git checkout -b "$newtag" "$newtag" >> "$log" 2>&1
 
             echo "##  Restoring files."
             echo "      Restoring app config file."
@@ -198,7 +198,7 @@ if [ -d "$webdir" ]; then #If webdir exists
             fi
         else
             echo "    You are already on the latest version."
-            echo "    Version: $currentBranch"
+            echo "    Version: $currenttag"
             echo
             exit
         fi
@@ -212,10 +212,10 @@ if [ -d "$webdir" ]; then #If webdir exists
         php composer.phar dump-autoload
         php artisan migrate
 
-        echo "Upgraded $si to version:$newBranch from:$currentBranch" >> "$log" 2>&1
+        echo "Upgraded $si to version:$newtag from:$currenttag" >> "$log" 2>&1
 
         echo
-        echo "    You are now on Version $newBranch of $si."
+        echo "    You are now on Version $newtag of $si."
         exit
 else
     echo "  ## No previous version of $si found."
