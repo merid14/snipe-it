@@ -24,7 +24,7 @@ function isinstalled ()
 shopt -s nocasematch
 case "$distro" in
     *Ubuntu*|*Debian*)
-        if [ $(dpkg-query -W -f='${Status}' "$@" 2>/dev/null | grep -c "ok installed") -eq 0 ]; then
+        if [ $(dpkg-query -W -f='${Status}' "$@" 2>/dev/null | grep -c "ok installed") -eq 1 ]; then
             true
         else
             false
