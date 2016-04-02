@@ -51,25 +51,21 @@ if [ -d "$webdir" ]; then #If webdir exists
             done
 
             if [ -d "$backup" ]; then #if dir exists else create it
-                echo "##  Backup directory already exists, using it."
+                echo "  ##  Backup directory already exists, using it."
                 echo "    $backup"
             else
-                echo "##  Setting up backup directory."
+                echo "  ##  Setting up backup directory."
                 echo "    $backup"
-                echo
                 mkdir -p "$backup"
             fi
 
-            echo "##  Backing up app file."
-            echo
+            echo "  ##  Backing up app file."
             cp -p "$webdir"/app/config/app.php "$backup"/
 
-            echo "##  Backing up database."
-            echo ""
+            echo "  ##  Backing up database."
             mysqldump "$name" > "$backup"/"$name".sql
 
-            echo "##  Getting update."
-            echo
+            echo "  ##  Getting update."
 
             ## run git update
             cd "$webdir" || exit
@@ -81,7 +77,7 @@ if [ -d "$webdir" ]; then #If webdir exists
             git stash pop >> "$log" 2>&1
             set -e
 
-            echo "##  Cleaning cache and view directories."
+            echo "  ##  Cleaning cache and view directories."
             rm -rf "$webdir"/app/storage/cache/*
             rm -rf "$webdir"/app/storage/views/*
 
@@ -89,7 +85,7 @@ if [ -d "$webdir" ]; then #If webdir exists
             # rm -rf "${$webdir:?}"/"${$name:?}"/app/storage/views/*
 
 
-            echo "##  ##  Restoring app.php file."
+            echo "  ##  Restoring app.php file."
             cp "$backup"/app.php "$webdir"/app/config/
 
 
@@ -142,7 +138,6 @@ if [ -d "$webdir" ]; then #If webdir exists
             else
                 echo "##  Setting up backup directory."
                 echo "    $backup"
-                echo
                 mkdir -p "$backup"
             fi
 
@@ -217,7 +212,7 @@ if [ -d "$webdir" ]; then #If webdir exists
         php composer.phar dump-autoload
         php artisan migrate
 
-        echo >> "$installed" "Upgraded $si to version:$newBranch from:$currentBranch"
+        echo "Upgraded $si to version:$newBranch from:$currentBranch" >> "$log" 2>&1
 
         echo
         echo "    You are now on Version $newBranch of $si."
