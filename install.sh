@@ -7,6 +7,7 @@ fi
 #  Leave branch="" for latest release.
 fork="snipe"
 branch=""
+tag=""
 
 link="https://raw.githubusercontent.com/$fork/snipe-it/$branch/install/"
 tmp=/tmp/snipeit/
