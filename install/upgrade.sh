@@ -102,8 +102,12 @@ if [ -d "$webdir" ]; then #If webdir exists
 
         #clone to tmp so we can check the latest version
         rm -rf "${tmp:?}/"
+        if ! $(ShowProgressOf git clone https://github.com/"$fork"/snipe-it "$tmp"); then
+        #     echo >&2 message
+                 echo >&2 Failed to clone $tag
+                 exit
+        fi
 
-        ShowProgressOf git clone https://github.com/"$fork"/snipe-it "$tmp"
         cd "$tmp" || exit
 
         if [ -z "$newtag" ]; then # If newtag is empty then get the latest release
@@ -146,13 +150,18 @@ if [ -d "$webdir" ]; then #If webdir exists
 
             echo "##  Backing up $si folder."
             cp -R "$webdir" "$backup"/"$name"
-            rm -rf "${webdir:?}"/"${name:?}"
+            rm -rf "${webdir:?}"
 
             echo "##  Backing up database."
             mysqldump "$name" > "$backup"/"$name".sql
 
             echo -n "##  Downloading Snipe-IT from github and put it in the web directory...";
-            ShowProgressOf git clone https://github.com/"$fork"/snipe-it "$webdir"
+            if ! $(ShowProgressOf git clone https://github.com/"$fork"/snipe-it "$webdir"); then
+            #     echo >&2 message
+                     echo >&2 Failed to clone $tag
+                     exit
+            fi
+
             # get latest stable release
             cd "$webdir" || exit
             if [ -z "$newtag" ]; then
