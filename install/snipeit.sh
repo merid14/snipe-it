@@ -85,7 +85,7 @@ case "$distro" in
         webdir=/var/www/html/"$name"/ && echo "$webdir" >> "$log" 2>&1
         gitdir="$webdir/.git" && echo "$gitdir" >> "$log" 2>&1
         apachefile=/etc/httpd/conf.d/"$name".conf && echo "$apachefile" >> "$log" 2>&1
-        tzone="$(timedatectl | gawk -F'[: ]+' ' $2 ~ /Timezone/ {print $3}')" && echo "$tzone" >> "$log" 2>&1
+        tzone="$(timedatectl | gawk -F'[: ]' ' $9 ~ /zone/ {print $11}')" && echo "$tzone" >> "$log" 2>&1
         apacheuser="apache:apache" && echo "$apacheuser" >> "$log" 2>&1
         apachelog="/var/log/httpd" && echo "$apachelog" >> "$log" 2>&1
         ;;
