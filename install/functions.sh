@@ -295,7 +295,14 @@ function setupGitSnipeit ()
         tag="$(git tag | grep -v 'pre' | tail -1)"
     fi
     echo "    Installing version: $tag"
-    git checkout -b "$tag" origin/"$tag"
+    if ! $(git checkout -b "$tag" origin/"$tag" >> "$log" 2>&1); then
+    #     echo >&2 message
+        if ! $(git checkout -b "$tag" "$tag" >> "$log" 2>&1); then
+             echo >&2 Failed to clone $tag
+             exit
+        fi
+    fi
+
 }
 
 function setupApacheMods ()
