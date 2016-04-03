@@ -18,8 +18,8 @@ if [ "$(id -u)" != "0" ]; then
   exec sudo "$0" "$@"
 fi
 #include functions
-tmp=/tmp/snipeit && echo "$tmp" >> "$log" 2>&1
-tmpinstall=/tmp/snipeit/install/ && echo "$tmpinstall" >> "$log" 2>&1
+#tmp=/tmp/snipeit && echo "$tmp" >> "$log" 2>&1
+#tmpinstall=/tmp/snipe-it/install/ && echo "$tmpinstall" >> "$log" 2>&1
 . "$tmpinstall"/functions.sh
 clear
 
