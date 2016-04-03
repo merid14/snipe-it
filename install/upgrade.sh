@@ -110,7 +110,7 @@ if [ -d "$webdir" ]; then #If webdir exists
             newtag=$(git tag | grep -v 'pre' | tail -1)
         fi
         if compareVersions "$currentVersion" "$newtag"; then
-            until [[ $ans1 == "yes" ]]; do
+            until [[ $ans == "yes" ]]; do
             echo "##  Upgrading to Version: $newtag from Version: $currentVersion"
             echo
             echo -n "  Q. Would you like to continue? (y/n) "
@@ -120,7 +120,7 @@ if [ -d "$webdir" ]; then #If webdir exists
                     y | yes )
                         echo "    Continuing with the upgrade process to version: $newtag."
                         echo
-                        ans1="yes"
+                        ans="yes"
                         ;;
                     n | no )
                         echo "  Exiting now!"
