@@ -11,7 +11,7 @@ tag=""
 
 link="https://raw.githubusercontent.com/$fork/snipe-it/$branch/install/"
 tmp=/tmp/snipeit/
-tmpinstall=/tmp/snipeit/install/
+tmpinstall=/tmp/snipe-it/install/
 log="/var/log/snipeit-install.log"
 
 rm -rf "${tmp:?}"

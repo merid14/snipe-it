@@ -136,7 +136,8 @@ case "$distro" in
 esac
 
 echo "##  Cleaning up..."
-rm -rf "${tmp:?}/"
+rm -rf "${tmp:?}"
+rm -rf "${tmpinstall:?}"
 echo
 echo "Installed $si to version:$tag $date" >> "$log" 2>&1
 echo

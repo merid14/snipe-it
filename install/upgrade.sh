@@ -101,8 +101,8 @@ if [ -d "$webdir" ]; then #If webdir exists
         currentVersion="$(cat "$webdir"/app/config/version.php | grep app | awk -F "'" '{print $4}' | cut -f1 -d"-")"
 
         #clone to tmp so we can check the latest version
-        rm -rf "${tmp:?}/"
-        if ! $(ShowProgressOf git clone https://github.com/"$fork"/snipe-it "$tmp"); then
+        rm -rf "${tmp:?}"
+        if ! $(git clone https://github.com/"$fork"/snipe-it "$tmp"); then
         #     echo >&2 message
                  echo >&2 Failed to clone $tag
                  exit
@@ -156,7 +156,7 @@ if [ -d "$webdir" ]; then #If webdir exists
             mysqldump "$name" > "$backup"/"$name".sql
 
             echo -n "##  Downloading Snipe-IT from github and put it in the web directory...";
-            if ! $(ShowProgressOf git clone https://github.com/"$fork"/snipe-it "$webdir"); then
+            if ! $(git clone https://github.com/"$fork"/snipe-it "$webdir"); then
             #     echo >&2 message
                      echo >&2 Failed to clone $tag
                      exit
