@@ -6,7 +6,7 @@ fi
 #  Set this to your github username and branch to pull your changes ** Only for Devs **
 #  Leave branch="" for latest release.
 fork="snipe"
-branch=""
+branch="master"
 tag=""
 
 link="https://raw.githubusercontent.com/$fork/snipe-it/$branch/install/"
