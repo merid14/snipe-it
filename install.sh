@@ -15,6 +15,7 @@ tmpinstall=/tmp/snipe-it/install/
 log="/var/log/snipeit-install.log"
 
 rm -rf "${tmp:?}"
+rm -rf "${tmpinstall:?}"
 mkdir -p "$tmpinstall"
 
 wget "$link"/snipeit.sh -P "$tmpinstall" 2>&1 | grep -i "failed\|error"

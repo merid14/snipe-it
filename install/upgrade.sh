@@ -98,24 +98,20 @@ if [ -d "$webdir" ]; then #If webdir exists
     else  # Must be a file copy install
         #get the current version
         echo -n "##  Beginning conversion from copy file install to git install."
-        currentVersion="$(cat "$webdir"/app/config/version.php | grep app | awk -F "'" '{print $4}' | cut -f1 -d"-")"
+        currenttag="$(cat "$webdir"/app/config/version.php | grep app | awk -F "'" '{print $4}' | cut -f1 -d"-")"
 
         #clone to tmp so we can check the latest version
         rm -rf "${tmp:?}"
-        if ! $(git clone https://github.com/"$fork"/snipe-it "$tmp"); then
-        #     echo >&2 message
-                 echo >&2 Failed to clone $tag
-                 exit
-        fi
+        git clone https://github.com/"$fork"/snipe-it "$tmp" || { echo >&2 "failed with $?"; exit 1; }
 
         cd "$tmp" || exit
 
         if [ -z "$newtag" ]; then # If newtag is empty then get the latest release
             newtag=$(git tag | grep -v 'pre' | tail -1)
         fi
-        if compareVersions "$currentVersion" "$newtag"; then
+        if compareVersions "$currenttag" "$newtag"; then
             until [[ $ans == "yes" ]]; do
-            echo "##  Upgrading to Version: $newtag from Version: $currentVersion"
+            echo "##  Upgrading to Version: $newtag from Version: $currenttag"
             echo
             echo -n "  Q. Would you like to continue? (y/n) "
             read -r cont
@@ -156,11 +152,7 @@ if [ -d "$webdir" ]; then #If webdir exists
             mysqldump "$name" > "$backup"/"$name".sql
 
             echo -n "##  Downloading Snipe-IT from github and put it in the web directory...";
-            if ! $(git clone https://github.com/"$fork"/snipe-it "$webdir"); then
-            #     echo >&2 message
-                     echo >&2 Failed to clone $tag
-                     exit
-            fi
+            git clone https://github.com/"$fork"/snipe-it "$webdir" || { echo >&2 "failed with $?"; exit 1; }
 
             # get latest stable release
             cd "$webdir" || exit
@@ -192,7 +184,7 @@ if [ -d "$webdir" ]; then #If webdir exists
             if [ -e "$backup"/"$name"/app/config/production/mail.php ]; then
                 cp "$backup"/"$name"/app/config/production/mail.php "$webdir"/app/config/production/
             fi
-            if compareVersions "$currentVersion" 2.1.0; then
+            if compareVersions "$currenttag" 2.1.0; then
                 echo "      Restoring ldap file."
                 if [ -e "$backup"/"$name"/app/config/production/ldap.php ]; then
                     cp "$backup"/"$name"/app/config/production/ldap.php "$webdir"/app/config/production/
