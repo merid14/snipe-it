@@ -210,6 +210,7 @@ if [ -d "$webdir" ]; then #If webdir exists
         # Change permissions on directories
         setupPermissions
         askDebug
+
         echo "##  Running composer to apply update."
         echo
         php composer.phar install --no-dev --prefer-source
