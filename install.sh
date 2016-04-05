@@ -21,6 +21,7 @@ mkdir -p "$tmpinstall"
 wget "$link"/snipeit.sh -P "$tmpinstall" 2>&1 | grep -i "failed\|error"
 wget "$link"/upgrade.sh -P "$tmpinstall" 2>&1 | grep -i "failed\|error"
 wget "$link"/functions.sh -P "$tmpinstall" 2>&1 | grep -i "failed\|error"
+echo "Press enter to continue."
 read test
 chmod -R 755 "$tmpinstall"
 . "$tmpinstall"/snipeit.sh 2>&1 | sudo tee -a /var/log/snipeit-install.log
