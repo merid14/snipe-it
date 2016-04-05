@@ -166,10 +166,40 @@ echo "  Welcome to Snipe-IT Inventory Installer for $supportedos!"
 echo
 }
 
+function askDebug ()
+{
+    #ask to disable debug if enabled.
+    ans=""
+    if grep -q true "$webdir"/app/config/production/app.php; then
+        until [[ $ans == "yes" ]] || [[ $ans == "no" ]]; do
+        echo -e -n "\e[33m  Q. Debugging is currently enabled. Would you like to disable? ([Y]/n) \e[0m"
+        read -r debug
+
+        shopt -s nocasematch
+        case $debug in
+            y | yes | "")
+                sed -i "s,true,false,g" "$webdir"/app/config/production/app.php
+                echo "    Debugging has been disabled."
+                ans="yes"
+                ;;
+            n | no )
+                echo -e "\e[31m    Debugging is still enabled. This is not reccomended unless\e[0m"
+                echo -e "\e[31m       you are having troubles with your install.\e[0m"
+                echo
+                ans="no"
+                ;;
+            *)
+                echo -e "\e[31m    Invalid answer. Please type y or n\e[0m"
+            ;;
+        esac
+        done
+    fi
+}
+
 function askFQDN ()
 {
     echo
-    echo -n "  Q. What is the FQDN of your server? ($fqdn): "
+    echo -e -n "\e[33m  Q. What is the FQDN of your server? ($fqdn): \e[0m"
     read -r fqdn
     if [ -z "$fqdn" ]; then
             fqdn="$(hostname --fqdn)"
@@ -181,7 +211,7 @@ function askFQDN ()
 function askDBuserpw ()
 {
     until [[ $ans == "yes" ]] || [[ $ans == "no" ]]; do
-    echo -n "  Q. Do you want to automatically create the snipe database user password? (y/n) "
+    echo -e -n "\e[33m  Q. Do you want to automatically create the snipe database user password? (y/n) \e[0m"
     read -r setpw
 
     shopt -s nocasematch
@@ -196,7 +226,8 @@ function askDBuserpw ()
             echo
             ans="no"
             ;;
-        *)      echo "    Invalid answer. Please type y or n"
+        *)
+            echo -e "\e[31m    Invalid answer. Please type y or n\e[0m"
         ;;
     esac
     done
@@ -298,7 +329,7 @@ function setupGitSnipeit ()
     if ! $(git checkout -b "$tag" origin/"$tag" >> "$log" 2>&1); then
     #     echo >&2 message
         if ! $(git checkout -b "$tag" "$tag" >> "$log" 2>&1); then
-             echo >&2 Failed to clone $tag
+             echo  -e >&2 "\e[31m  Failed to clone $tag.\e[0m"
              exit
         fi
     fi
@@ -360,20 +391,20 @@ esac
 function setupFiles ()
 {
     echo "##  Modifying the $si files necessary for a production environment."
-    echo "  Setting up Timezone."
+    echo " -- Setting up Timezone."
 
     sed -i "s,UTC,$tzone,g" "$webdir"/app/config/app.php
 
-    echo "  Setting up bootstrap file."
+    echo " -- Setting up bootstrap file."
     sed -i "s,www.yourserver.com,$hostname,g" "$webdir"/bootstrap/start.php
 
-    echo "  Setting up database file."
+    echo " -- Setting up database file."
     cp "$webdir"/app/config/production/database.example.php "$webdir"/app/config/production/database.php
     sed -i "s,snipeit_laravel,snipeit,g" "$webdir"/app/config/production/database.php
     sed -i "s,travis,snipeit,g" "$webdir"/app/config/production/database.php
     sed -i "s,password'  => '',password'  => '$mysqluserpw',g" "$webdir"/app/config/production/database.php
 
-    echo "  Setting up app file."
+    echo " -- Setting up app file."
     cp "$webdir"/app/config/production/app.example.php "$webdir"/app/config/production/app.php
     sed -i "s,https://production.yourserver.com,http://$fqdn,g" "$webdir"/app/config/production/app.php
     sed -i "s,Change_this_key_or_snipe_will_get_ya,$appkey,g" "$webdir"/app/config/production/app.php
@@ -401,7 +432,14 @@ echo >> "$dbsetup" "GRANT ALL PRIVILEGES ON snipeit.* TO snipeit@localhost IDENT
 
     echo "##  Input your MySQL/MariaDB root password  (blank if this is a fresh install): "
 ##  TODO add try fail without -p and then add -p
-    mysql -u root -p < "$dbsetup"
+    if mysql -u root < "$dbsetup";then
+        echo "  DB setup successful without password."
+    elif mysql -u root -p < "$dbsetup";then
+        echo "  DB setup successful with password."
+    else
+        echo "  DB setup failed"
+        exit
+    fi
 
     echo "##  Securing mariaDB server.";
     /usr/bin/mysql_secure_installation
@@ -449,12 +487,3 @@ function UpgradeSnipeit ()
     . "$tmpinstall"/upgrade.sh
 }
 
-function setupDebug ()
-{
-    if grep -q true "$webdir"/app/config/production/app.php; then
-
-        sed -i "s,false,true,g" "$webdir"/app/config/production/app.php
-    else
-        sed -i "s,false,true,g" "$webdir"/app/config/production/app.php
-    fi
-}

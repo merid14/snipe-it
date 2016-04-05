@@ -12,6 +12,7 @@ echo "##  Checking for  previous version of $si."
 
 if [ -d "$webdir" ]; then #If webdir exists
     cd "$webdir" || exit
+
     if [ -d "$gitdir" ]; then # If git directory exists
         if [ -z "$newtag" ]; then # If newtag is empty then get the latest release
             newtag=$(git tag | grep -v 'pre' | tail -1)
@@ -31,7 +32,7 @@ if [ -d "$webdir" ]; then #If webdir exists
             until [[ $ans == "yes" ]]; do
                 echo "##  Upgrading to Version: $newtag from Version: $currenttag"
                 echo ""
-                echo -n "  Q. Would you like to continue? (y/n) "
+                echo -e "\e[33m  Q. Would you like to continue? (y/n) \e[0m"
                 read -r cont
                 shopt -s nocasematch
                 case $cont in
@@ -91,8 +92,8 @@ if [ -d "$webdir" ]; then #If webdir exists
 
         else
             echo
-            echo -e "\e[31m    You are already on the latest version.\e[0m"
-            echo -e "\e[33m    Version: $currenttag\e[0m"
+            echo -e "\e[32m    You are already on the latest version.\e[0m"
+            echo -e "\e[32m    Version: $currenttag\e[0m"
             echo
             exit
         fi
@@ -208,7 +209,7 @@ if [ -d "$webdir" ]; then #If webdir exists
     fi
         # Change permissions on directories
         setupPermissions
-
+        askDebug
         echo "##  Running composer to apply update."
         echo
         php composer.phar install --no-dev --prefer-source
