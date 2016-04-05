@@ -448,3 +448,13 @@ function UpgradeSnipeit ()
 {
     . "$tmpinstall"/upgrade.sh
 }
+
+function setupDebug ()
+{
+    if grep -q true "$webdir"/app/config/production/app.php; then
+
+        sed -i "s,false,true,g" "$webdir"/app/config/production/app.php
+    else
+        sed -i "s,false,true,g" "$webdir"/app/config/production/app.php
+    fi
+}

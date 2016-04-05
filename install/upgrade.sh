@@ -18,7 +18,7 @@ if [ -d "$webdir" ]; then #If webdir exists
         fi
         currenttag="$(basename "$(git symbolic-ref HEAD)")"
 
-        echo "##  $si install found. Version: $currenttag"
+        echo -e "\e[33m##  $si install found. Version: $currenttag\e[0m"
 
         if compareVersions "$currenttag" "$newtag"; then ##TODO Strip "v" from version name to allow number calculation
 
@@ -90,8 +90,9 @@ if [ -d "$webdir" ]; then #If webdir exists
 
 
         else
-            echo "    You are already on the latest version."
-            echo "    Version: $currenttag"
+            echo
+            echo -e "\e[31m    You are already on the latest version.\e[0m"
+            echo -e "\e[33m    Version: $currenttag\e[0m"
             echo
             exit
         fi
@@ -102,7 +103,7 @@ if [ -d "$webdir" ]; then #If webdir exists
 
         #clone to tmp so we can check the latest version
         rm -rf "${tmp:?}"
-        git clone https://github.com/"$fork"/snipe-it "$tmp" || { echo >&2 "failed with $?"; exit 1; }
+        git clone -q https://github.com/"$fork"/snipe-it "$tmp" || { echo >&2 "failed with $?"; exit 1; }
 
         cd "$tmp" || exit
 
@@ -152,7 +153,7 @@ if [ -d "$webdir" ]; then #If webdir exists
             mysqldump "$name" > "$backup"/"$name".sql
 
             echo -n "##  Downloading Snipe-IT from github and put it in the web directory...";
-            git clone https://github.com/"$fork"/snipe-it "$webdir" || { echo >&2 "failed with $?"; exit 1; }
+            git clone -q https://github.com/"$fork"/snipe-it "$webdir" || { echo >&2 "failed with $?"; exit 1; }
 
             # get latest stable release
             cd "$webdir" || exit
@@ -160,37 +161,37 @@ if [ -d "$webdir" ]; then #If webdir exists
                 newtag=$(git tag | grep -v 'pre' | tail -1)
             fi
 
-            echo "    Installing version: $newtag"
+            echo "  -- Installing version: $newtag"
             git checkout -b "$newtag" "$newtag" >> "$log" 2>&1
 
             echo "##  Restoring files."
-            echo "      Restoring app config file."
+            echo "  -- Restoring app config file."
             if [ -e "$backup"/app.php ]; then
                 cp "$backup"/app.php "$webdir"/app/config/
             fi
-            echo "      Restoring app production file."
+            echo "  -- Restoring app production file."
             if [ -e "$backup"/"$name"/app/config/production/app.php ]; then
                 cp "$backup"/"$name"/app/config/production/app.php "$webdir"/app/config/production/
             fi
-            echo "      Restoring bootstrap file."
+            echo "  -- Restoring bootstrap file."
             if [ -e "$backup"/"$name"/bootstrap/start.php ]; then
                 cp "$backup"/"$name"/bootstrap/start.php "$webdir"/bootstrap/
             fi
-            echo "      Restoring database file."
+            echo "  -- Restoring database file."
             if [ -e "$backup"/"$name"/app/config/production/database.php ]; then
                 cp "$backup"/"$name"/app/config/production/database.php "$webdir"/app/config/production/
             fi
-            echo "      Restoring mail file."
+            echo "  -- Restoring mail file."
             if [ -e "$backup"/"$name"/app/config/production/mail.php ]; then
                 cp "$backup"/"$name"/app/config/production/mail.php "$webdir"/app/config/production/
             fi
             if compareVersions "$currenttag" 2.1.0; then
-                echo "      Restoring ldap file."
+                echo "  -- Restoring ldap file."
                 if [ -e "$backup"/"$name"/app/config/production/ldap.php ]; then
                     cp "$backup"/"$name"/app/config/production/ldap.php "$webdir"/app/config/production/
                 fi
             fi
-            echo "      Restoring composer files."
+            echo "  -- Restoring composer files."
             if [ -e "$backup"/"$name"/composer.phar ]; then
                 cp "$backup"/"$name"/composer.phar "$webdir"
             fi
@@ -198,8 +199,9 @@ if [ -d "$webdir" ]; then #If webdir exists
                 cp -r "$backup"/"$name"/vendor "$webdir"
             fi
         else
-            echo "    You are already on the latest version."
-            echo "    Version: $currenttag"
+            echo
+            echo -e "\e[31m    You are already on the latest version.\e[0m"
+            echo -e "\e[33m    Version: $currenttag\e[0m"
             echo
             exit
         fi
@@ -216,8 +218,8 @@ if [ -d "$webdir" ]; then #If webdir exists
         echo "Upgraded $si to version:$newtag from:$currenttag" >> "$log" 2>&1
 
         echo
-        echo "    You are now on Version $newtag of $si."
+        echo -e "\e[33m    You are now on Version $newtag of $si.\e[0m"
         exit
 else
-    echo "  ## No previous version of $si found."
+    echo -e "\e[31m  ## No previous version of $si found.\e[0m"
 fi
