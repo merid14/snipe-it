@@ -487,3 +487,51 @@ function UpgradeSnipeit ()
     . "$tmpinstall"/upgrade.sh
 }
 
+function askUpgradeConfirm ()
+{
+    until [[ $ans == "yes" ]]; do
+    echo -e "\e[33m##  Upgrading from Version: $currenttag to Version: $newtag  \e[0m"
+    echo
+    echo -e -n "\e[33m  Q. Would you like to continue? (y/n) \e[0m"
+    read -r cont
+    shopt -s nocasematch
+    case $cont in
+            y | yes )
+                echo "    Continuing with the upgrade process to version: $newtag."
+                echo
+                ans="yes"
+                ;;
+            n | no )
+                echo "  Exiting now!"
+                exit
+                ;;
+            *)
+                echo "    Invalid answer. Please type y or n"
+                ;;
+    esac
+    done
+}
+
+function setupBackup ()
+{
+    if [ -d "$backup" ]; then #if dir exists else create it
+        echo "  ##  Backup directory already exists, using it."
+        echo "    $backup"
+    else
+        echo "  ##  Setting up backup directory."
+        echo "    $backup"
+        mkdir -p "$backup"
+    fi
+
+    echo "  ##  Backing up app file."
+    cp -p "$webdir"/app/config/app.php "$backup"/
+
+    echo "  ##  Backing up database."
+    mysqldump "$name" > "$backup"/"$name".sql
+
+    if [ ! -d "$gitdir" ]; then # If this is a file copy conversion
+        echo "##  Backing up $si folder."
+        cp -R "$webdir" "$backup"/"$name"
+        rm -rf "${webdir:?}"
+    fi
+}
