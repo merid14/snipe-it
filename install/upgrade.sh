@@ -137,6 +137,7 @@ if [ -d "$webdir" ]; then #If webdir exists
         php composer.phar install --no-dev --prefer-source
         php composer.phar dump-autoload
 
+        ans=""
         until [[ $ans == "no" ]]; do
         php artisan migrate
         chkfail="$(tail -n 1 /home/wwahlstedt/test.log)" >> "$log" 2>&1
