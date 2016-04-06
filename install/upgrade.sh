@@ -7,7 +7,7 @@
 ans=""
 #cd "$webdir" ##TODO this needs to check if the dir exists first cant exit wihout breaking the script
 echo
-echo "##  Checking for  previous version of $si."
+echo "##  Checking for previous version of $si."
 
 
 if [ -d "$webdir" ]; then #If webdir exists
@@ -133,13 +133,35 @@ if [ -d "$webdir" ]; then #If webdir exists
 
         echo "##  Running composer to apply update."
         echo
+
         php composer.phar install --no-dev --prefer-source
         php composer.phar dump-autoload
-        php artisan migrate
 
-        echo
-        echo -e "\e[33m    You are now on Version $newtag of $si.\e[0m"
-        exit
+        until [[ $ans == "no" ]]; do
+        php artisan migrate
+        chkfail="$(tail -n 1 /home/wwahlstedt/test.log)" >> "$log" 2>&1
+        if grep -i "Cancelled!" <<< "$chkfail"; then
+            echo -e "\e[31m  ## Migrations Cancelled!\e[0m"
+            echo -e -n "\e[31m    Do you want to run migrations? (y/n) \e[0m"
+        read -r cont
+        fi
+        shopt -s nocasematch
+        case $cont in
+                y | yes )
+                    echo "Running migrations."
+                    ;;
+                n | no )
+                    ans="no"
+                    echo -e "\e[33m    You are now on Version $newtag of $si.\e[0m"
+                    echo -e "\e[33m     However migrations have to be run before using the software\e[0m"
+                    echo -e "\e[33m     Please run: php artisan migrate\e[0m"
+                    exit
+                    ;;
+                *)
+                    echo "    Invalid answer. Please type y or n"
+                    ;;
+        esac
+        done
 else
     echo -e "\e[31m  ## No previous version of $si found.\e[0m"
 fi

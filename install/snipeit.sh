@@ -60,7 +60,7 @@ showBanner
 shopt -s nocasematch
 case "$distro" in
     *Ubuntu*|*Debian*)
-        echo "  The installer has detected Ubuntu/Debian as the OS."
+        echo "##  The installer has detected Ubuntu/Debian as the OS."
         distro=ubuntu && echo "$distro" >> "$log" 2>&1
         webdir=/var/www/"$name"/ && echo "$webdir" >> "$log" 2>&1
         gitdir="$webdir/.git" && echo "$gitdir" >> "$log" 2>&1
@@ -70,7 +70,7 @@ case "$distro" in
         apachelog="/var/log/apache2" && echo "$apachelog" >> "$log" 2>&1
         ;;
     *centos*6*|*redhat*6*)
-        echo "  The installer has detected redhat/centos 6 as the OS."
+        echo "##  The installer has detected redhat/centos 6 as the OS."
         distro=centos6 && echo "$distro" >> "$log" 2>&1
         webdir=/var/www/html/"$name"/ && echo "$webdir" >> "$log" 2>&1
         gitdir="$webdir/.git" && echo "$gitdir" >> "$log" 2>&1
@@ -80,7 +80,7 @@ case "$distro" in
         apachelog="/var/log/httpd" && echo "$apachelog" >> "$log" 2>&1
         ;;
     *centos*7*|*redhat*7*)
-        echo "  The installer has detected redhat/centos 7 as the OS."
+        echo "##  The installer has detected redhat/centos 7 as the OS."
         distro=centos7 && echo "$distro" >> "$log" 2>&1
         webdir=/var/www/html/"$name"/ && echo "$webdir" >> "$log" 2>&1
         gitdir="$webdir/.git" && echo "$gitdir" >> "$log" 2>&1
