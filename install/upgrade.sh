@@ -23,52 +23,15 @@ if [ -d "$webdir" ]; then #If webdir exists
 
         if compareVersions "$currenttag" "$newtag"; then ##TODO Strip "v" from version name to allow number calculation
 
-            echo "##  Beginning the $si update process to version: $newtag"
+            echo -e "\e[32m##  Beginning the $si update process to version: $newtag\e[0m"
             echo ""
             echo "    By default we are pulling from the latest release."
             echo "    If you pulled from another branch/tag please upgrade manually."
             echo
-
-            until [[ $ans == "yes" ]]; do
-                echo "##  Upgrading to Version: $newtag from Version: $currenttag"
-                echo ""
-                echo -e "\e[33m  Q. Would you like to continue? (y/n) \e[0m"
-                read -r cont
-                shopt -s nocasematch
-                case $cont in
-                    y | yes )
-                        echo "  Continuing with the upgrade process to version: $newtag."
-                        echo
-                        ans="yes"
-                        ;;
-                    n | no )
-                        echo "  Exiting now!"
-                        exit
-                        ;;
-                    *)
-                        echo -e "\e[33m    Invalid answer. Please type y or n\e[0m"
-                        ;;
-                esac
-            done
-
-            if [ -d "$backup" ]; then #if dir exists else create it
-                echo "  ##  Backup directory already exists, using it."
-                echo "    $backup"
-            else
-                echo "  ##  Setting up backup directory."
-                echo "    $backup"
-                mkdir -p "$backup"
-            fi
-
-            echo "  ##  Backing up app file."
-            cp -p "$webdir"/app/config/app.php "$backup"/
-
-            echo "  ##  Backing up database."
-            mysqldump "$name" > "$backup"/"$name".sql
-
+            askUpgradeConfirm
+            setupBackup
             echo "  ##  Getting update."
 
-            ## run git update
             cd "$webdir" || exit
             set +e
             git add . >> "$log" 2>&1
@@ -81,15 +44,11 @@ if [ -d "$webdir" ]; then #If webdir exists
             echo "  ##  Cleaning cache and view directories."
             rm -rf "$webdir"/app/storage/cache/*
             rm -rf "$webdir"/app/storage/views/*
-
             # rm -rf "${$webdir:?}"/"${$name:?}"/app/storage/cache/*
             # rm -rf "${$webdir:?}"/"${$name:?}"/app/storage/views/*
 
-
             echo "  ##  Restoring app.php file."
             cp "$backup"/app.php "$webdir"/app/config/
-
-
         else
             echo
             echo -e "\e[32m    You are already on the latest version.\e[0m"
@@ -98,7 +57,7 @@ if [ -d "$webdir" ]; then #If webdir exists
             exit
         fi
     else  # Must be a file copy install
-        #get the current version
+
         echo -e "\e[33m##  Beginning conversion from copy file install to git install.\e[0m"
         currenttag="$(cat "$webdir"/app/config/version.php | grep app | awk -F "'" '{print $4}' | cut -f1 -d"-")"
 
@@ -107,53 +66,14 @@ if [ -d "$webdir" ]; then #If webdir exists
         git clone -q https://github.com/"$fork"/snipe-it "$tmp" || { echo >&2 "failed with $?"; exit 1; }
 
         cd "$tmp" || exit
-
         if [ -z "$newtag" ]; then # If newtag is empty then get the latest release
             newtag=$(git tag | grep -v 'pre' | tail -1)
         fi
         if compareVersions "$currenttag" "$newtag"; then
-            until [[ $ans == "yes" ]]; do
-            echo "##  Upgrading to Version: $newtag from Version: $currenttag"
-            echo
-            echo -e "\e[31m  Q. Would you like to continue? (y/n) \e[0m"
-            read -r cont
-            shopt -s nocasematch
-            case $cont in
-                    y | yes )
-                        echo "    Continuing with the upgrade process to version: $newtag."
-                        echo
-                        ans="yes"
-                        ;;
-                    n | no )
-                        echo "  Exiting now!"
-                        exit
-                        ;;
-                    *)
-                        echo "    Invalid answer. Please type y or n"
-                        ;;
-            esac
-            done
+            askUpgradeConfirm
+            setupBackup
 
-            if [ -d "$backup" ]; then #if dir does exist
-                echo "##  Backup directory already exists, using it."
-                echo "    $backup"
-            else
-                echo "##  Setting up backup directory."
-                echo "    $backup"
-                mkdir -p "$backup"
-            fi
-
-            echo "##  Backing up app file."
-            cp "$webdir"/app/config/app.php "$backup"
-
-            echo "##  Backing up $si folder."
-            cp -R "$webdir" "$backup"/"$name"
-            rm -rf "${webdir:?}"
-
-            echo "##  Backing up database."
-            mysqldump "$name" > "$backup"/"$name".sql
-
-            echo -n "##  Downloading Snipe-IT from github and put it in the web directory...";
+            echo "##  Downloading Snipe-IT from github and put it in the web directory...";
             git clone -q https://github.com/"$fork"/snipe-it "$webdir" || { echo >&2 "failed with $?"; exit 1; }
 
             # get latest stable release
@@ -216,8 +136,6 @@ if [ -d "$webdir" ]; then #If webdir exists
         php composer.phar install --no-dev --prefer-source
         php composer.phar dump-autoload
         php artisan migrate
-
-        echo "Upgraded $si to version:$newtag from:$currenttag" >> "$log" 2>&1
 
         echo
         echo -e "\e[33m    You are now on Version $newtag of $si.\e[0m"
