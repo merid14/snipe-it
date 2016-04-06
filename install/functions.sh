@@ -489,6 +489,7 @@ function UpgradeSnipeit ()
 
 function askUpgradeConfirm ()
 {
+    ans=""
     until [[ $ans == "yes" ]]; do
     echo -e "\e[33m##  Upgrading from Version: $currenttag to Version: $newtag  \e[0m"
     echo
@@ -510,7 +511,6 @@ function askUpgradeConfirm ()
                 ;;
     esac
     done
-    ans=""
 }
 
 function setupBackup ()
