@@ -510,6 +510,7 @@ function askUpgradeConfirm ()
                 ;;
     esac
     done
+    ans=""
 }
 
 function setupBackup ()
