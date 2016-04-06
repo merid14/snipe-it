@@ -46,7 +46,7 @@ if [ -d "$webdir" ]; then #If webdir exists
                         exit
                         ;;
                     *)
-                        echo "    Invalid answer. Please type y or n"
+                        echo -e "\e[33m    Invalid answer. Please type y or n\e[0m"
                         ;;
                 esac
             done
@@ -99,7 +99,7 @@ if [ -d "$webdir" ]; then #If webdir exists
         fi
     else  # Must be a file copy install
         #get the current version
-        echo -n "##  Beginning conversion from copy file install to git install."
+        echo -e "\e[33m##  Beginning conversion from copy file install to git install.\e[0m"
         currenttag="$(cat "$webdir"/app/config/version.php | grep app | awk -F "'" '{print $4}' | cut -f1 -d"-")"
 
         #clone to tmp so we can check the latest version
@@ -115,7 +115,7 @@ if [ -d "$webdir" ]; then #If webdir exists
             until [[ $ans == "yes" ]]; do
             echo "##  Upgrading to Version: $newtag from Version: $currenttag"
             echo
-            echo -n "  Q. Would you like to continue? (y/n) "
+            echo -e "\e[31m  Q. Would you like to continue? (y/n) \e[0m"
             read -r cont
             shopt -s nocasematch
             case $cont in
