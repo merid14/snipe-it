@@ -327,9 +327,9 @@ function setupGitTags ()
 
 function setupGetFiles ()
 {
-    if $method == "git"; then
+    if [ "$method" = "git" ]; then
         setupGitSnipeit
-    elif $method == "fc"; then
+    elif [ "$method" = "fc" ]; then
         setupFCSnipeit
     fi
 }
