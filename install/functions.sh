@@ -310,6 +310,15 @@ case "$distro" in
 esac
 }
 
+function setupGetFiles ()
+{
+    if $method == "git"; then
+        setupGitSnipeit
+    elif $method == "fc"; then
+        setupFCSnipeit
+    fi
+}
+
 function setupGitSnipeit ()
 {
     echo
@@ -335,6 +344,17 @@ function setupGitSnipeit ()
     fi
 
 }
+
+function setupFCSnipeit ()
+{
+    echo "##  Downloading snipeit and extract to web directory."
+
+    wget -P $tmp/ https://github.com/$fork/snipe-it/archive/"$file" >> "$log" 2>&1
+    unzip -qo $tmp/$file -d $tmp/
+    cp -R $tmp/snipe-it-$branch $webdir/$name
+}
+
+
 
 function setupApacheMods ()
 {
