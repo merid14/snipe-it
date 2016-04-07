@@ -475,7 +475,7 @@ echo >> "$dbsetup" "GRANT ALL PRIVILEGES ON snipeit.* TO snipeit@localhost IDENT
 # chown root:root "$dbsetup"
 # chmod 700 "$dbsetup"
     startMariadb
-
+##TODO: fix the error checking to handle a snipeit db already exists
     echo "##  Input your MySQL/MariaDB root password  (blank if this is a fresh install): "
     if mysql -u root < "$dbsetup";then
         echo " --  DB setup successful without password."
