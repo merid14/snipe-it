@@ -140,8 +140,8 @@ if [ -d "$webdir" ]; then #If webdir exists
         ans=""
         until [[ $ans == "no" ]]; do
         php artisan migrate
-        chkfail="$(tail -n 1 $log)" > /dev/null 2>&1
-        if grep -i "Cancelled!" <<< "$chkfail"; then
+        chkfail="$(tail -n 1 $log)"
+        if grep "Cancelled!" <<< "$chkfail" > /dev/null 2>&1; then
             echo -e "\e[31m  ## Migrations Cancelled!\e[0m"
             echo -e -n "\e[31m    Do you want to run migrations? (y/n) \e[0m"
         read -r cont

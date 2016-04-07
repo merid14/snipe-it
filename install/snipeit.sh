@@ -109,7 +109,7 @@ case "$distro" in
     debian|ubuntu)
         setupPackages
         startApache
-        setupGitSnipeit
+        setupGetFiles
         setupApacheMods
         setupApacheHost
         setupDB
@@ -122,7 +122,7 @@ case "$distro" in
     centos* )
         setupRepos
         setupPackages
-        setupGitSnipeit
+        setupGetFiles
         setupDB
         setupApacheHost
         startApache
