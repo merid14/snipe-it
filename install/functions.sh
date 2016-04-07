@@ -282,9 +282,9 @@ case "$distro" in
 
         for p in $PACKAGES;do
         if isinstalled "$p"; then
-            echo " ## $p Installed"
+            echo " -- $p Installed"
         else
-            echo -n " ## $p Installing... "
+            echo -n " -- $p Installing... "
             ShowProgressOf apt-get install -q -y "$p"
             echo
         fi
@@ -298,9 +298,9 @@ case "$distro" in
 
         for p in $PACKAGES;do
         if isinstalled "$p"; then
-            echo " ## $p Installed"
+            echo " -- $p Installed"
         else
-            echo -n " ## $p Installing... "
+            echo -n " -- $p Installing... "
             ShowProgressOf yum -y -q install "$p"
             echo
         fi

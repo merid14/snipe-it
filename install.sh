@@ -4,10 +4,12 @@ if [ "$(id -u)" != "0" ]; then
   exec sudo "$0" "$@"
 fi
 #  Set this to your github username and branch to pull your changes ** Only for Devs **
-#  Leave branch="" for latest release.
+#  Leave tag="" for latest release.
 fork="snipe"
 branch="master"
 tag=""
+method="git"
+
 while [[ "$@" > 1 ]]
 do
 # process arguments
@@ -65,6 +67,7 @@ arg="$1"
             ;;
         "--file-copy" )
             file="v"$branch".zip"
+            method="fc"
             shift # past argument=value
             echo "Using file-copy method"
             ;;
