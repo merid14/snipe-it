@@ -111,8 +111,8 @@ case "$distro" in
         startApache
         setupGetFiles
         setupApacheMods
-        setupApacheHost
         setupDB
+        setupApacheHost
         setupFiles
         setupComposer
         setupPermissions

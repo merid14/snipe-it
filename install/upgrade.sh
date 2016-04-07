@@ -21,10 +21,10 @@ if [ -d "$webdir" ]; then #If webdir exists
 
         if compareVersions "$currenttag" "$newtag"; then ##TODO Strip "v" from version name to allow number calculation
 
-            echo -e "\e[32m##  Beginning the $si update process to version: $newtag\e[0m"
+            echo -e "##  Beginning the $si update process"
             echo ""
-            echo "    By default we are pulling from the latest release."
-            echo "    If you pulled from another branch/tag please upgrade manually."
+            echo -e "\e[31m    By default we are pulling from the latest release.\e[0m"
+            echo -e "\e[31m    If you pulled from another branch/tag please upgrade manually.\e[0m"
             echo
             askUpgradeConfirm
             setupBackup
@@ -33,19 +33,19 @@ if [ -d "$webdir" ]; then #If webdir exists
             cd "$webdir" || exit
             set +e
             git add . >> "$log" 2>&1
-            git commit -m "Upgrading to $newtag from $currenttag" >> "$log" 2>&1
+            git commit -m "Upgrading from $currenttag to $newtag " >> "$log" 2>&1
             git stash >> "$log" 2>&1
             git checkout -b "$newtag" "$newtag" >> "$log" 2>&1
             git stash pop >> "$log" 2>&1
             set -e
 
-            echo "  --  Cleaning cache and view directories."
+            echo "##  Cleaning cache and view directories."
             rm -rf "$webdir"/app/storage/cache/*
             rm -rf "$webdir"/app/storage/views/*
             # rm -rf "${$webdir:?}"/"${$name:?}"/app/storage/cache/*
             # rm -rf "${$webdir:?}"/"${$name:?}"/app/storage/views/*
 
-            echo "  --  Restoring app.php file."
+            echo "##  Restoring app.php file."
             cp "$backup"/app.php "$webdir"/app/config/
         else
             echo
