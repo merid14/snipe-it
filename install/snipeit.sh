@@ -138,8 +138,10 @@ esac
 echo "##  Cleaning up..."
 rm -rf "${tmp:?}"
 rm -rf "${tmpinstall:?}"
+cd "$webdir"
+setupGitTags
 echo
-echo "Installed $si to version:$tag $date" >> "$log" 2>&1
+echo "Installed $si to version:$currenttag $date" >> "$log" 2>&1
 echo
 echo -e "\e[31m The mail configuration has not been setup.\e[0m"
 echo -e "\e[31m   To setup follow the docs here:\e[0m"

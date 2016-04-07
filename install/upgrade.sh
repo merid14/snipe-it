@@ -28,7 +28,7 @@ if [ -d "$webdir" ]; then #If webdir exists
             echo
             askUpgradeConfirm
             setupBackup
-            echo "  ##  Getting update."
+            echo "  --  Getting update."
 
             cd "$webdir" || exit
             set +e
@@ -39,13 +39,13 @@ if [ -d "$webdir" ]; then #If webdir exists
             git stash pop >> "$log" 2>&1
             set -e
 
-            echo "  ##  Cleaning cache and view directories."
+            echo "  --  Cleaning cache and view directories."
             rm -rf "$webdir"/app/storage/cache/*
             rm -rf "$webdir"/app/storage/views/*
             # rm -rf "${$webdir:?}"/"${$name:?}"/app/storage/cache/*
             # rm -rf "${$webdir:?}"/"${$name:?}"/app/storage/views/*
 
-            echo "  ##  Restoring app.php file."
+            echo "  --  Restoring app.php file."
             cp "$backup"/app.php "$webdir"/app/config/
         else
             echo
@@ -82,37 +82,37 @@ if [ -d "$webdir" ]; then #If webdir exists
                 newtag=$(git tag | grep -v 'pre' | tail -1)
             fi
 
-            echo "  -- Installing version: $newtag"
+            echo "  --  Installing version: $newtag"
             git checkout -b "$newtag" "$newtag" >> "$log" 2>&1
 
             echo "##  Restoring files."
-            echo "  -- Restoring app config file."
+            echo "  --  Restoring app config file."
             if [ -e "$backup"/app.php ]; then
                 cp "$backup"/app.php "$webdir"/app/config/
             fi
-            echo "  -- Restoring app production file."
+            echo "  --  Restoring app production file."
             if [ -e "$backup"/"$name"/app/config/production/app.php ]; then
                 cp "$backup"/"$name"/app/config/production/app.php "$webdir"/app/config/production/
             fi
-            echo "  -- Restoring bootstrap file."
+            echo "  --  Restoring bootstrap file."
             if [ -e "$backup"/"$name"/bootstrap/start.php ]; then
                 cp "$backup"/"$name"/bootstrap/start.php "$webdir"/bootstrap/
             fi
-            echo "  -- Restoring database file."
+            echo "  --  Restoring database file."
             if [ -e "$backup"/"$name"/app/config/production/database.php ]; then
                 cp "$backup"/"$name"/app/config/production/database.php "$webdir"/app/config/production/
             fi
-            echo "  -- Restoring mail file."
+            echo "  --  Restoring mail file."
             if [ -e "$backup"/"$name"/app/config/production/mail.php ]; then
                 cp "$backup"/"$name"/app/config/production/mail.php "$webdir"/app/config/production/
             fi
             if compareVersions "$currenttag" 2.1.0; then
-                echo "  -- Restoring ldap file."
+                echo "  --  Restoring ldap file."
                 if [ -e "$backup"/"$name"/app/config/production/ldap.php ]; then
                     cp "$backup"/"$name"/app/config/production/ldap.php "$webdir"/app/config/production/
                 fi
             fi
-            echo "  -- Restoring composer files."
+            echo "  --  Restoring composer files."
             if [ -e "$backup"/"$name"/composer.phar ]; then
                 cp "$backup"/"$name"/composer.phar "$webdir"
             fi
@@ -142,8 +142,8 @@ if [ -d "$webdir" ]; then #If webdir exists
         php artisan migrate
         chkfail="$(tail -n 1 $log)"
         if grep "Cancelled!" <<< "$chkfail" > /dev/null 2>&1; then
-            echo -e "\e[31m  ## Migrations Cancelled!\e[0m"
-            echo -e -n "\e[31m    Do you want to run migrations? (y/n) \e[0m"
+            echo -e "\e[31m  --  Migrations Cancelled!\e[0m"
+            echo -e -n "\e[31m    Q. Do you want to run migrations? (y/n) \e[0m"
         read -r cont
         fi
         shopt -s nocasematch
@@ -164,5 +164,5 @@ if [ -d "$webdir" ]; then #If webdir exists
         esac
         done
 else
-    echo -e "\e[31m  ## No previous version of $si found.\e[0m"
+    echo -e "\e[31m  --  No previous version of $si found.\e[0m"
 fi
