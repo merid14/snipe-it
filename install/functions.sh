@@ -183,7 +183,7 @@ function askDebug ()
         case $debug in
             y | yes | "")
                 sed -i "s,true,false,g" "$webdir"/app/config/production/app.php
-                echo "  --   Debugging has been disabled."
+                echo "  --  Debugging has been disabled."
                 ans="yes"
                 ;;
             n | no )
@@ -193,7 +193,7 @@ function askDebug ()
                 ans="no"
                 ;;
             *)
-                echo -e "\e[31m    Invalid answer. Please type y or n\e[0m"
+                echo -e "\e[31m --  Invalid answer. Please type y or n\e[0m"
             ;;
         esac
         done
@@ -208,7 +208,7 @@ function askFQDN ()
     if [ -z "$fqdn" ]; then
             fqdn="$(hostname --fqdn)"
     fi
-    echo "  --   Setting to $fqdn"
+    echo "  --  Setting to $fqdn"
     echo
 }
 
@@ -245,9 +245,9 @@ function setupRepos ()
     echo
     echo "##  Adding IUS, Epel and MariaDB repos.";
 
-    echo -n " --   MariaDB Repo"
+    echo " --  MariaDB Repo"
     if [ -f "$mariadbRepo" ]; then
-        echo "    --   Repo already exists. $apachefile"
+        echo "    --  Repo already exists. $apachefile"
     else
         touch "$mariadbRepo"
         echo >> "$mariadbRepo" "[mariadb]"
@@ -258,9 +258,9 @@ function setupRepos ()
         echo >> "$mariadbRepo" "enable=1"
     fi
 
-    echo -n " --   Epel Repo"
+    echo -n " --  Epel Repo"
     ShowProgressOf yum -y -q install wget epel-release
-    echo -n " --   IUS Repo"
+    echo -n " --  IUS Repo"
     ShowProgressOf wget -P "$tmp"/ https://"$distro".iuscommunity.org/ius-release.rpm
     ShowProgressOf rpm -Uvh "$tmp"/ius-release*.rpm
 
@@ -353,7 +353,7 @@ function setupGitSnipeit ()
     if [ -z "$tag" ]; then
         tag="$(git tag | grep -v 'pre' | tail -1)"
     fi
-    echo "    Installing version: $tag"
+    echo " --  Installing version: $tag"
     if ! $(git checkout -b "$tag" origin/"$tag" >> "$log" 2>&1); then
     #     echo >&2 message
         if ! $(git checkout -b "$tag" "$tag" >> "$log" 2>&1); then
@@ -404,7 +404,7 @@ esac
 
     echo "##  Creating the new virtual host in Apache.";
     if [ -f "$apachefile" ]; then
-        echo "    VirtualHost already exists. $apachefile"
+        echo " --  VirtualHost already exists. $apachefile"
     else
         echo "##  Setting up $si virtual host."
         echo >> "$apachefile" ""
@@ -443,13 +443,13 @@ function setupFiles ()
         echo " --  Setting up bootstrap file."
         sed -i "s,www.yourserver.com,$hostname,g" "$webdir"/bootstrap/start.php
 
-        echo " -- Setting up database file."
+        echo " --  Setting up database file."
         cp "$webdir"/app/config/production/database.example.php "$webdir"/app/config/production/database.php
         sed -i "s,snipeit_laravel,snipeit,g" "$webdir"/app/config/production/database.php
         sed -i "s,travis,snipeit,g" "$webdir"/app/config/production/database.php
         sed -i "s,password'  => '',password'  => '$mysqluserpw',g" "$webdir"/app/config/production/database.php
 
-        echo " -- Setting up app file."
+        echo " --  Setting up app file."
         cp "$webdir"/app/config/production/app.example.php "$webdir"/app/config/production/app.php
         sed -i "s,https://production.yourserver.com,http://$fqdn,g" "$webdir"/app/config/production/app.php
         sed -i "s,Change_this_key_or_snipe_will_get_ya,$appkey,g" "$webdir"/app/config/production/app.php
@@ -480,7 +480,6 @@ echo >> "$dbsetup" "GRANT ALL PRIVILEGES ON snipeit.* TO snipeit@localhost IDENT
     elif mysql -u root -p < "$dbsetup";then
         echo "  --  DB setup successful with password."
     else
-        echo "  DB setup failed"
         echo -e "\e[31m  --  DB setup failed.\e[0m"
         exit
     fi
@@ -560,22 +559,22 @@ function askUpgradeConfirm ()
 function setupBackup ()
 {
     if [ -d "$backup" ]; then #if dir exists else create it
-        echo "  ##  Backup directory already exists, using it."
+        echo "  --  Backup directory already exists, using it."
         echo "    $backup"
     else
-        echo "  ##  Setting up backup directory."
+        echo "  --  Setting up backup directory."
         echo "    $backup"
         mkdir -p "$backup"
     fi
 
-    echo "  ##  Backing up app file."
+    echo "  --  Backing up app file."
     cp -p "$webdir"/app/config/app.php "$backup"/
 
-    echo "  ##  Backing up database."
+    echo "  --  Backing up database."
     mysqldump "$name" > "$backup"/"$name".sql
 
     if [ ! -d "$gitdir" ]; then # If this is a file copy conversion
-        echo "##  Backing up $si folder."
+        echo "  --  Backing up $si folder."
         cp -R "$webdir" "$backup"/"$name"
         rm -rf "${webdir:?}"
     fi
