@@ -427,8 +427,9 @@ function setupFiles ()
     setupGitTags
     if compareVersions "$newtag" 2.9; then
         if compareVersions "$currenttag" 2.9; then
-        echo "It's v3!"
-        exit
+            echo "It's v3!"
+            exit
+        fi
     else
         echo "##  Modifying the $si files necessary for a production environment."
         echo " -- Setting up Timezone."
