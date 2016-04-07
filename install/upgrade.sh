@@ -164,5 +164,5 @@ if [ -d "$webdir" ]; then #If webdir exists
         esac
         done
 else
-    echo -e "\e[31m  --  No previous version of $si found.\e[0m"
+    echo -e "\e[31m --  No previous version of $si found. Continuing...\e[0m"
 fi

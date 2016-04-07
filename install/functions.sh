@@ -208,7 +208,7 @@ function askFQDN ()
     if [ -z "$fqdn" ]; then
             fqdn="$(hostname --fqdn)"
     fi
-    echo "  --  Setting to $fqdn"
+    echo "      Setting to $fqdn"
     echo
 }
 
@@ -225,7 +225,7 @@ function askDBuserpw ()
             ans="yes"
             ;;
         n | no )
-            echo -n  "   Q. What do you want your snipeit user password to be?"
+            echo -e -n "\e[33m   Q. What do you want your snipeit user password to be?\e[0m"
             read -sr mysqluserpw
             echo
             ans="no"
@@ -247,7 +247,7 @@ function setupRepos ()
 
     echo " --  MariaDB Repo"
     if [ -f "$mariadbRepo" ]; then
-        echo "    --  Repo already exists. $apachefile"
+        echo "  --  Repo already exists. $apachefile"
     else
         touch "$mariadbRepo"
         echo >> "$mariadbRepo" "[mariadb]"
@@ -431,9 +431,11 @@ function setupFiles ()
     setupGitTags
     if compareVersions "$newtag" 2.9; then
         if compareVersions "$currenttag" 2.9; then
-            echo "It's v3!"
+            echo "  It's v3!"
+            echo "  Current tag: $currenttag"
             exit
         fi
+    echo "  New Tag: $newtag"
     else
         echo "##  Modifying the $si files necessary for a production environment."
         echo " --  Setting up Timezone."
@@ -476,11 +478,11 @@ echo >> "$dbsetup" "GRANT ALL PRIVILEGES ON snipeit.* TO snipeit@localhost IDENT
 
     echo "##  Input your MySQL/MariaDB root password  (blank if this is a fresh install): "
     if mysql -u root < "$dbsetup";then
-        echo "  --  DB setup successful without password."
+        echo " --  DB setup successful without password."
     elif mysql -u root -p < "$dbsetup";then
-        echo "  --  DB setup successful with password."
+        echo " --  DB setup successful with password."
     else
-        echo -e "\e[31m  --  DB setup failed.\e[0m"
+        echo -e "\e[31m --  DB setup failed.\e[0m"
         exit
     fi
 
