@@ -133,6 +133,7 @@ esac
 
 function startMariadb ()
 {
+echo "##  Starting the MariaDB server.";
 shopt -s nocasematch
 case "$distro" in
     *Ubuntu*|*Debian*)
@@ -182,7 +183,7 @@ function askDebug ()
         case $debug in
             y | yes | "")
                 sed -i "s,true,false,g" "$webdir"/app/config/production/app.php
-                echo "    Debugging has been disabled."
+                echo "  --   Debugging has been disabled."
                 ans="yes"
                 ;;
             n | no )
@@ -207,7 +208,7 @@ function askFQDN ()
     if [ -z "$fqdn" ]; then
             fqdn="$(hostname --fqdn)"
     fi
-    echo "     Setting to $fqdn"
+    echo "  --   Setting to $fqdn"
     echo
 }
 
@@ -224,7 +225,7 @@ function askDBuserpw ()
             ans="yes"
             ;;
         n | no )
-            echo -n  "    Q. What do you want your snipeit user password to be?"
+            echo -n  "   Q. What do you want your snipeit user password to be?"
             read -sr mysqluserpw
             echo
             ans="no"
@@ -242,10 +243,11 @@ function askDBuserpw ()
 function setupRepos ()
 {
     echo
-    echo "##  Adding IUS, epel-release and mariaDB repos.";
+    echo "##  Adding IUS, Epel and MariaDB repos.";
 
+    echo -n " --   MariaDB Repo"
     if [ -f "$mariadbRepo" ]; then
-        echo "    Repo already exists. $apachefile"
+        echo "    --   Repo already exists. $apachefile"
     else
         touch "$mariadbRepo"
         echo >> "$mariadbRepo" "[mariadb]"
@@ -256,7 +258,9 @@ function setupRepos ()
         echo >> "$mariadbRepo" "enable=1"
     fi
 
+    echo -n " --   Epel Repo"
     ShowProgressOf yum -y -q install wget epel-release
+    echo -n " --   IUS Repo"
     ShowProgressOf wget -P "$tmp"/ https://"$distro".iuscommunity.org/ius-release.rpm
     ShowProgressOf rpm -Uvh "$tmp"/ius-release*.rpm
 
@@ -282,9 +286,9 @@ case "$distro" in
 
         for p in $PACKAGES;do
         if isinstalled "$p"; then
-            echo " -- $p Installed"
+            echo " --  $p Installed"
         else
-            echo -n " -- $p Installing... "
+            echo -n " --  $p Installing... "
             ShowProgressOf apt-get install -q -y "$p"
             echo
         fi
@@ -298,9 +302,9 @@ case "$distro" in
 
         for p in $PACKAGES;do
         if isinstalled "$p"; then
-            echo " -- $p Installed"
+            echo " --  $p Installed"
         else
-            echo -n " -- $p Installing... "
+            echo -n " --  $p Installing... "
             ShowProgressOf yum -y -q install "$p"
             echo
         fi
@@ -432,11 +436,11 @@ function setupFiles ()
         fi
     else
         echo "##  Modifying the $si files necessary for a production environment."
-        echo " -- Setting up Timezone."
+        echo " --  Setting up Timezone."
 
         sed -i "s,UTC,$tzone,g" "$webdir"/app/config/app.php
 
-        echo " -- Setting up bootstrap file."
+        echo " --  Setting up bootstrap file."
         sed -i "s,www.yourserver.com,$hostname,g" "$webdir"/bootstrap/start.php
 
         echo " -- Setting up database file."
@@ -468,17 +472,16 @@ echo >> "$dbsetup" "GRANT ALL PRIVILEGES ON snipeit.* TO snipeit@localhost IDENT
 # I dont think we need this anymore?
 # chown root:root "$dbsetup"
 # chmod 700 "$dbsetup"
-
-    echo "##  Starting the mariaDB server.";
     startMariadb
 
     echo "##  Input your MySQL/MariaDB root password  (blank if this is a fresh install): "
     if mysql -u root < "$dbsetup";then
-        echo "  DB setup successful without password."
+        echo "  --  DB setup successful without password."
     elif mysql -u root -p < "$dbsetup";then
-        echo "  DB setup successful with password."
+        echo "  --  DB setup successful with password."
     else
         echo "  DB setup failed"
+        echo -e "\e[31m  --  DB setup failed.\e[0m"
         exit
     fi
 
