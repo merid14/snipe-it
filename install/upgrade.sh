@@ -14,11 +14,11 @@ if [ -d "$webdir" ]; then #If webdir exists
     cd "$webdir" || exit
 
     if [ -d "$gitdir" ]; then # If git directory exists
-        if [ -z "$newtag" ]; then # If newtag is empty then get the latest release
-            newtag=$(git tag | grep -v 'pre' | tail -1)
-        fi
-        currenttag="$(basename "$(git symbolic-ref HEAD)")"
-
+        # if [ -z "$newtag" ]; then # If newtag is empty then get the latest release
+        #     newtag=$(git tag | grep -v 'pre' | tail -1)
+        # fi
+        # currenttag="$(basename "$(git symbolic-ref HEAD)")"
+        setupGitTags
         echo -e "\e[33m##  $si install found. Version: $currenttag\e[0m"
 
         if compareVersions "$currenttag" "$newtag"; then ##TODO Strip "v" from version name to allow number calculation
@@ -59,16 +59,18 @@ if [ -d "$webdir" ]; then #If webdir exists
     else  # Must be a file copy install
 
         echo -e "\e[33m##  Beginning conversion from copy file install to git install.\e[0m"
-        currenttag="$(cat "$webdir"/app/config/version.php | grep app | awk -F "'" '{print $4}' | cut -f1 -d"-")"
+        # currenttag="$(cat "$webdir"/app/config/version.php | grep app | awk -F "'" '{print $4}' | cut -f1 -d"-")"
+        setupGitTags
 
         #clone to tmp so we can check the latest version
         rm -rf "${tmp:?}"
         git clone -q https://github.com/"$fork"/snipe-it "$tmp" || { echo >&2 "failed with $?"; exit 1; }
 
         cd "$tmp" || exit
-        if [ -z "$newtag" ]; then # If newtag is empty then get the latest release
-            newtag=$(git tag | grep -v 'pre' | tail -1)
-        fi
+        # if [ -z "$newtag" ]; then # If newtag is empty then get the latest release
+        #     newtag=$(git tag | grep -v 'pre' | tail -1)
+        # fi
+        setupGitTags
         if compareVersions "$currenttag" "$newtag"; then
             askUpgradeConfirm
             setupBackup

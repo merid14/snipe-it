@@ -46,6 +46,9 @@ esac
 }
 
 ## TODO: add handleing of word based branches.
+# Useage compareVersions $var1 > $var2
+# example compareVersions 3 1
+#           return true
 function compareVersions ()
 {
     if [[ "$1" == "$2" ]]; then
@@ -66,7 +69,7 @@ function compareVersions ()
             return 1
         fi
         if ((10#${version1[i]} < 10#${version2[i]})); then
-            return 0
+            return 0 #
         fi
     done
     return 2
@@ -310,6 +313,18 @@ case "$distro" in
 esac
 }
 
+function setupGitTags ()
+{
+    if [ -d ".git" ]; then # If git directory exists
+        if [ -z "$newtag" ]; then # If newtag is empty then get the latest release
+            newtag=$(git tag | grep -v 'pre' | tail -1)
+        fi
+        currenttag="$(basename "$(git symbolic-ref HEAD)")"
+    else  # Must be a file copy install
+        currenttag="$(cat "$webdir"/app/config/version.php | grep app | awk -F "'" '{print $4}' | cut -f1 -d"-")"
+    fi
+}
+
 function setupGetFiles ()
 {
     if $method == "git"; then
@@ -354,8 +369,6 @@ function setupFCSnipeit ()
     cp -R $tmp/snipe-it-$branch $webdir/$name
 }
 
-
-
 function setupApacheMods ()
 {
     echo "##  Enabling mcrypt and rewrite"
@@ -363,6 +376,7 @@ function setupApacheMods ()
     a2enmod rewrite >> "$log" 2>&1
     ls -al /etc/apache2/mods-enabled/rewrite.load >> "$log" 2>&1
 }
+
 function setupApacheHost ()
 {
 shopt -s nocasematch
@@ -410,31 +424,38 @@ esac
 
 function setupFiles ()
 {
-    echo "##  Modifying the $si files necessary for a production environment."
-    echo " -- Setting up Timezone."
+    setupGitTags
+    if compareVersions "$newtag" 2.9; then
+        if compareVersions "$currenttag" 2.9; then
+        echo "It's v3!"
+        exit
+    else
+        echo "##  Modifying the $si files necessary for a production environment."
+        echo " -- Setting up Timezone."
 
-    sed -i "s,UTC,$tzone,g" "$webdir"/app/config/app.php
+        sed -i "s,UTC,$tzone,g" "$webdir"/app/config/app.php
 
-    echo " -- Setting up bootstrap file."
-    sed -i "s,www.yourserver.com,$hostname,g" "$webdir"/bootstrap/start.php
+        echo " -- Setting up bootstrap file."
+        sed -i "s,www.yourserver.com,$hostname,g" "$webdir"/bootstrap/start.php
 
-    echo " -- Setting up database file."
-    cp "$webdir"/app/config/production/database.example.php "$webdir"/app/config/production/database.php
-    sed -i "s,snipeit_laravel,snipeit,g" "$webdir"/app/config/production/database.php
-    sed -i "s,travis,snipeit,g" "$webdir"/app/config/production/database.php
-    sed -i "s,password'  => '',password'  => '$mysqluserpw',g" "$webdir"/app/config/production/database.php
+        echo " -- Setting up database file."
+        cp "$webdir"/app/config/production/database.example.php "$webdir"/app/config/production/database.php
+        sed -i "s,snipeit_laravel,snipeit,g" "$webdir"/app/config/production/database.php
+        sed -i "s,travis,snipeit,g" "$webdir"/app/config/production/database.php
+        sed -i "s,password'  => '',password'  => '$mysqluserpw',g" "$webdir"/app/config/production/database.php
 
-    echo " -- Setting up app file."
-    cp "$webdir"/app/config/production/app.example.php "$webdir"/app/config/production/app.php
-    sed -i "s,https://production.yourserver.com,http://$fqdn,g" "$webdir"/app/config/production/app.php
-    sed -i "s,Change_this_key_or_snipe_will_get_ya,$appkey,g" "$webdir"/app/config/production/app.php
+        echo " -- Setting up app file."
+        cp "$webdir"/app/config/production/app.example.php "$webdir"/app/config/production/app.php
+        sed -i "s,https://production.yourserver.com,http://$fqdn,g" "$webdir"/app/config/production/app.php
+        sed -i "s,Change_this_key_or_snipe_will_get_ya,$appkey,g" "$webdir"/app/config/production/app.php
 
-    # uncomment to enable debug
-    #sed -i "s,false,true,g" "$webdir"/app/config/production/app.php
+        # uncomment to enable debug
+        #sed -i "s,false,true,g" "$webdir"/app/config/production/app.php
 
-    # we dont need to do this right now, will implement mail config later
-    # echo "  Setting up mail file."
-    # cp "$webdir"/app/config/production/mail.example.php "$webdir"/app/config/production/mail.php
+        # we dont need to do this right now, will implement mail config later
+        # echo "  Setting up mail file."
+        # cp "$webdir"/app/config/production/mail.example.php "$webdir"/app/config/production/mail.php
+    fi
 }
 
 function setupDB ()
@@ -451,7 +472,6 @@ echo >> "$dbsetup" "GRANT ALL PRIVILEGES ON snipeit.* TO snipeit@localhost IDENT
     startMariadb
 
     echo "##  Input your MySQL/MariaDB root password  (blank if this is a fresh install): "
-##  TODO add try fail without -p and then add -p
     if mysql -u root < "$dbsetup";then
         echo "  DB setup successful without password."
     elif mysql -u root -p < "$dbsetup";then
