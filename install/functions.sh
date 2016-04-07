@@ -247,7 +247,7 @@ function setupRepos ()
 
     echo " --  MariaDB Repo"
     if [ -f "$mariadbRepo" ]; then
-        echo "  --  Repo already exists. $apachefile"
+        echo "      Repo already exists. $apachefile"
     else
         touch "$mariadbRepo"
         echo >> "$mariadbRepo" "[mariadb]"
@@ -429,8 +429,8 @@ esac
 function setupFiles ()
 {
     setupGitTags
-    if compareVersions "$newtag" 2.9; then
-        if compareVersions "$currenttag" 2.9; then
+    if compareVersions "$newtag" v2.9; then
+        if compareVersions "$currenttag" v2.9; then
             echo "  It's v3!"
             echo "  Current tag: $currenttag"
             exit
@@ -488,6 +488,7 @@ echo >> "$dbsetup" "GRANT ALL PRIVILEGES ON snipeit.* TO snipeit@localhost IDENT
 
     echo "##  Securing mariaDB server.";
     /usr/bin/mysql_secure_installation
+    echo
 }
 
 function setupPermissions ()
@@ -536,14 +537,13 @@ function askUpgradeConfirm ()
 {
     ans=""
     until [[ $ans == "yes" ]]; do
-    echo -e "\e[33m##  Upgrading from Version: $currenttag to Version: $newtag  \e[0m"
-    echo
+    echo -e "\e[32m##  Upgrading from Version: $currenttag to Version: $newtag  \e[0m"
     echo -e -n "\e[33m  Q. Would you like to continue? (y/n) \e[0m"
     read -r cont
     shopt -s nocasematch
     case $cont in
             y | yes )
-                echo "    Continuing with the upgrade process to version: $newtag."
+                echo "      Continuing with the upgrade process to version: $newtag."
                 echo
                 ans="yes"
                 ;;
@@ -552,7 +552,7 @@ function askUpgradeConfirm ()
                 exit
                 ;;
             *)
-                echo "    Invalid answer. Please type y or n"
+                echo "      Invalid answer. Please type y or n"
                 ;;
     esac
     done
@@ -560,11 +560,11 @@ function askUpgradeConfirm ()
 
 function setupBackup ()
 {
+    echo "##  Setting up backup directory."
     if [ -d "$backup" ]; then #if dir exists else create it
         echo "  --  Backup directory already exists, using it."
         echo "    $backup"
     else
-        echo "  --  Setting up backup directory."
         echo "    $backup"
         mkdir -p "$backup"
     fi
