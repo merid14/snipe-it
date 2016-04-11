@@ -231,7 +231,7 @@ function askDBuserpw ()
             ans="no"
             ;;
         *)
-            echo -e "\e[31m    Invalid answer. Please type y or n\e[0m"
+            echo -e "\e[31m      Invalid answer. Please type y or n\e[0m"
         ;;
     esac
     done
@@ -349,7 +349,7 @@ function setupGitSnipeit ()
     # if [ ! -d "$webdir" ]; then
     #     mkdir -p "$webdir"
     # fi
-    cd "$webdir" || exit
+    cd "$webdir" || rollbackExit
     if [ -z "$tag" ]; then
         tag="$(git tag | grep -v 'pre' | tail -1)"
     fi
@@ -358,10 +358,10 @@ function setupGitSnipeit ()
     #     echo >&2 message
         if ! $(git checkout -b "$tag" "$tag" >> "$log" 2>&1); then
              echo  -e >&2 "\e[31m  Failed to clone $tag.\e[0m"
-             exit
+             rollbackExit
         fi
     fi
-
+    echo
 }
 
 function setupFCSnipeit ()
@@ -393,7 +393,7 @@ case "$distro" in
         ;;
     *)
         echo -e "\e[31m  Failed to find the apache version.\e[0m"
-        exit
+        rollbackExit
         ;;
 esac
     if [ "$apacheversion" ]; then
@@ -405,8 +405,8 @@ esac
     echo "##  Creating the new virtual host in Apache.";
     if [ -f "$apachefile" ]; then
         echo " --  VirtualHost already exists. $apachefile"
+        echo
     else
-        echo "##  Setting up $si virtual host."
         echo >> "$apachefile" ""
         echo >> "$apachefile" ""
 ##TODO Grep if exists        echo >> $apachefile "LoadModule rewrite_module modules/mod_rewrite.so"
@@ -429,11 +429,11 @@ esac
 function setupFiles ()
 {
     setupGitTags
-    if compareVersions "$newtag" v2.9; then
-        if compareVersions "$currenttag" v2.9; then
+    if compareVersions "3" "$newtag"; then
+        if compareVersions "3" "$currenttag"; then
             echo "  It's v3!"
             echo "  Current tag: $currenttag"
-            exit
+            rollbackExit
         fi
     echo "  New Tag: $newtag"
     else
@@ -467,28 +467,95 @@ function setupFiles ()
 
 function setupDB ()
 {
-    echo "##  Setting up your database."
-#store dbsetup in var instead of file
+stoploop=""
+
 echo >> "$dbsetup" "CREATE DATABASE snipeit;"
 echo >> "$dbsetup" "GRANT ALL PRIVILEGES ON snipeit.* TO snipeit@localhost IDENTIFIED BY '$mysqluserpw';"
+
+
+startMariadb
+echo "##  Setting up your database."
+if mysql -u root < "$dbsetup";then
+    echo " --  DB setup successful without password."
+else
+    echo "##  Input your MySQL/MariaDB root password: "
+    if mysql -u root -p < "$dbsetup";then
+        echo " --  DB setup successful with password."
+    else
+    stoploop=""
+    until [[ $stoploop == "stop" ]]; do
+        echo -e "\e[31m --  Wrong Password!\e[0m"
+        echo -n "   Q. Enter MySQL/MariaDB root password:"
+        read -sr mysqlrootpw
+        result="$(mysql -u root -p"$mysqlrootpw" -e 'use snipeit' 2>&1)"
+
+        if grep "1049" <<< "$result" > /dev/null 2>&1; then
+            echo "database missing pw"
+            mysql -u root -p"$mysqlrootpw" < "$dbsetup"
+        elif grep "1045" <<< "$result" > /dev/null 2>&1; then
+            echo  "wrong password pw"
+        else
+            stoploop="stop"
+        fi
+    done
+    fi
+fi
+echo
+echo "##  Securing mariaDB server.";
+/usr/bin/mysql_secure_installation
+echo
+
+
+#     echo "##  Setting up your database."
+#     if mysql -u root < "$dbsetup";then
+#         echo " --  DB setup successful without password."
+#     else
+#         echo "##  Input your MySQL/MariaDB root password: "
+#         if mysql -u root -p < "$dbsetup";then
+#             echo " --  DB setup successful with password."
+#         else
+#             echo -e "\e[31m --  DB setup failed.\e[0m"
+#             exit
+#         fi
+#     fi
+
+# result="$(mysql -u root -e 'use snipeit' 2>&1)"
+# if grep "1049" <<< "$result" > /dev/null 2>&1; then
+#     echo database missing no pw
+#     mysql -u root < "$dbsetup"
+#     stoploop="stop"
+# elif grep "1045" <<< "$result" > /dev/null 2>&1; then
+#     echo wrong password no pw
+#     echo -n "   Q. Enter MySQL root password?"
+#     read -sr mysqlrootpw
+#     result="$(mysql -u root -p"$mysqlrootpw" -e 'use snipeit' 2>&1)"
+
+# elif grep "1049" <<< "$result" > /dev/null 2>&1; then
+#     echo database missing pw
+#     mysql -u root -p"$mysqlrootpw" < "$dbsetup"
+#     stoploop="stop"
+# elif grep "1045" <<< "$result" > /dev/null 2>&1; then
+#     echo  wrong password pw
+# fi
+
 # I dont think we need this anymore?
 # chown root:root "$dbsetup"
 # chmod 700 "$dbsetup"
-    startMariadb
-##TODO: fix the error checking to handle a snipeit db already exists
-    echo "##  Input your MySQL/MariaDB root password  (blank if this is a fresh install): "
-    if mysql -u root < "$dbsetup";then
-        echo " --  DB setup successful without password."
-    elif mysql -u root -p < "$dbsetup";then
-        echo " --  DB setup successful with password."
-    else
-        echo -e "\e[31m --  DB setup failed.\e[0m"
-        exit
-    fi
-
-    echo "##  Securing mariaDB server.";
-    /usr/bin/mysql_secure_installation
-    echo
+#     startMariadb
+# ##TODO: fix the error checking to handle a snipeit db already exists
+#     echo "##  Input your MySQL/MariaDB root password  (blank if this is a fresh install): "
+#     if ;then
+#         echo " --  DB setup successful without password."
+#     elif mysql -u root -p < "$dbsetup";then
+#         echo " --  DB setup successful with password."
+#     else
+#         echo -e "\e[31m --  DB setup failed.\e[0m"
+#         exit
+#     fi
+#     echo
+#     echo "##  Securing mariaDB server.";
+#     /usr/bin/mysql_secure_installation
+#     echo
 }
 
 function setupPermissions ()
@@ -580,4 +647,14 @@ function setupBackup ()
         cp -R "$webdir" "$backup"/"$name"
         rm -rf "${webdir:?}"
     fi
+}
+
+function rollbackExit ()
+{
+echo "Deleting old install files."
+rm -rf "$webdir"
+rm -rf "${tmp:?}"
+rm -rf "${tmpinstall:?}"
+echo "Dropping Database."
+mysql -u root -e "drop database snipeit;"
 }
