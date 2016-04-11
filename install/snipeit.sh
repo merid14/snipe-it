@@ -109,9 +109,9 @@ case "$distro" in
     debian|ubuntu)
         setupPackages
         startApache
-        setupGetFiles
         setupApacheMods
         setupDB
+        setupGetFiles
         setupApacheHost
         setupFiles
         setupComposer
@@ -122,8 +122,8 @@ case "$distro" in
     centos* )
         setupRepos
         setupPackages
-        setupGetFiles
         setupDB
+        setupGetFiles
         setupApacheHost
         startApache
         setupFiles
