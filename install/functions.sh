@@ -168,6 +168,11 @@ echo
 echo
 echo "  Welcome to Snipe-IT Inventory Installer for $supportedos!"
 echo
+echo "  !WARNING!: This installer assumes that you are installing on a fresh,"
+echo "    blank server. It will install all the packages needed, setup the database"
+echo "    and configure snipeit for you."
+echo
+echo -e -n "\e[33m     DO NOT RUN ON A CURRENT PRODUCTION SERVER! \e[0m"
 }
 
 function askDebug ()
@@ -467,39 +472,64 @@ function setupFiles ()
 
 function setupDB ()
 {
-stoploop=""
-
 echo >> "$dbsetup" "CREATE DATABASE snipeit;"
 echo >> "$dbsetup" "GRANT ALL PRIVILEGES ON snipeit.* TO snipeit@localhost IDENTIFIED BY '$mysqluserpw';"
 
-
 startMariadb
+
 echo "##  Setting up your database."
-if mysql -u root < "$dbsetup" > /dev/null 2>&1;then
-    echo " --  DB setup successful without password."
-else
-    echo "##  Input your MySQL/MariaDB root password: "
-    if mysql -u root -p < "$dbsetup" > /dev/null 2>&1;then
-        echo " --  DB setup successful with password."
-    else
-    stoploop=""
-    until [[ $stoploop == "stop" ]]; do
+mysqlrootpw=""
+dbnopass=""
+dbwpass=""
+until [[ $dbnopass == "stop" ]]; do
+    result="$(mysql -u root -e 'use snipeit' >/dev/null 2>&1)"
+    # echo "$result"
+    if grep "1049" <<< "$result" ; then
+        echo "database missing"
+        if mysql -u root < "$dbsetup" > /dev/null 2>&1;then
+            echo " --  DB setup successful."
+            dbnopass="stop"
+            dbwpass="stop"
+        fi
+    elif grep "1045" <<< "$result" > /dev/null 2>&1; then
         echo -e "\e[31m --  Wrong Password!\e[0m"
         echo -n "   Q. Enter MySQL/MariaDB root password:"
         read -sr mysqlrootpw
-        result="$(mysql -u root -p"$mysqlrootpw" -e 'use snipeit' 2>&1)"
-
-        if grep "1049" <<< "$result" > /dev/null 2>&1; then
-            echo "database missing pw"
-            mysql -u root -p"$mysqlrootpw" < "$dbsetup"
-        elif grep "1045" <<< "$result" > /dev/null 2>&1; then
-            echo  "wrong password pw"
-        else
-            stoploop="stop"
-        fi
-    done
+        dbnopass="stop"
+    elif grep "1007" <<< "$result" > /dev/null 2>&1; then
+        echo -e "\e[31m --  Database already exists!\e[0m"
+        dbnopass="stop"
+        dbwpass="stop"
+    else
+        echo "not sure what the problem is."
+        echo "$result"
+        dbnopass="stop"
     fi
-fi
+done
+until [[ $dbwpass == "stop" ]]; do
+    echo -n "   Q. Enter MySQL/MariaDB root password:  pw"
+    read -sr mysqlrootpw
+    result="$(mysql -u root -p"$mysqlrootpw" -e 'use snipeit' >/dev/null 2>&1)"
+    # echo "$result"
+    if grep "1049" <<< "$result" ; then
+        echo "database missing pw"
+        if mysql -u root -p"$mysqlrootpw" < "$dbsetup" > /dev/null 2>&1;then
+            echo " --  DB setup successful. pw"
+        fi
+    elif grep "1045" <<< "$result" > /dev/null 2>&1; then
+        echo -e "\e[31m --  Wrong Password!  pw\e[0m"
+        echo -n "   Q. Enter MySQL/MariaDB root password:  pw"
+        read -sr mysqlrootpw
+    elif grep "1007" <<< "$result" > /dev/null 2>&1; then
+        echo -e "\e[31m --  Database already exists!  pw\e[0m"
+        dbwpass="stop"
+    else
+        echo "not sure what the problem is. pw"
+        echo "$result"
+        dbwpass="stop"
+    fi
+done
+
 echo
 echo "##  Securing mariaDB server.";
 /usr/bin/mysql_secure_installation
@@ -657,4 +687,5 @@ rm -rf "${tmp:?}"
 rm -rf "${tmpinstall:?}"
 echo "Dropping Database."
 mysql -u root -e "drop database snipeit;"
+exit
 }
