@@ -475,11 +475,11 @@ echo >> "$dbsetup" "GRANT ALL PRIVILEGES ON snipeit.* TO snipeit@localhost IDENT
 
 startMariadb
 echo "##  Setting up your database."
-if mysql -u root < "$dbsetup";then
+if mysql -u root < "$dbsetup" > /dev/null 2>&1;then
     echo " --  DB setup successful without password."
 else
     echo "##  Input your MySQL/MariaDB root password: "
-    if mysql -u root -p < "$dbsetup";then
+    if mysql -u root -p < "$dbsetup" > /dev/null 2>&1;then
         echo " --  DB setup successful with password."
     else
     stoploop=""
