@@ -285,9 +285,8 @@ case "$distro" in
         ShowProgressOf apt-get -q -y upgrade
 
         echo "##  Installing packages..."
-        PACKAGES="git unzip php5 php5-mcrypt php5-curl php5-mysql php5-gd
-                php5-ldap libapache2-mod-php5 curl debconf-utils apache2
-                MariaDB-server MariaDB-client"
+        PACKAGES="git unzip curl debconf-utils apache2 MariaDB-server MariaDB-client
+        php7.0 php7.0-mcrypt php7.0-curl php7.0-mysql php7.0-gd php7.0-ldap libapache2-mod-php7.0"
 
         for p in $PACKAGES;do
         if isinstalled "$p"; then
@@ -297,13 +296,19 @@ case "$distro" in
             ShowProgressOf apt-get install -q -y "$p"
             echo
         fi
+        # Check that packages were all successfully installed.
+        if [ ! isinstalled "$p" ]; then
+            printf "\b\b\b\b\b\b\b\b"
+            echo -e "\e[31mFailed!\e[0m"
+            packagefailed=true
+        fi
         done;
         ;;
     *centos*|*redhat*)
         echo "##  Installing packages...";
-        PACKAGES="httpd MariaDB-server MariaDB-client git unzip php56u php56u-mysqlnd
-                php56u-bcmath php56u-cli php56u-common php56u-embedded
-                php56u-gd php56u-mbstring php56u-mcrypt php56u-ldap"
+        PACKAGES="httpd MariaDB-server MariaDB-client git unzip php70u php70u-mysqlnd
+                php70u-bcmath php70u-cli php70u-common php70u-embedded
+                php70u-gd php70u-mbstring php70u-mcrypt php70u-ldap"
 
         for p in $PACKAGES;do
         if isinstalled "$p"; then
@@ -313,6 +318,12 @@ case "$distro" in
             ShowProgressOf yum -y -q install "$p"
             echo
         fi
+        # Check that packages were all successfully installed.
+        if [ ! isinstalled "$p" ]; then
+            printf "\b\b\b\b\b\b\b\b"
+            echo -e "\e[31mFailed!\e[0m"
+            packagefailed=true
+        fi
         done;
         ;;
     *)
@@ -320,6 +331,13 @@ case "$distro" in
         exit
         ;;
 esac
+
+if $packagefailed; then
+    echo -e "\e[31m  Failed to setup packages.\e[0m"
+    echo -e "\e[31m  Please check install log for errors and
+                    resolve package issues before installing again.\e[0m"
+    exit
+fi
 }
 
 function setupGitTags ()
