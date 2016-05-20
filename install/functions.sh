@@ -96,16 +96,13 @@ function getOSinfo ()
 
 function getDistro ()
 {
-    distro="$(cat /proc/version)"
-    if grep -q -i 'centos\|redhat' <<<"$distro"; then
-        for f in $(find /etc -type f -maxdepth 1 \( ! -wholename /etc/os-release ! -wholename /etc/lsb-release -wholename /etc/\*release -o -wholename /etc/\*version \) 2> /dev/null);
-        do
-            distro="${f:5:${#f}-13}"
-        done;
-        if [ "$distro" = "centos" ] || [ "$distro" = "redhat" ]; then
-            distro+="$(rpm -q --qf "%{VERSION}" "$(rpm -q --whatprovides redhat-release)")"
-        fi
-    fi
+if [ -f /etc/lsb-release ]; then
+    distro="$(lsb_release -s -i -r)"
+elif [ -f /etc/os-release ]; then
+    distro=$(. /etc/os-release && echo $ID $VERSION_ID)
+else
+    distro="unsupported"
+fi
 }
 
 function startApache ()
@@ -169,6 +166,7 @@ echo
 echo "  Welcome to Snipe-IT Inventory Installer for $supportedos!"
 echo
 echo -e "\e[31m   **********     !WARNING!   ****   !WARNING!     ********** \e[0m"
+echo -e "\e[33m    DO NOT RUN ON A CURRENT PRODUCTION SERVER! \e[0m"
 echo "    This installer assumes that you are installing on a fresh,"
 echo "    blank server. It will install all the packages needed, setup the database"
 echo "    and configure snipeit for you."
@@ -181,8 +179,6 @@ echo "    NOTICE: If you would like to see whats going on in the background "
 echo "            while running the script please open a new shell and run:"
 echo
 echo "               tail -f /var/log/snipeit-install.log"
-echo
-echo -e "\e[33m     DO NOT RUN ON A CURRENT PRODUCTION SERVER! \e[0m"
 echo
 echo "  Press enter to continue. CTRL+C to quit"
 read test
@@ -310,11 +306,11 @@ case "$distro" in
             echo
         fi
         # Check that packages were all successfully installed.
-        if [ ! isinstalled "$p" ]; then
-            printf "\b\b\b\b\b\b\b\b"
-            echo -e "\e[31mFailed!\e[0m"
-            packagefailed=true
-        fi
+        # if [[ ! $(isinstalled "$p") ]]; then
+        #     printf "\b\b\b\b\b\b\b\b"
+        #     echo -e "\e[31mFailed!\e[0m"
+        #     packagefailed=true
+        # fi
         done;
         ;;
     *centos*|*redhat*)
@@ -332,11 +328,11 @@ case "$distro" in
             echo
         fi
         # Check that packages were all successfully installed.
-        if [ ! isinstalled "$p" ]; then
-            printf "\b\b\b\b\b\b\b\b"
-            echo -e "\e[31mFailed!\e[0m"
-            packagefailed=true
-        fi
+        # if [[ ! $(isinstalled "$p") ]]; then
+        #     printf "\b\b\b\b\b\b\b\b"
+        #     echo -e "\e[31mFailed!\e[0m"
+        #     packagefailed=true
+        # fi
         done;
         ;;
     *)
@@ -345,12 +341,12 @@ case "$distro" in
         ;;
 esac
 
-if $packagefailed; then
-    echo -e "\e[31m  Failed to setup packages.\e[0m"
-    echo -e "\e[31m  Please check install log for errors and
-                    resolve package issues before installing again.\e[0m"
-    exit
-fi
+# if $packagefailed; then
+#     echo -e "\e[31m  Failed to setup packages.\e[0m"
+#     echo -e "\e[31m  Please check install log for errors and
+#                     resolve package issues before installing again.\e[0m"
+#     exit
+# fi
 }
 
 function setupGitTags ()
