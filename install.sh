@@ -15,6 +15,7 @@
 #                   tail -f /var/log/snipeit-install.log
 #
 # -----------------------------------------------------------------------------
+set -o nounset errexit pipefail
 
 # ensure running as root
 if [ "$(id -u)" != "0" ]; then
@@ -103,6 +104,8 @@ log="/var/log/snipeit-install.log"
 
 rm -rf "${tmp:?}"
 rm -rf "${tmpinstall:?}"
+
+mkdir -p "$tmp"
 mkdir -p "$tmpinstall"
 
 wget "$link"/snipeit.sh -P "$tmpinstall" 2>&1 | grep -i "failed\|error"
