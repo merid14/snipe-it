@@ -114,17 +114,6 @@ if [ ! -e "$tmpinstall/snipeit.sh" ] && [ ! -e "$tmpinstall/upgrade.sh" ] && [ !
     exit
 fi
 
-echo ""
-echo "   This installer is for Debian and CentOS based distributions."
-echo "   We assume you will be installing as a subdomain on a fresh OS install."
-echo "   Mail is setup separately. SELinux is assumed to be disabled."
-echo "   If you have issues please include your installer log when reporting it."
-echo ""
-echo "   NOTICE: If you would like to see whats going on in the background "
-echo "           while running the script please open a new shell and run:"
-echo ""
-echo "                   tail -f /var/log/snipeit-install.log"
-echo ""
 echo "  Press enter to continue."
 read test
 
