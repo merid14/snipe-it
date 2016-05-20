@@ -168,22 +168,24 @@ echo
 echo
 echo "  Welcome to Snipe-IT Inventory Installer for $supportedos!"
 echo
-echo -e "\e[31m      **********     !WARNING!     ********** \e[0m"
+echo -e "\e[31m   **********     !WARNING!   ****   !WARNING!     ********** \e[0m"
 echo "    This installer assumes that you are installing on a fresh,"
 echo "    blank server. It will install all the packages needed, setup the database"
 echo "    and configure snipeit for you."
-echo "   Mail is setup separately. SELinux is assumed to be disabled."
-echo "   If you have issues please include your installer log when reporting it."
 echo
-echo "   NOTICE: If you would like to see whats going on in the background "
-echo "           while running the script please open a new shell and run:"
+echo "    Mail is setup separately. SELinux is assumed to be disabled."
+echo "    If you have issues please include your installer log when reporting it."
+echo -e "\e[31m   **********     !WARNING!   ****   !WARNING!     ********** \e[0m"
 echo
-echo "                   tail -f /var/log/snipeit-install.log"
+echo "    NOTICE: If you would like to see whats going on in the background "
+echo "            while running the script please open a new shell and run:"
+echo
+echo "               tail -f /var/log/snipeit-install.log"
 echo
 echo -e "\e[33m     DO NOT RUN ON A CURRENT PRODUCTION SERVER! \e[0m"
 echo
 echo "  Press enter to continue. CTRL+C to quit"
-echo
+read test
 }
 
 function askDebug ()
