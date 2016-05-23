@@ -91,11 +91,11 @@ case "$distro" in
         apachelog="/var/log/httpd" && echo "$apachelog" >> "$log" 2>&1
         ;;
     *)
-        echo -e "\e[31m  The installer has detected $distro as the OS.\e[0m"
-        echo -e "\e[31m  Unfortunately this installer doesn't work on your os.\e[0m"
-        echo -e "\e[31m  Supported OS's are: $supportedos\e[0m"
-        echo -e "\e[31m  Please see snipeit docs for manual install: .\e[0m"
-        echo -e "\e[31m      http://docs.snipeitapp.com/installation/downloading.html.\e[0m"
+        printf "${RED}  The installer has detected $distro as the OS.${NORMAL}\n"
+        printf "${RED}  Unfortunately this installer doesn't work on your os.${NORMAL}\n"
+        printf "${RED}  Supported OS's are: $supportedos${NORMAL}\n"
+        printf "${RED}  Please see snipeit docs for manual install: .${NORMAL}\n"
+        printf "${RED}      http://docs.snipeitapp.com/installation/downloading.html.${NORMAL}\n"
         exit
         ;;
 esac
@@ -144,11 +144,11 @@ setupGitTags
 echo
 echo "Installed $si to version:$currenttag $date" >> "$log" 2>&1
 echo
-echo -e "\e[31m The mail configuration has not been setup.\e[0m"
-echo -e "\e[31m   To setup follow the docs here:\e[0m"
+printf "${RED} The mail configuration has not been setup.${NORMAL}\n"
+printf "${RED}   To setup follow the docs here:${NORMAL}\n"
 echo "   http://docs.snipeitapp.com/installation/configuration.html"
 echo
-echo -e "\e[31m  SELinux has not been configured. Please follow the docs here:\e[0m"
+printf "${RED}  SELinux has not been configured. Please follow the docs here:${NORMAL}\n"
 echo "     http://docs.snipeitapp.com/installation/server/linux-osx.html"
 echo
 echo
