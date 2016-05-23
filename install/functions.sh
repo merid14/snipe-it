@@ -518,7 +518,7 @@ dbnopass=""
 dbwpass=""
 until [[ $dbnopass == "stop" ]]; do
     result="$(mysql -u root -e 'use snipeit' >/dev/null 2>&1)"
-    # echo "$result"
+    echo "$result"
     if grep "1049" <<< "$result" ; then
         echo "database missing"
         if mysql -u root < "$dbsetup" > /dev/null 2>&1;then
@@ -545,7 +545,7 @@ until [[ $dbwpass == "stop" ]]; do
     echo -n "   Q. Enter MySQL/MariaDB root password:  pw"
     read -sr mysqlrootpw
     result="$(mysql -u root -p"$mysqlrootpw" -e 'use snipeit' >/dev/null 2>&1)"
-    # echo "$result"
+    echo "$result"
     if grep "1049" <<< "$result" ; then
         echo "database missing pw"
         if mysql -u root -p"$mysqlrootpw" < "$dbsetup" > /dev/null 2>&1;then
