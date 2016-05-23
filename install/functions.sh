@@ -10,7 +10,7 @@ function ShowProgressOf ()
     local pid=$!
     local delay=0.25
     local spinstr='|/-\'
-    while ps a | awk '{print $1}' | grep $pid; do
+    while [ "$(ps a | awk '{print $1}' | grep $pid)" ]; do
         local temp=${spinstr#?}
         printf " [%c]  " "$spinstr"
         local spinstr=$temp${spinstr%"$temp"}
@@ -109,7 +109,7 @@ fi
 
 function startApache ()
 {
-echo "##  Starting the apache server.";
+echo "##  Starting the apache server";
 shopt -s nocasematch
 case "$distro" in
     *Ubuntu*|*Debian*)
@@ -132,7 +132,7 @@ esac
 
 function startMariadb ()
 {
-echo "##  Starting the MariaDB server.";
+echo "##  Starting the MariaDB server";
 shopt -s nocasematch
 case "$distro" in
     *Ubuntu*|*Debian*)
@@ -259,7 +259,7 @@ function askDBuserpw ()
 function setupRepos ()
 {
     echo
-    echo "##  Adding IUS, Epel and MariaDB repos.";
+    echo "##  Adding IUS, Epel and MariaDB repos";
 
     echo " --  MariaDB Repo"
     if [ -f "$mariadbRepo" ]; then
@@ -442,7 +442,7 @@ esac
         apacheaccess="Allow From All"
     fi
 
-    echo "##  Creating the new virtual host in Apache.";
+    echo "##  Creating the new virtual host in Apache";
     if [ -f "$apachefile" ]; then
         echo " --  VirtualHost already exists. $apachefile"
         echo
@@ -566,7 +566,7 @@ until [[ $dbwpass == "stop" ]]; do
 done
 
 echo
-echo "##  Securing mariaDB server.";
+echo "##  Securing mariaDB server";
 /usr/bin/mysql_secure_installation
 echo
 
@@ -618,7 +618,7 @@ echo
 #         exit
 #     fi
 #     echo
-#     echo "##  Securing mariaDB server.";
+#     echo "##  Securing mariaDB server";
 #     /usr/bin/mysql_secure_installation
 #     echo
 }
