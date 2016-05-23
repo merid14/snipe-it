@@ -54,6 +54,7 @@ tzone=""
 apacheuser=""
 apachelog=""
 apacheversion=""
+packagefailed="false"
 
 distro="$os" && echo "$distro" >> "$log" 2>&1
 os="OS: $os" && echo "$os" >> "$log" 2>&1
