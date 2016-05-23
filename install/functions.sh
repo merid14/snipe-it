@@ -1,6 +1,22 @@
 #!/bin/bash
 # shellcheck disable=SC2154,SC2034
 
+BLACK=$(tput setaf 0)
+RED=$(tput setaf 1)
+GREEN=$(tput setaf 2)
+YELLOW=$(tput setaf 3)
+LIME_YELLOW=$(tput setaf 190)
+POWDER_BLUE=$(tput setaf 153)
+BLUE=$(tput setaf 4)
+MAGENTA=$(tput setaf 5)
+CYAN=$(tput setaf 6)
+WHITE=$(tput setaf 7)
+BRIGHT=$(tput bold)
+NORMAL=$(tput sgr0)
+BLINK=$(tput blink)
+REVERSE=$(tput smso)
+UNDERLINE=$(tput smul)
+
 function ShowProgressOf ()
 {
     tput civis
@@ -8,7 +24,7 @@ function ShowProgressOf ()
     local pid=$!
     local delay=0.25
     local spinstr='|/-\'
-    while [ "$(ps a | awk '{print $1}' | grep $pid)" ]; do
+    while ps a | awk '{print $1}' | grep $pid; do
         local temp=${spinstr#?}
         printf " [%c]  " "$spinstr"
         local spinstr=$temp${spinstr%"$temp"}
@@ -24,7 +40,7 @@ function isinstalled ()
 shopt -s nocasematch
 case "$distro" in
     *Ubuntu*|*Debian*)
-        if [ $(dpkg-query -W -f='${Status}' "$@" 2>/dev/null | grep -c "ok installed") -eq 1 ]; then
+        if [ "$(dpkg-query -W -f='${Status}' "$@" 2>/dev/null | grep -c "ok installed")" -eq 1 ]; then
             true
         else
             false
@@ -38,7 +54,7 @@ case "$distro" in
         fi
         ;;
     *)
-        echo -e "\e[31m  Failed to find the OS.\e[0m"
+        printf "${RED}  Failed to find the OS.${NORMAL}\n"
         exit
         ;;
 esac
@@ -122,7 +138,7 @@ case "$distro" in
         systemctl restart httpd.service
         ;;
     *)
-        echo -e "\e[31m  Failed to find the OS.\e[0m"
+        printf "${RED}  Failed to find the OS.${NORMAL}\n"
         exit
         ;;
 esac
@@ -145,7 +161,7 @@ case "$distro" in
         systemctl start mariadb.service
         ;;
     *)
-        echo -e "\e[31m  Failed to find the OS.\e[0m"
+        printf "${RED}  Failed to find the OS.${NORMAL}\n"
         exit
         ;;
 esac
@@ -165,15 +181,15 @@ echo
 echo
 echo "  Welcome to Snipe-IT Inventory Installer for $supportedos!"
 echo
-echo -e "\e[31m   **********     !WARNING!   ****   !WARNING!     ********** \e[0m"
-echo -e "\e[33m    DO NOT RUN ON A CURRENT PRODUCTION SERVER! \e[0m"
+printf "${RED}   **********     !WARNING!   ****   !WARNING!     ********** ${NORMAL}\n"
+printf "${YELLOW}    DO NOT RUN ON A CURRENT PRODUCTION SERVER! ${NORMAL}\n"
 echo "    This installer assumes that you are installing on a fresh,"
 echo "    blank server. It will install all the packages needed, setup the database"
 echo "    and configure snipeit for you."
 echo
 echo "    Mail is setup separately. SELinux is assumed to be disabled."
 echo "    If you have issues please include your installer log when reporting it."
-echo -e "\e[31m   **********     !WARNING!   ****   !WARNING!     ********** \e[0m"
+printf "${RED}   **********     !WARNING!   ****   !WARNING!     ********** ${NORMAL}\n"
 echo
 echo "    NOTICE: If you would like to see whats going on in the background "
 echo "            while running the script please open a new shell and run:"
@@ -190,7 +206,7 @@ function askDebug ()
     ans=""
     if grep -q true "$webdir"/app/config/production/app.php; then
         until [[ $ans == "yes" ]] || [[ $ans == "no" ]]; do
-        echo -e -n "\e[33m  Q. Debugging is currently enabled. Would you like to disable? ([Y]/n) \e[0m"
+        printf "${YELLOW}  Q. Debugging is currently enabled. Would you like to disable? ([Y]/n) ${NORMAL}"
         read -r debug
 
         shopt -s nocasematch
@@ -201,13 +217,13 @@ function askDebug ()
                 ans="yes"
                 ;;
             n | no )
-                echo -e "\e[31m    Debugging is still enabled. This is not reccomended unless\e[0m"
-                echo -e "\e[31m       you are having troubles with your install.\e[0m"
+                printf "${RED}    Debugging is still enabled. This is not reccomended unless${NORMAL}\n"
+                printf "${RED}       you are having troubles with your install.${NORMAL}\n"
                 echo
                 ans="no"
                 ;;
             *)
-                echo -e "\e[31m --  Invalid answer. Please type y or n\e[0m"
+                printf "${RED} --  Invalid answer. Please type y or n${NORMAL}\n"
             ;;
         esac
         done
@@ -217,7 +233,7 @@ function askDebug ()
 function askFQDN ()
 {
     echo
-    echo -e -n "\e[33m  Q. What is the FQDN of your server? ($fqdn): \e[0m"
+    printf "${YELLOW}  Q. What is the FQDN of your server? ($fqdn): ${NORMAL}"
     read -r fqdn
     if [ -z "$fqdn" ]; then
             fqdn="$(hostname --fqdn)"
@@ -229,7 +245,7 @@ function askFQDN ()
 function askDBuserpw ()
 {
     until [[ $ans == "yes" ]] || [[ $ans == "no" ]]; do
-    echo -e -n "\e[33m  Q. Do you want to automatically create the snipe database user password? (y/n) \e[0m"
+    printf "${YELLOW}  Q. Do you want to automatically create the snipe database user password? (y/n) ${NORMAL}"
     read -r setpw
 
     shopt -s nocasematch
@@ -239,13 +255,13 @@ function askDBuserpw ()
             ans="yes"
             ;;
         n | no )
-            echo -e -n "\e[33m   Q. What do you want your snipeit user password to be?\e[0m"
+            printf "${YELLOW}   Q. What do you want your snipeit user password to be?${NORMAL}"
             read -sr mysqluserpw
             echo
             ans="no"
             ;;
         *)
-            echo -e "\e[31m      Invalid answer. Please type y or n\e[0m"
+            printf "${RED}      Invalid answer. Please type y or n${NORMAL}\n"
         ;;
     esac
     done
@@ -294,7 +310,7 @@ case "$distro" in
         ShowProgressOf apt-get -q -y upgrade
 
         echo "##  Installing packages..."
-        PACKAGES="git unzip curl debconf-utils apache2 MariaDB-server MariaDB-client
+        PACKAGES="git unzip curl debconf-utils apache2 mariadb-server mariadb-client
         php7.0 php7.0-mcrypt php7.0-curl php7.0-mysql php7.0-gd php7.0-ldap libapache2-mod-php7.0"
 
         for p in $PACKAGES;do
@@ -304,18 +320,21 @@ case "$distro" in
             echo -n " --  $p Installing... "
             ShowProgressOf apt-get install -q -y "$p"
             echo
+                if isinstalled "$p"; then
+                    printf "\033[A\033[A --  $p Installing..."
+                    printf "${GREEN} Installed ${NORMAL}\n"
+                else
+                    printf "\033[A\033[A --  $p Installing..."
+                    printf "${RED} Install Failed! ${NORMAL}\n"
+                    packagefailed=true
+                fi
         fi
         # Check that packages were all successfully installed.
-        # if [[ ! $(isinstalled "$p") ]]; then
-        #     printf "\b\b\b\b\b\b\b\b"
-        #     echo -e "\e[31mFailed!\e[0m"
-        #     packagefailed=true
-        # fi
         done;
         ;;
     *centos*|*redhat*)
         echo "##  Installing packages...";
-        PACKAGES="httpd MariaDB-server MariaDB-client git unzip php70u php70u-mysqlnd
+        PACKAGES="httpd MariaDB-server mariadbB-client git unzip php70u php70u-mysqlnd
                 php70u-bcmath php70u-cli php70u-common php70u-embedded
                 php70u-gd php70u-mbstring php70u-mcrypt php70u-ldap"
 
@@ -326,27 +345,30 @@ case "$distro" in
             echo -n " --  $p Installing... "
             ShowProgressOf yum -y -q install "$p"
             echo
+            # Check that packages were all successfully installed.
+                if isinstalled "$p"; then
+                    printf "\033[A\033[A --  $p Installing..."
+                    printf "${GREEN} Installed ${NORMAL}\n"
+                else
+                    printf "\033[A\033[A --  $p Installing..."
+                    printf "${RED} Install Failed! ${NORMAL}\n"
+                    packagefailed=true
+                fi
         fi
-        # Check that packages were all successfully installed.
-        # if [[ ! $(isinstalled "$p") ]]; then
-        #     printf "\b\b\b\b\b\b\b\b"
-        #     echo -e "\e[31mFailed!\e[0m"
-        #     packagefailed=true
-        # fi
         done;
         ;;
     *)
-        echo -e "\e[31m  Failed to setup packages.\e[0m"
+        printf "${RED}  Failed to setup packages.${NORMAL}\n"
         exit
         ;;
 esac
 
-# if $packagefailed; then
-#     echo -e "\e[31m  Failed to setup packages.\e[0m"
-#     echo -e "\e[31m  Please check install log for errors and
-#                     resolve package issues before installing again.\e[0m"
-#     exit
-# fi
+if $packagefailed; then
+    printf "${RED}  Failed to setup packages.${NORMAL}\n"
+    printf "${RED}  Please check install log for errors and${NORMAL}\n"
+    printf "${RED}  resolve package issues before installing again.${NORMAL}\n"
+    exit
+fi
 }
 
 function setupGitTags ()
@@ -389,7 +411,7 @@ function setupGitSnipeit ()
     if ! $(git checkout -b "$tag" origin/"$tag" >> "$log" 2>&1); then
     #     echo >&2 message
         if ! $(git checkout -b "$tag" "$tag" >> "$log" 2>&1); then
-             echo  -e >&2 "\e[31m  Failed to clone $tag.\e[0m"
+             printf >&2 "${RED}  Failed to clone $tag.${NORMAL}\n"
              rollbackExit
         fi
     fi
@@ -424,7 +446,7 @@ case "$distro" in
         apacheversion="$(apachectl -v | grep 2.4)"
         ;;
     *)
-        echo -e "\e[31m  Failed to find the apache version.\e[0m"
+        printf "${RED}  Failed to find the apache version.${NORMAL}\n"
         rollbackExit
         ;;
 esac
@@ -519,12 +541,12 @@ until [[ $dbnopass == "stop" ]]; do
             dbwpass="stop"
         fi
     elif grep "1045" <<< "$result" > /dev/null 2>&1; then
-        echo -e "\e[31m --  Wrong Password!\e[0m"
+        printf "${RED} --  Wrong Password!${NORMAL}\n"
         echo -n "   Q. Enter MySQL/MariaDB root password:"
         read -sr mysqlrootpw
         dbnopass="stop"
     elif grep "1007" <<< "$result" > /dev/null 2>&1; then
-        echo -e "\e[31m --  Database already exists!\e[0m"
+        printf "${RED} --  Database already exists!${NORMAL}\n"
         dbnopass="stop"
         dbwpass="stop"
     else
@@ -544,11 +566,11 @@ until [[ $dbwpass == "stop" ]]; do
             echo " --  DB setup successful. pw"
         fi
     elif grep "1045" <<< "$result" > /dev/null 2>&1; then
-        echo -e "\e[31m --  Wrong Password!  pw\e[0m"
+        printf "${RED} --  Wrong Password!  pw${NORMAL}\n"
         echo -n "   Q. Enter MySQL/MariaDB root password:  pw"
         read -sr mysqlrootpw
     elif grep "1007" <<< "$result" > /dev/null 2>&1; then
-        echo -e "\e[31m --  Database already exists!  pw\e[0m"
+        printf "${RED} --  Database already exists!  pw${NORMAL}\n"
         dbwpass="stop"
     else
         echo "not sure what the problem is. pw"
@@ -571,7 +593,7 @@ echo
 #         if mysql -u root -p < "$dbsetup";then
 #             echo " --  DB setup successful with password."
 #         else
-#             echo -e "\e[31m --  DB setup failed.\e[0m"
+#             printf "${RED} --  DB setup failed.${NORMAL}\n"
 #             exit
 #         fi
 #     fi
@@ -606,7 +628,7 @@ echo
 #     elif mysql -u root -p < "$dbsetup";then
 #         echo " --  DB setup successful with password."
 #     else
-#         echo -e "\e[31m --  DB setup failed.\e[0m"
+#         printf "${RED} --  DB setup failed.${NORMAL}\n"
 #         exit
 #     fi
 #     echo
@@ -661,8 +683,8 @@ function askUpgradeConfirm ()
 {
     ans=""
     until [[ $ans == "yes" ]]; do
-    echo -e "\e[32m##  Upgrading from Version: $currenttag to Version: $newtag  \e[0m"
-    echo -e -n "\e[33m  Q. Would you like to continue? (y/n) \e[0m"
+    printf "${GREEN}##  Upgrading from Version: $currenttag to Version: $newtag  ${NORMAL}\n"
+    printf "${YELLOW}  Q. Would you like to continue? (y/n) ${NORMAL}"
     read -r cont
     shopt -s nocasematch
     case $cont in

@@ -17,14 +17,14 @@ if [ -d "$webdir" ]; then #If webdir exists
         # fi
         # currenttag="$(basename "$(git symbolic-ref HEAD)")"
         setupGitTags
-        echo -e "\e[33m##  $si install found. Version: $currenttag\e[0m"
+        printf "${YELLOW}##  $si install found. Version: $currenttag${NORMAL}\n"
 
         if compareVersions "$currenttag" "$newtag"; then ##TODO Strip "v" from version name to allow number calculation
 
             echo -e "##  Beginning the $si update process"
             echo ""
-            echo -e "\e[31m    By default we are pulling from the latest release.\e[0m"
-            echo -e "\e[31m    If you pulled from another branch/tag please upgrade manually.\e[0m"
+            printf "${RED}    By default we are pulling from the latest release.${NORMAL}\n"
+            printf "${RED}    If you pulled from another branch/tag please upgrade manually.${NORMAL}\n"
             echo
             askUpgradeConfirm
             setupBackup
@@ -49,14 +49,14 @@ if [ -d "$webdir" ]; then #If webdir exists
             cp "$backup"/app.php "$webdir"/app/config/
         else
             echo
-            echo -e "\e[32m    You are already on the latest version.\e[0m"
-            echo -e "\e[32m    Version: $currenttag\e[0m"
+            printf "${YELLOW}    You are already on the latest version.${NORMAL}\n"
+            printf "${YELLOW}    Version: $currenttag${NORMAL}\n"
             echo
             exit
         fi
     else  # Must be a file copy install
 
-        echo -e "\e[33m##  Beginning conversion from copy file install to git install.\e[0m"
+        printf "${YELLOW}##  Beginning conversion from copy file install to git install.${NORMAL}\n"
         # currenttag="$(cat "$webdir"/app/config/version.php | grep app | awk -F "'" '{print $4}' | cut -f1 -d"-")"
         setupGitTags
 
@@ -121,8 +121,8 @@ if [ -d "$webdir" ]; then #If webdir exists
             fi
         else
             echo
-            echo -e "\e[31m    You are already on the latest version.\e[0m"
-            echo -e "\e[33m    Version: $currenttag\e[0m"
+            printf "${RED}    You are already on the latest version.${NORMAL}\n"
+            printf "${YELLOW}    Version: $currenttag${NORMAL}\n"
             echo
             exit
         fi
@@ -142,8 +142,8 @@ if [ -d "$webdir" ]; then #If webdir exists
         php artisan migrate
         chkfail="$(tail -n 1 $log)"
         if grep "Cancelled!" <<< "$chkfail" > /dev/null 2>&1; then
-            echo -e "\e[31m  --  Migrations Cancelled!\e[0m"
-            echo -e -n "\e[31m    Q. Do you want to run migrations? (y/n) \e[0m"
+            printf "${RED}  --  Migrations Cancelled!${NORMAL}\n"
+            printf "${RED}    Q. Do you want to run migrations? (y/n) ${NORMAL}"
         read -r cont
         fi
         shopt -s nocasematch
@@ -153,9 +153,9 @@ if [ -d "$webdir" ]; then #If webdir exists
                     ;;
                 n | no )
                     ans="no"
-                    echo -e "\e[33m    You are now on Version $newtag of $si.\e[0m"
-                    echo -e "\e[33m     However migrations have to be run before using the software\e[0m"
-                    echo -e "\e[33m     Please run: php artisan migrate\e[0m"
+                    printf "${YELLOW}    You are now on Version $newtag of $si.${NORMAL}\n"
+                    printf "${YELLOW}     However migrations have to be run before using the software${NORMAL}\n"
+                    printf "${YELLOW}     Please run: php artisan migrate${NORMAL}\n"
                     exit
                     ;;
                 *)
@@ -164,5 +164,5 @@ if [ -d "$webdir" ]; then #If webdir exists
         esac
         done
 else
-    echo -e "\e[31m --  No previous version of $si found. Continuing...\e[0m"
+    printf "${RED} --  No previous version of $si found. Continuing...${NORMAL}\n"
 fi
