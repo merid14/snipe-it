@@ -48,8 +48,8 @@ esac
 }
 
 ## TODO: add handleing of word based branches.
-# Useage compareVersions $var1 > $var2
-# example compareVersions 3 1
+# Useage compareVersions $var1 < $var2
+# example compareVersions 1 3
 #           return true
 function compareVersions ()
 {
@@ -469,11 +469,22 @@ esac
 function setupFiles ()
 {
     setupGitTags
+    echo "newtag = $newtag"
     if compareVersions "3" "$newtag"; then
         if compareVersions "3" "$currenttag"; then
             echo "  It's v3!"
             echo "  Current tag: $currenttag"
-            rollbackExit
+            # echo "## Configuring .env file."
+            # echo > "$webdir/$name/.env" "
+            # #Created By Snipe-it Installer
+            # APP_TIMEZONE=$(cat /etc/timezone)
+            # DB_HOST=localhost
+            # DB_DATABASE=snipeit
+            # DB_USERNAME=snipeit
+            # DB_PASSWORD=$mysqluserpw
+            # APP_URL=http://$fqdn
+            # APP_KEY=$random32"
+            # rollbackExit
         fi
     echo "  New Tag: $newtag"
     else
@@ -512,7 +523,7 @@ echo >> "$dbsetup" "GRANT ALL PRIVILEGES ON snipeit.* TO snipeit@localhost IDENT
 
 startMariadb
 
-echo "##  Setting up your database."
+echo "##  Setting up your database"
 mysqlrootpw=""
 dbnopass=""
 dbwpass=""
@@ -536,7 +547,7 @@ until [[ $dbnopass == "stop" ]]; do
         dbnopass="stop"
         dbwpass="stop"
     else
-        echo "not sure what the problem is."
+        echo "not sure what the problem is"
         echo "$result"
         dbnopass="stop"
     fi
