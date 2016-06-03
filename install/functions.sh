@@ -524,57 +524,66 @@ echo >> "$dbsetup" "GRANT ALL PRIVILEGES ON snipeit.* TO snipeit@localhost IDENT
 startMariadb
 
 echo "##  Setting up your database"
-mysqlrootpw=""
-dbnopass=""
-dbwpass=""
-until [[ $dbnopass == "stop" ]]; do
-    result="$(mysql -u root -e 'use snipeit' >/dev/null 2>&1)"
-    echo "$result"
-    if grep "1049" <<< "$result" ; then
-        echo "database missing"
-        if mysql -u root < "$dbsetup" > /dev/null 2>&1;then
-            echo " --  DB setup successful."
-            dbnopass="stop"
-            dbwpass="stop"
-        fi
-    elif grep "1045" <<< "$result" > /dev/null 2>&1; then
-        printf "${RED} --  Wrong Password!${NORMAL}\n"
-        echo -n "   Q. Enter MySQL/MariaDB root password:"
-        read -sr mysqlrootpw
-        dbnopass="stop"
-    elif grep "1007" <<< "$result" > /dev/null 2>&1; then
-        printf "${RED} --  Database already exists!${NORMAL}\n"
-        dbnopass="stop"
-        dbwpass="stop"
-    else
-        echo "not sure what the problem is"
-        echo "$result"
-        dbnopass="stop"
-    fi
-done
-until [[ $dbwpass == "stop" ]]; do
     echo -n "   Q. Enter MySQL/MariaDB root password:  pw"
     read -sr mysqlrootpw
-    result="$(mysql -u root -p"$mysqlrootpw" -e 'use snipeit' >/dev/null 2>&1)"
-    echo "$result"
-    if grep "1049" <<< "$result" ; then
-        echo "database missing pw"
-        if mysql -u root -p"$mysqlrootpw" < "$dbsetup" > /dev/null 2>&1;then
-            echo " --  DB setup successful. pw"
-        fi
-    elif grep "1045" <<< "$result" > /dev/null 2>&1; then
-        printf "${RED} --  Wrong Password!  pw${NORMAL}\n"
-        echo -n "   Q. Enter MySQL/MariaDB root password:  pw"
-        read -sr mysqlrootpw
-    elif grep "1007" <<< "$result" > /dev/null 2>&1; then
-        printf "${RED} --  Database already exists!  pw${NORMAL}\n"
-        dbwpass="stop"
+
+
+    if mysql -u root -p"$mysqlrootpw" -e 'use snipeit';then
+            echo "database exists"
+    elif mysql -u root -p"$mysqlrootpw" < "$dbsetup";then
+        echo " --  DB setup successful."
     else
-        echo "not sure what the problem is. pw"
-        echo "$result"
-        dbwpass="stop"
+        echo "incorrect password"
     fi
-done
+
+# until [[ $dbnopass == "stop" ]]; do
+#     result="mysql -u root -e 'use snipeit' > /dev/null 2>&1"
+#     echo "result = $result"
+#     if grep "1049" <<< "$result" ; then
+#         echo "database missing"
+#         if mysql -u root < "$dbsetup" > /dev/null 2>&1;then
+#             echo " --  DB setup successful."
+#             dbnopass="stop"
+#             dbwpass="stop"
+#         fi
+#     elif grep "1045" <<< "$result" > /dev/null 2>&1; then
+#         printf "${RED} --  Wrong Password!${NORMAL}\n"
+#         echo -n "   Q. Enter MySQL/MariaDB root password:"
+#         read -sr mysqlrootpw
+#         dbnopass="stop"
+#     elif grep "1007" <<< "$result" > /dev/null 2>&1; then
+#         printf "${RED} --  Database already exists!${NORMAL}\n"
+#         dbnopass="stop"
+#         dbwpass="stop"
+#     else
+#         echo "not sure what the problem is"
+#         echo "result = $result"
+#         dbnopass="stop"
+#     fi
+# done
+# until [[ $dbwpass == "stop" ]]; do
+#     echo -n "   Q. Enter MySQL/MariaDB root password:  pw"
+#     read -sr mysqlrootpw
+#     result="$(mysql -u root -p"$mysqlrootpw" -e 'use snipeit' >/dev/null 2>&1)"
+#     echo "$result"
+#     if grep "1049" <<< "$result" ; then
+#         echo "database missing pw"
+#         if mysql -u root -p"$mysqlrootpw" < "$dbsetup" > /dev/null 2>&1;then
+#             echo " --  DB setup successful. pw"
+#         fi
+#     elif grep "1045" <<< "$result" > /dev/null 2>&1; then
+#         printf "${RED} --  Wrong Password!  pw${NORMAL}\n"
+#         echo -n "   Q. Enter MySQL/MariaDB root password:  pw"
+#         read -sr mysqlrootpw
+#     elif grep "1007" <<< "$result" > /dev/null 2>&1; then
+#         printf "${RED} --  Database already exists!  pw${NORMAL}\n"
+#         dbwpass="stop"
+#     else
+#         echo "not sure what the problem is. pw"
+#         echo "$result"
+#         dbwpass="stop"
+#     fi
+# done
 
 echo
 echo "##  Securing mariaDB server";
