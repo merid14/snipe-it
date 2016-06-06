@@ -132,6 +132,7 @@ case "$distro" in
         setupDB
         setupGetFiles
         setupApacheHost
+        startApache
         setupFiles
         setupComposer
         setupPermissions
