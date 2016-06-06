@@ -167,8 +167,8 @@ echo
 echo
 echo "  Welcome to Snipe-IT Inventory Installer for $supportedos!"
 echo
-printf "${RED}   *************     !WARNING!   **********   !WARNING!     ************* ${NORMAL}\n"
-printf "${YELLOW}              DO NOT RUN ON A CURRENT PRODUCTION SERVER! ${NORMAL}\n"
+printf "${RED}   *************     !WARNING!   *************   !WARNING!     ************* ${NORMAL}\n"
+printf "${YELLOW}                   DO NOT RUN ON A CURRENT PRODUCTION SERVER! ${NORMAL}\n"
 echo
 echo "    This installer assumes that you are installing on a fresh,"
 echo "    blank server. It will install all the packages needed, setup the database"
@@ -177,7 +177,7 @@ echo
 echo "    Mail is setup separately. SELinux is assumed to be disabled."
 echo "    If you have issues please include your installer log when reporting it."
 echo
-printf "${RED}   *************     !WARNING!   **********   !WARNING!     ************* ${NORMAL}\n"
+printf "${RED}   *************     !WARNING!   *************   !WARNING!     ************* ${NORMAL}\n"
 echo
 echo "    NOTICE: If you would like to see whats going on in the background "
 echo "            while running the script please open a new shell and run:"
@@ -299,7 +299,8 @@ case "$distro" in
 
         echo "##  Installing packages..."
         PACKAGES="git unzip curl debconf-utils apache2 mariadb-server mariadb-client
-        php7.0 php7.0-mcrypt php7.0-curl php7.0-mysql php7.0-gd php7.0-ldap libapache2-mod-php7.0"
+        php7.0 php7.0-mcrypt php7.0-curl php7.0-mysql php7.0-gd php7.0-mbstring
+        php7.0-ldap libapache2-mod-php7.0"
 
         for p in $PACKAGES;do
         if isinstalled "$p"; then
@@ -533,9 +534,9 @@ echo "##  Securing mariaDB server";
 echo
 
 echo "##  Setting up your database"
-echo -n "   Q. Enter MySQL/MariaDB root password:  pw"
+echo -n "   Q. Enter MySQL/MariaDB root password: "
 read -sr mysqlrootpw
-
+echo
 
     if mysql -u root -p"$mysqlrootpw" -e 'use snipeit';then
             echo "database exists"
@@ -662,8 +663,8 @@ function setupComposer ()
 {
     echo "##  Installing and configuring composer"
     cd "$webdir" || exit
-    curl -sS https://getcomposer.org/installer | php
-    php composer.phar install --no-dev --prefer-source
+    curl -sS https://getcomposer.org/installer | php || exit
+    php composer.phar install --no-dev --prefer-source || exit
 }
 
 function setupSnipeit ()
