@@ -40,21 +40,21 @@ mkdir $tmp
 
 function isinstalled {
   if yum list installed "$@" >/dev/null 2>&1; then
-    true
+	true
   else
-    false
+	false
   fi
 }
 
 
 #  Lets find what distro we are using and what version
 if [ -f /etc/lsb-release ]; then
-    distro="$(lsb_release -s -i -r)"
+	distro="$(lsb_release -s -i -r)"
 elif [ -f /etc/os-release ]; then
-    distro="$(. /etc/os-release && echo $ID $VERSION_ID)"
-    version="$(. /etc/os-release && echo $VERSION_ID)"
+	distro="$(. /etc/os-release && echo $ID $VERSION_ID)"
+	version="$(. /etc/os-release && echo $VERSION_ID)"
 else
-    distro="unsupported"
+	distro="unsupported"
 fi
 
 echo "
@@ -63,7 +63,7 @@ echo "
 	  \__ \/ __ \/ / __ \/ _ \______ / /  / /
 	 ___/ / / / / / /_/ /  __/_____// /  / /
 	/____/_/ /_/_/ .___/\___/     /___/ /_/
-	            /_/
+				/_/
 "
 
 echo ""
@@ -73,22 +73,22 @@ echo ""
 
 shopt -s nocasematch
 case $distro in
-        *Ubuntu*)
-                echo "  The installer has detected Ubuntu as the OS."
-                ;;
+		*Ubuntu*)
+				echo "  The installer has detected Ubuntu as the OS."
+				;;
 	*Debian*)
-                echo "  The installer has detected Debian as the OS."
-                ;;
-        *centos*6*|*redhat*6*)
-                echo "  The installer has detected $distro as the OS."
-                ;;
-        *centos*7*|*redhat*7*)
-                echo "  The installer has detected $distro as the OS."
-                ;;
-        *)
-                echo "  The installer was unable to determine your OS. Exiting for safety."
-                exit
-                ;;
+				echo "  The installer has detected Debian as the OS."
+				;;
+		*centos*6*|*redhat*6*)
+				echo "  The installer has detected $distro as the OS."
+				;;
+		*centos*7*|*redhat*7*)
+				echo "  The installer has detected $distro as the OS."
+				;;
+		*)
+				echo "  The installer was unable to determine your OS. Exiting for safety."
+				exit
+				;;
 esac
 
 #Get your FQDN.
@@ -96,7 +96,7 @@ esac
 echo -n "  Q. What is the FQDN of your server? ($fqdn): "
 read fqdn
 if [ -z "$fqdn" ]; then
-        fqdn="$(hostname --fqdn)"
+		fqdn="$(hostname --fqdn)"
 fi
 echo "     Setting to $fqdn"
 echo ""
@@ -107,18 +107,18 @@ echo -n "  Q. Do you want to automatically create the snipe database user passwo
 read setpw
 
 case $setpw in
-        [yY] | [yY][Ee][Ss] )
-                mysqluserpw="$(echo `< /dev/urandom tr -dc _A-Za-z-0-9 | head -c16`)"
-                ans="yes"
-                ;;
-        [nN] | [n|N][O|o] )
-                echo -n  "    Q. What do you want your snipeit user password to be?"
-                read -s mysqluserpw
-                echo ""
+		[yY] | [yY][Ee][Ss] )
+				mysqluserpw="$(echo `< /dev/urandom tr -dc _A-Za-z-0-9 | head -c16`)"
+				ans="yes"
+				;;
+		[nN] | [n|N][O|o] )
+				echo -n  "    Q. What do you want your snipeit user password to be?"
+				read -s mysqluserpw
+				echo ""
 				ans="no"
-                ;;
-        *) 		echo "    Invalid answer. Please type y or n"
-                ;;
+				;;
+		*) 		echo "    Invalid answer. Please type y or n"
+				;;
 esac
 done
 
@@ -168,10 +168,10 @@ case $distro in
 		echo ""
 		echo "##  Cloning Snipe-IT from github to the web directory.";
 		git clone https://github.com/$fork/snipe-it $webdir/$name >> /var/log/snipeit-install.log 2>&1
-        # get latest stable release
-        cd $webdir/$name
-        branch=$(git tag | grep -v 'pre' | tail -1)
-        git checkout -b $branch $branch
+		# get latest stable release
+		cd $webdir/$name
+		branch=$(git tag | grep -v 'pre' | tail -1)
+		git checkout -b $branch $branch
 
 ##  TODO make sure apache is set to start on boot and go ahead and start it
 
@@ -281,7 +281,7 @@ case $distro in
 		sudo apt-get -y upgrade >> /var/log/snipeit-install.log 2>&1
 
 		if [ "$version" == "16.04" ]; then
-		    echo "##  Installing packages."
+			echo "##  Installing packages."
 			sudo apt-get install -y git unzip php php-mcrypt php-curl php-mysql php-gd php-ldap php-mbstring >> /var/log/snipeit-install.log 2>&1
 			#Enable mcrypt and rewrite
 			echo "##  Enabling mcrypt and rewrite"
@@ -289,13 +289,13 @@ case $distro in
 			sudo phpenmod mbstring >> /var/log/snipeit-install 2>&1
 			sudo a2enmod rewrite >> /var/log/snipeit-install.log 2>&1
 		else
-		    echo "##  Installing packages."
+			echo "##  Installing packages."
 			sudo apt-get install -y git unzip php5 php5-mcrypt php5-curl php5-mysql php5-gd php5-ldap >> /var/log/snipeit-install.log 2>&1
 			#Enable mcrypt and rewrite
 			echo "##  Enabling mcrypt and rewrite"
 			sudo php5enmod mcrypt >> /var/log/snipeit-install.log 2>&1
 			sudo a2enmod rewrite >> /var/log/snipeit-install.log 2>&1
-  		#  Get files and extract to web dir
+		#  Get files and extract to web dir
 		fi
 
 		#We already established MySQL root & user PWs, so we dont need to be prompted. Let's go ahead and install Apache, PHP and MySQL.
@@ -306,10 +306,10 @@ case $distro in
 		echo ""
 		echo "##  Cloning Snipe-IT from github to the web directory.";
 		git clone https://github.com/$fork/snipe-it $webdir/$name >> /var/log/snipeit-install.log 2>&1
-        # get latest stable release
-        cd $webdir/$name
-        branch=$(git tag | grep -v 'pre' | tail -1)
-        git checkout -b $branch $branch
+		# get latest stable release
+		cd $webdir/$name
+		branch=$(git tag | grep -v 'pre' | tail -1)
+		git checkout -b $branch $branch
 
 ##  TODO make sure apache is set to start on boot and go ahead and start it
 
@@ -443,14 +443,14 @@ case $distro in
 			fi
 		done;
 
-        echo ""
+		echo ""
 		echo "##  Cloning Snipe-IT from github to the web directory.";
 
 		git clone https://github.com/$fork/snipe-it $webdir/$name >> /var/log/snipeit-install.log 2>&1
-        # get latest stable release
-        cd $webdir/$name
-        branch=$(git tag | grep -v 'pre' | tail -1)
-        git checkout -b $branch $branch
+		# get latest stable release
+		cd $webdir/$name
+		branch=$(git tag | grep -v 'pre' | tail -1)
+		git checkout -b $branch $branch
 
 		# Make mariaDB start on boot and restart the daemon
 		echo "##  Starting the mariaDB server.";
@@ -580,14 +580,14 @@ case $distro in
 			fi
 		done;
 
-        echo ""
+		echo ""
 		echo "##  Downloading Snipe-IT from github and put it in the web directory.";
 
 		git clone https://github.com/$fork/snipe-it $webdir/$name >> /var/log/snipeit-install.log 2>&1
-        # get latest stable release
-        cd $webdir/$name
-        branch=$(git tag | grep -v 'pre' | tail -1)
-        git checkout -b $branch $branch
+		# get latest stable release
+		cd $webdir/$name
+		branch=$(git tag | grep -v 'pre' | tail -1)
+		git checkout -b $branch $branch
 
 		# Make mariaDB start on boot and restart the daemon
 		echo "##  Starting the mariaDB server.";
