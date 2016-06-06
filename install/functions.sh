@@ -167,15 +167,17 @@ echo
 echo
 echo "  Welcome to Snipe-IT Inventory Installer for $supportedos!"
 echo
-printf "${RED}   **********     !WARNING!   ****   !WARNING!     ********** ${NORMAL}\n"
-printf "${YELLOW}    DO NOT RUN ON A CURRENT PRODUCTION SERVER! ${NORMAL}\n"
+printf "${RED}   *************     !WARNING!   **********   !WARNING!     ************* ${NORMAL}\n"
+printf "${YELLOW}              DO NOT RUN ON A CURRENT PRODUCTION SERVER! ${NORMAL}\n"
+echo
 echo "    This installer assumes that you are installing on a fresh,"
 echo "    blank server. It will install all the packages needed, setup the database"
 echo "    and configure snipeit for you."
 echo
 echo "    Mail is setup separately. SELinux is assumed to be disabled."
 echo "    If you have issues please include your installer log when reporting it."
-printf "${RED}   **********     !WARNING!   ****   !WARNING!     ********** ${NORMAL}\n"
+echo
+printf "${RED}   *************     !WARNING!   **********   !WARNING!     ************* ${NORMAL}\n"
 echo
 echo "    NOTICE: If you would like to see whats going on in the background "
 echo "            while running the script please open a new shell and run:"
@@ -353,6 +355,8 @@ if $packagefailed; then
     printf "${RED}  Failed to setup packages.${NORMAL}\n"
     printf "${RED}  Please check install log for errors and${NORMAL}\n"
     printf "${RED}  resolve package issues before installing again.${NORMAL}\n"
+    printf "${RED}  You can check the installer log back running the command:${NORMAL}\n"
+    printf "${RED}  less /var/log/snipeit-install.log ${NORMAL}\n"
     exit
 fi
 }
@@ -526,6 +530,8 @@ startMariadb
 echo "##  Setting up your database"
     echo -n "   Q. Enter MySQL/MariaDB root password:  pw"
     read -sr mysqlrootpw
+# dbnopass=""
+# dbwpass=""
 
 
     if mysql -u root -p"$mysqlrootpw" -e 'use snipeit';then
