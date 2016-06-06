@@ -36,6 +36,12 @@ return array(
         'invalidfiles' => 'いずれかのファイルが大き過ぎるか、ファイルタイプが許可されていません。許可されているファイルタイプ（png, gif, jpg, doc, docx, pdf, and txt）',
     ),
 
+    'import' => array(
+        'error'         => 'Some Items did not import Correctly.',
+        'errorDetail'   => 'The Following Items were not imported because of errors.',
+        'success'       => "Your File has been imported",
+    ),
+
 
     'delete' => array(
         'confirm'   	=> 'この資産を削除してもよろしいですか？',
@@ -52,7 +58,9 @@ return array(
     'checkin' => array(
         'error'   		=> '資産はチェックインされませんでした。もう一度、やり直して下さい。',
         'success' 		=> '資産は正常にチェックインされました。',
-        'user_does_not_exist' => 'その利用者は不正です。もう一度、やり直して下さい。'
+        'user_does_not_exist' => 'その利用者は不正です。もう一度、やり直して下さい。',
+        'already_checked_in'  => 'That asset is already checked in.',
+
     ),
 
     'requests' => array(

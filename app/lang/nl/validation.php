@@ -33,6 +33,7 @@ return array(
     "digits_between"   => ":attribute moet tussen de :min en :max cijfers bevatten.",
     "email"            => "Het formaat van :attribute is ongeldig.",
     "exists"           => "Het geselecteerde kenmerk :attribute is ongeldig.",
+    "email_array"      => "Een of meerdere e-mail adressen kloppen niet.",
     "image"            => ":attribute moet een afbeelding zijn.",
     "in"               => "Het geselecteerde kenmerk :attribute is ongeldig.",
     "integer"          => ":attribute moet van het type integer zijn.",

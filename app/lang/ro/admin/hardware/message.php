@@ -36,6 +36,12 @@ return array(
         'invalidfiles' => 'One or more of your files is too large or is a filetype that is not allowed. Allowed filetypes are png, gif, jpg, doc, docx, pdf, and txt.',
     ),
 
+    'import' => array(
+        'error'         => 'Some Items did not import Correctly.',
+        'errorDetail'   => 'The Following Items were not imported because of errors.',
+        'success'       => "Your File has been imported",
+    ),
+
 
     'delete' => array(
         'confirm'   	=> 'Sunteti sigur ca vreti sa stergeti acest activ?',
@@ -52,7 +58,9 @@ return array(
     'checkin' => array(
         'error'   		=> 'Activul nu a fost primit, va rugam incercati iar',
         'success' 		=> 'Activul a fost primit.',
-        'user_does_not_exist' => 'Utilizatorul este invalid. Va rugam incercati iar.'
+        'user_does_not_exist' => 'Utilizatorul este invalid. Va rugam incercati iar.',
+        'already_checked_in'  => 'That asset is already checked in.',
+
     ),
 
     'requests' => array(

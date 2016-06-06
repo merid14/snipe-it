@@ -36,6 +36,12 @@ return array(
         'invalidfiles' => 'En eller flere av filene dine er for store eller av en ikke tillatt filtype. Tillatte filtyper er png, gif, jpg, doc, docx, pdf og txt.',
     ),
 
+    'import' => array(
+        'error'         => 'Some Items did not import Correctly.',
+        'errorDetail'   => 'The Following Items were not imported because of errors.',
+        'success'       => "Your File has been imported",
+    ),
+
 
     'delete' => array(
         'confirm'   	=> 'Er du sikker på at du vil slette eiendelen?',
@@ -52,12 +58,14 @@ return array(
     'checkin' => array(
         'error'   		=> 'Eiendel ble ikke sjekket inn. Prøv igjen',
         'success' 		=> 'Vellykket innsjekk av eiendel.',
-        'user_does_not_exist' => 'Denne brukeren er ugyldig. Vennligst prøv igjen.'
+        'user_does_not_exist' => 'Denne brukeren er ugyldig. Vennligst prøv igjen.',
+        'already_checked_in'  => 'That asset is already checked in.',
+
     ),
 
     'requests' => array(
-        'error'   		=> 'Asset was not requested, please try again',
-        'success' 		=> 'Asset requested successfully.',
+        'error'   		=> 'Eiendelen ble ikke forespurt, prøv igjen',
+        'success' 		=> 'Eiendel ble forespurt.',
     )
 
 );

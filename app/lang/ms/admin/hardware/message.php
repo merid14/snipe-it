@@ -36,6 +36,12 @@ return array(
         'invalidfiles' => 'One or more of your files is too large or is a filetype that is not allowed. Allowed filetypes are png, gif, jpg, doc, docx, pdf, and txt.',
     ),
 
+    'import' => array(
+        'error'         => 'Some Items did not import Correctly.',
+        'errorDetail'   => 'The Following Items were not imported because of errors.',
+        'success'       => "Your File has been imported",
+    ),
+
 
     'delete' => array(
         'confirm'   	=> 'Anda pasti anda ingin hapuskan harta ini?',
@@ -52,7 +58,9 @@ return array(
     'checkin' => array(
         'error'   		=> 'Harta tidak diterima, sila cuba lagi',
         'success' 		=> 'Harta berjaya diterima.',
-        'user_does_not_exist' => 'Pengguna tidah sah. Sila cuba lagi.'
+        'user_does_not_exist' => 'Pengguna tidah sah. Sila cuba lagi.',
+        'already_checked_in'  => 'That asset is already checked in.',
+
     ),
 
     'requests' => array(

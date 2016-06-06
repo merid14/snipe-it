@@ -59,7 +59,7 @@ class AssetImportCommand extends Command {
 
 		// Loop through the records
 		$nbInsert = $csv->each(function ($row) use ($duplicates) {
-			$status_id = 1;
+
 
 			// Let's just map some of these entries to more user friendly words
 
@@ -77,7 +77,7 @@ class AssetImportCommand extends Command {
 				$user_email = '';
 			}
 
-			// User's email
+			// User's username
 			if (array_key_exists('2',$row)) {
 				$user_username = trim($row[2]);
 			} else {
@@ -98,23 +98,24 @@ class AssetImportCommand extends Command {
 				$user_asset_category = '';
 			}
 
-			// Asset Name
+			// Asset Model
 			if (array_key_exists('5',$row)) {
-				$user_asset_name = trim($row[5]);
+                $user_asset_model = substr(trim($row[5]), 0, 254);
 			} else {
-				$user_asset_name = '';
+				$user_asset_model = '';
 			}
 
 			// Asset Manufacturer
 			if (array_key_exists('6',$row)) {
-				$user_asset_mfgr = trim($row[6]);
+                $user_asset_mfgr = substr(trim($row[6]), 0, 254);
 			} else {
 				$user_asset_mfgr = '';
 			}
 
 			// Asset model number
 			if (array_key_exists('7',$row)) {
-				$user_asset_modelno = trim($row[7]);
+                $user_asset_modelno = substr(trim($row[7]), 0, 254);
+				//$user_asset_modelno = trim($row[7]);
 			} else {
 				$user_asset_modelno = '';
 			}
@@ -169,16 +170,49 @@ class AssetImportCommand extends Command {
 				$user_asset_purchase_cost = '';
 			}
 
-       // Asset Company Name
-       if (array_key_exists('14',$row)) {
-              if ($row[14]!='') {
-                  $user_asset_company_name = trim($row[14]);
-              } else {
-                      $user_asset_company_name= '';
-              }
-       } else {
-              $user_asset_company_name = '';
-       }
+           // Asset Company Name
+           if (array_key_exists('14',$row)) {
+                  if ($row[14]!='') {
+                      $user_asset_company_name = trim($row[14]);
+                  } else {
+                          $user_asset_company_name= '';
+                  }
+           } else {
+                  $user_asset_company_name = '';
+           }
+
+           // Asset Status Name
+           if (array_key_exists('15',$row)) {
+                if ($row[15]!='') {
+                  $user_asset_status = trim($row[15]);
+                } else {
+                  $user_asset_status= '';
+                }
+           } else {
+                  $user_asset_status = '';
+           }
+
+           // Asset Warranty Months
+           if (array_key_exists('16',$row)) {
+                if ($row[16]!='') {
+                  $user_asset_warranty = intval($row[16]);
+                } else {
+                    $user_asset_warranty= NULL;
+                }
+           } else {
+                  $user_asset_warranty = NULL;
+           }
+
+           // Asset Supplier
+           if (array_key_exists('17',$row)) {
+                if ($row[17]!='') {
+                  $user_asset_supplier = trim($row[17]);
+                } else {
+                      $user_asset_supplier= '';
+                }
+           } else {
+                  $user_asset_supplier = '';
+           }
 
 
 			// A number was given instead of a name
@@ -220,7 +254,7 @@ class AssetImportCommand extends Command {
 			$this->comment('Username: '.$user_username);
 			$this->comment('Email: '.$user_email);
 			$this->comment('Category Name: '.$user_asset_category);
-			$this->comment('Item: '.$user_asset_name);
+			$this->comment('Item: '.$user_asset_model);
 			$this->comment('Manufacturer ID: '.$user_asset_mfgr);
 			$this->comment('Model No: '.$user_asset_modelno);
 			$this->comment('Serial No: '.$user_asset_serial);
@@ -228,9 +262,11 @@ class AssetImportCommand extends Command {
 			$this->comment('Location: '.$user_asset_location);
 			$this->comment('Purchase Date: '.$user_asset_purchase_date);
 			$this->comment('Purchase Cost: '.$user_asset_purchase_cost);
+            $this->comment('Status: '.$user_asset_status);
+            $this->comment('Supplier: '.$user_asset_supplier);
+            $this->comment('Warranty Months: '.$user_asset_warranty);
 			$this->comment('Notes: '.$user_asset_notes);
-                        $this->comment('Company Name: '.$user_asset_company_name);
-
+            $this->comment('Company Name: '.$user_asset_company_name);
 			$this->comment('------------- Action Summary ----------------');
 
 			if ($user_username!='') {
@@ -269,7 +305,7 @@ class AssetImportCommand extends Command {
 				$this->comment('Location '.$user_asset_location.' already exists');
 			} else {
 
-        $location = new Location();
+            $location = new Location();
 
 				if ($user_asset_location!='') {
 
@@ -310,7 +346,7 @@ class AssetImportCommand extends Command {
 
 			} else {
 				$category = new Category();
-        $category->name = e($category_name);
+                $category->name = e($category_name);
 				$category->category_type = 'asset';
 				$category->user_id = 1;
 
@@ -338,21 +374,65 @@ class AssetImportCommand extends Command {
 
 			}
 
+            // Check for the supplier match and create it if it doesn't exist
+			if ($supplier = Supplier::where('name', e($user_asset_supplier))->first()) {
+				$this->comment('Supplier '.$user_asset_supplier.' already exists');
+			} else {
+				$supplier = new Supplier();
+				$supplier->name = e($user_asset_supplier);
+				$supplier->user_id = 1;
+
+				if ($supplier->save()) {
+					$this->comment('Supplier '.$user_asset_supplier.' was created');
+                } else {
+					$this->comment('Something went wrong! Supplier '.$user_asset_supplier.' was NOT created');
+				}
+
+			}
+
+
+            if ($user_asset_status=='') {
+                $user_asset_status = 'Unspecified Status';
+            }
+            // Check for the status label match and create it if it doesn't exist
+			if ($statuslabel = Statuslabel::where('name', e($user_asset_status))->first()) {
+				$this->comment('Status Label '.$user_asset_status.' already exists');
+			} else {
+
+                $statuslabel = new Statuslabel();
+                $statuslabel->name = e($user_asset_status);
+				$statuslabel->user_id = 1;
+                $statuslabel->deployable = 1;
+
+				if ($statuslabel->save()) {
+					$this->comment('Status Label '.$user_asset_status.' was created');
+                } else {
+					$this->comment('Something went wrong! Status Label '.$user_asset_status.' was NOT created');
+				}
+
+			}
+            $status_id = $statuslabel->id;
+
+
+
+
+
+
 			// Check for the asset model match and create it if it doesn't exist
-			if ($asset_model = Model::where('name', e($user_asset_name))->where('modelno', e($user_asset_modelno))->where('category_id', $category->id)->where('manufacturer_id', $manufacturer->id)->first()) {
-				$this->comment('The Asset Model '.$user_asset_name.' with model number '.$user_asset_modelno.' already exists');
+			if ($asset_model = Model::where('name', e($user_asset_model ))->where('modelno', e($user_asset_modelno))->where('category_id', $category->id)->where('manufacturer_id', $manufacturer->id)->first()) {
+				$this->comment('The Asset Model '.$user_asset_model .' with model number '.$user_asset_modelno.' already exists');
 			} else {
 				$asset_model = new Model();
-				$asset_model->name = e($user_asset_name);
+				$asset_model->name = e($user_asset_model );
 				$asset_model->manufacturer_id = $manufacturer->id;
 				$asset_model->modelno = e($user_asset_modelno);
 				$asset_model->category_id = $category->id;
 				$asset_model->user_id = 1;
 
 				if ($asset_model->save()) {
-					$this->comment('Asset Model '.$user_asset_name.' with model number '.$user_asset_modelno.' was created');
+					$this->comment('Asset Model '.$user_asset_model .' with model number '.$user_asset_modelno.' was created');
                                 } else {
-					$this->comment('Something went wrong! Asset Model '.$user_asset_name.' was NOT created');
+					$this->comment('Something went wrong! Asset Model '.$user_asset_model .' was NOT created');
 				}
 
 			}
@@ -390,7 +470,7 @@ class AssetImportCommand extends Command {
   				if ($user_asset_purchase_cost!='') {
   					$asset->purchase_cost = ParseFloat(e($user_asset_purchase_cost));
   				} else {
-  					$asset->purchase_cost = 0.00;
+  					$asset->purchase_cost = '0.00';
   				}
   				$asset->serial = e($user_asset_serial);
   				$asset->asset_tag = e($user_asset_tag);
@@ -399,6 +479,7 @@ class AssetImportCommand extends Command {
   				$asset->rtd_location_id = $location->id;
   				$asset->user_id = 1;
   				$asset->status_id = $status_id;
+                $asset->warranty_months = $user_asset_warranty;
                 $asset->company_id = $company->id;
   				if ($user_asset_purchase_date!='') {
   					$asset->purchase_date = $user_asset_purchase_date;
@@ -408,9 +489,9 @@ class AssetImportCommand extends Command {
   				$asset->notes = e($user_asset_notes);
 
   				if ($asset->save()) {
-  					$this->comment('Asset '.$user_asset_name.' with serial number '.$user_asset_serial.' was created');
+  					$this->comment('Asset '.$user_asset_model .' with serial number '.$user_asset_serial.' was created');
   	            } else {
-  					$this->comment('Something went wrong! Asset '.$user_asset_name.' was NOT created');
+  					$this->comment('Something went wrong! Asset '.$user_asset_model .' was NOT created');
   				}
 
         }

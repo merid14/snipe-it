@@ -35,6 +35,12 @@ return array(
         'invalidfiles' => 'Един или повече файлове са твърде големи или с непозволен тип. Разрешените файлови типове за качване са png, gif, jpg, doc, docx, pdf и txt.',
     ),
 
+    'import' => array(
+        'error'         => 'Some Items did not import Correctly.',
+        'errorDetail'   => 'The Following Items were not imported because of errors.',
+        'success'       => "Your File has been imported",
+    ),
+
 
     'delete' => array(
         'confirm'   	=> 'Сигурни ли сте, че желаете изтриване на актива?',
@@ -51,7 +57,9 @@ return array(
     'checkin' => array(
         'error'   		=> 'Активът не беше вписан. Моля опитайте отново.',
         'success' 		=> 'Активът вписан успешно.',
-        'user_does_not_exist' => 'Невалиден потребител. Моля опитайте отново.'
+        'user_does_not_exist' => 'Невалиден потребител. Моля опитайте отново.',
+        'already_checked_in'  => 'That asset is already checked in.',
+
     ),
 
     'requests' => array(

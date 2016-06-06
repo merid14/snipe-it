@@ -3,7 +3,8 @@
 return array(
 
     'does_not_exist' => 'Diese Kategorie existiert nicht.',
-    'assoc_users'	 => 'Diese Kategorie kann nicht gelöscht werden da sie bereits mit einem Modell verbunden ist. Bitte trennen sie diese Kategorie von Ihren Modellen und versuchen sie es erneut. ',
+    'assoc_models'	 => 'Diese Kategorie kann nicht gelöscht werden da sie bereits mit einem Modell verbunden ist. Bitte trennen Sie diese Kategorie von Ihren Modellen und versuchen Sie es erneut. ',
+    'assoc_items'	 => 'Diese Kategorie kann nicht gelöscht werden da sie bereits mit einem :asset_type verbunden ist. Bitte trennen Sie diese Kategorie von Ihrem :asset_type und versuchen Sie es erneut. ',
 
     'create' => array(
         'error'   => 'Die Kategorie konnte nicht erstellt werden, bitte versuchen sie es erneut.',

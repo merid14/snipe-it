@@ -36,6 +36,12 @@ return array(
         'invalidfiles' => 'Un ou plusieurs de vos fichiers sont trop gros, ou sont d\'un type non autorisé. Les types de fichiers autorisés sont png, gif, jpg, doc, docx, pdf et txt.',
     ),
 
+    'import' => array(
+        'error'         => 'Some Items did not import Correctly.',
+        'errorDetail'   => 'The Following Items were not imported because of errors.',
+        'success'       => "Your File has been imported",
+    ),
+
 
     'delete' => array(
         'confirm'   	=> 'Etes-vous sûr de vouloir supprimer ce bien?',
@@ -52,7 +58,9 @@ return array(
     'checkin' => array(
         'error'   		=> 'Ce bien n\'a pas été retourné, veuillez réessayer',
         'success' 		=> 'Ce bien a été retourné correctement.',
-        'user_does_not_exist' => 'Cet utilisateur est invalide. Veuillez réessayer.'
+        'user_does_not_exist' => 'Cet utilisateur est invalide. Veuillez réessayer.',
+        'already_checked_in'  => 'That asset is already checked in.',
+
     ),
 
     'requests' => array(

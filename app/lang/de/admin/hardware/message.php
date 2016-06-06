@@ -36,6 +36,12 @@ return array(
         'invalidfiles' => 'Eine oder mehrere Ihrer Dateien ist zu groß oder deren Dateityp ist nicht zugelassen. Zugelassene Dateitypen sind png, gif, jpg, doc, docx, pdf, und txt.',
     ),
 
+    'import' => array(
+        'error'         => 'Some Items did not import Correctly.',
+        'errorDetail'   => 'The Following Items were not imported because of errors.',
+        'success'       => "Your File has been imported",
+    ),
+
 
     'delete' => array(
         'confirm'   	=> 'Sind Sie sicher, dass Sie dieses Asset entfernen möchten?',
@@ -52,7 +58,9 @@ return array(
     'checkin' => array(
         'error'   		=> 'Asset konnte nicht eingebucht werden. Bitte versuchen Sie es erneut',
         'success' 		=> 'Asset wurde erfolgreich eingebucht.',
-        'user_does_not_exist' => 'Dieser Benutzer existiert nicht. Bitte versuchen Sie es erneut.'
+        'user_does_not_exist' => 'Dieser Benutzer existiert nicht. Bitte versuchen Sie es erneut.',
+        'already_checked_in'  => 'Dieses Asset ist bereits eingebucht.',
+
     ),
 
     'requests' => array(

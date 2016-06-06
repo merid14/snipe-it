@@ -7,6 +7,7 @@ return array(
     'cost'				=> 'Einkaufspreis',
     'create'                             => 'Verbrauchsmaterial erstellen',
     'date'					=> 'Kaufdatum',
+    'item_no'               => 'Artikel Nr.',
     'order'					=> 'Bestellnummer',
     'remaining' 			             => 'übrig',
     'total' 			                 => 'Gesamt',

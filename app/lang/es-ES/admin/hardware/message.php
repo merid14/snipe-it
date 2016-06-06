@@ -36,6 +36,12 @@ return array(
         'invalidfiles' => 'Uno o más sus archivos es demasiado grande o es de un tipo no permitido. Los tipos de archivo permitidos son png, gif, jpg, doc, docx, pdf y txt.',
     ),
 
+    'import' => array(
+        'error'         => 'Some Items did not import Correctly.',
+        'errorDetail'   => 'The Following Items were not imported because of errors.',
+        'success'       => "Your File has been imported",
+    ),
+
 
     'delete' => array(
         'confirm'   	=> 'Estás seguro que quieres eliminar el equipo?',
@@ -52,7 +58,9 @@ return array(
     'checkin' => array(
         'error'   		=> 'No se ha quitado el equipo. Intentalo de nuevo.',
         'success' 		=> 'Equipo quitado correctamente.',
-        'user_does_not_exist' => 'Este usuario no es correcto. Intentalo de nuevo.'
+        'user_does_not_exist' => 'Este usuario no es correcto. Intentalo de nuevo.',
+        'already_checked_in'  => 'That asset is already checked in.',
+
     ),
 
     'requests' => array(

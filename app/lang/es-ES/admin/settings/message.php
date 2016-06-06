@@ -13,5 +13,10 @@ return array(
         'generated'             => 'Un nuevo archivo de respaldo fue creado satisfactoriamente.',
         'file_not_found'        => 'El archivo de respaldo no se ha encontrado en el servidor.',
     ),
+    'purge' => array(
+        'error'     => 'An error has occurred while purging. ',
+        'validation_failed'     => 'Su confirmación de purga es incorrecta. Por favor, escriba la palabra "Borrar" en el cuadro de confirmación.',
+        'success'               => 'Registros eliminados correctamente purgados.'
+    ),
 
 );

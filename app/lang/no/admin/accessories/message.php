@@ -16,9 +16,9 @@ return array(
     ),
 
     'delete' => array(
-        'confirm'   => 'Er du sikker på at du vil slette denne kategorien?',
-        'error'   => 'Det oppstod et problem under sletting av kategori. Prøv igjen.',
-        'success' => 'Vellykket sletting av kategori.'
+        'confirm'   => 'Er du sikker på at du vil slette dette tilbehøret?',
+        'error'   => 'Det oppstod et problem under sletting av tilbehøret. Prøv igjen.',
+        'success' => 'Tilbehøret ble slettet.'
     ),
 
      'checkout' => array(

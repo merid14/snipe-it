@@ -35,6 +35,12 @@ return array(
         'invalidfiles' => 'Um ou mais de seus arquivos é muito grande ou está em um tipo de arquivo não permitido. Os tipos permitidos são png, gif, jpg, doc, docx, pdf, e txt.',
     ),
 
+    'import' => array(
+        'error'         => 'Some Items did not import Correctly.',
+        'errorDetail'   => 'The Following Items were not imported because of errors.',
+        'success'       => "Your File has been imported",
+    ),
+
 
     'delete' => array(
         'confirm'   	=> 'Tem certeza de que deseja excluir este ativo?',
@@ -51,12 +57,14 @@ return array(
     'checkin' => array(
         'error'   		=> 'Ativo não foi retornado, favor tentar novamente',
         'success' 		=> 'Ativo retornado com sucesso.',
-        'user_does_not_exist' => 'Este usuário é inválido. Tente novamente.'
+        'user_does_not_exist' => 'Este usuário é inválido. Tente novamente.',
+        'already_checked_in'  => 'Este ativo já foi devolvido.',
+
     ),
 
     'requests' => array(
-        'error'   		=> 'Asset was not requested, please try again',
-        'success' 		=> 'Asset requested successfully.',
+        'error'   		=> 'Ativo não foi solicitado, por favor tente novamente',
+        'success' 		=> 'Ativo solicitado com sucesso.',
     )
 
 );

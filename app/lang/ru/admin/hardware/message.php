@@ -36,6 +36,12 @@ return array(
         'invalidfiles' => 'Один или несколько ваших файлов слишком большого размера или имеют неподдерживаемый формат. Разрешены только следующие форматы файлов:  png, gif, jpg, doc, docx, pdf, txt.',
     ),
 
+    'import' => array(
+        'error'         => 'Some Items did not import Correctly.',
+        'errorDetail'   => 'The Following Items were not imported because of errors.',
+        'success'       => "Your File has been imported",
+    ),
+
 
     'delete' => array(
         'confirm'   	=> 'Вы уверены что хотите удалить этот актив?',
@@ -52,12 +58,14 @@ return array(
     'checkin' => array(
         'error'   		=> 'Актив не был отвязан, пожалуйста попробуйте снова',
         'success' 		=> 'Актив успешно отвязан.',
-        'user_does_not_exist' => 'Этот пользователь является недопустимым. Пожалуйста, попробуйте еще раз.'
+        'user_does_not_exist' => 'Этот пользователь является недопустимым. Пожалуйста, попробуйте еще раз.',
+        'already_checked_in'  => 'Этот актив уже привязан.',
+
     ),
 
     'requests' => array(
-        'error'   		=> 'Asset was not requested, please try again',
-        'success' 		=> 'Asset requested successfully.',
+        'error'   		=> 'Актив не был запрошен, попробуйте ещё раз',
+        'success' 		=> 'Актив запрошен успешно.',
     )
 
 );
