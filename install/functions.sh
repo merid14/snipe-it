@@ -323,7 +323,7 @@ case "$distro" in
         ;;
     *centos*|*redhat*)
         echo "##  Installing packages...";
-        PACKAGES="httpd MariaDB-server mariadbB-client git unzip php70u php70u-mysqlnd
+        PACKAGES="httpd MariaDB-server MariaDB-client git unzip mod_php70u php70u-mysqlnd
                 php70u-bcmath php70u-cli php70u-common php70u-embedded
                 php70u-gd php70u-mbstring php70u-mcrypt php70u-ldap"
 
