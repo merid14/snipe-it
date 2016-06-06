@@ -153,15 +153,15 @@ case $distro in
 		sudo apt-get -y install apache2 >> /var/log/snipeit-install.log 2>&1
 		sudo apt-get install -y git unzip php5 php5-mcrypt php5-curl php5-mysql php5-gd php5-ldap libapache2-mod-php5 curl >> /var/log/snipeit-install.log 2>&1
 		sudo service apache2 restart
-		
-		#We already established MySQL root & user PWs, so we dont need to be prompted. Let's go ahead and install Apache, PHP and MySQL.
-		echo "##  Setting up LAMP."
-		#sudo DEBIAN_FRONTEND=noninteractive apt-get install -y lamp-server^ >> /var/log/snipeit-install.log 2>&1 
 
-		#  Get files and extract to web dir
+		#We already established MySQL root & user PWs, so we dont need to be prompted. Let's go ahead and install Apache, PHP and MySQL.
+		# echo "##  Setting up LAMP."
+		#sudo DEBIAN_FRONTEND=noninteractive apt-get install -y lamp-server^ >> /var/log/snipeit-install.log 2>&1
+
+    	#  Get files and extract to web dir
 		echo ""
 		echo "##  Downloading snipeit and extract to web directory."
-		wget -P $tmp/ https://github.com/snipe/snipe-it/archive/$file >> /var/log/snipeit-install.log 2>&1 
+		wget -P $tmp/ https://github.com/snipe/snipe-it/archive/$file >> /var/log/snipeit-install.log 2>&1
 		unzip -qo $tmp/$file -d $tmp/
 		cp -R $tmp/snipe-it-master $webdir/$name
 
@@ -169,9 +169,9 @@ case $distro in
 
 		#Enable mcrypt and rewrite
 		echo "##  Enabling mcrypt and rewrite"
-		sudo php5enmod mcrypt >> /var/log/snipeit-install.log 2>&1 
-		sudo a2enmod rewrite >> /var/log/snipeit-install.log 2>&1 
-		sudo ls -al /etc/apache2/mods-enabled/rewrite.load >> /var/log/snipeit-install.log 2>&1 
+		sudo php5enmod mcrypt >> /var/log/snipeit-install.log 2>&1
+		sudo a2enmod rewrite >> /var/log/snipeit-install.log 2>&1
+		sudo ls -al /etc/apache2/mods-enabled/rewrite.load >> /var/log/snipeit-install.log 2>&1
 
 		#Create a new virtual host for Apache.
 		echo "##  Create Virtual host for apache."
@@ -191,7 +191,7 @@ case $distro in
 
 		echo "##  Setting up hosts file."
 		echo >> $hosts "127.0.0.1 $hostname $fqdn"
-		a2ensite $name.conf >> /var/log/snipeit-install.log 2>&1 
+		a2ensite $name.conf >> /var/log/snipeit-install.log 2>&1
 
 		#Modify the Snipe-It files necessary for a production environment.
 		echo "##  Modify the Snipe-It files necessary for a production environment."
@@ -227,12 +227,12 @@ case $distro in
 		sudo chmod -R 755 $webdir/$name/public/uploads
 		sudo chown -R www-data:www-data /var/www/
 		# echo "##  Finished permission changes."
-		
+
 		echo "##  Input your MySQL/MariaDB root password: "
 		echo ""
 		sudo mysql -u root -p < $dbsetup
 		echo ""
-		
+
 		echo "##  Securing Mysql"
 		echo "## I understand this is redundant. You don't need to change your root pw again if you don't want to."
 		# Have user set own root password when securing install
@@ -250,7 +250,7 @@ case $distro in
 		echo "##  Restarting apache."
 		service apache2 restart
 		;;
-		
+
 	*Ubuntu*)
 		#####################################  Install for Ubuntu  ##############################################
 
@@ -282,12 +282,12 @@ case $distro in
 		echo "##  Installing packages."
 		#We already established MySQL root & user PWs, so we dont need to be prompted. Let's go ahead and install Apache, PHP and MySQL.
 		echo "##  Setting up LAMP."
-		sudo DEBIAN_FRONTEND=noninteractive apt-get install -y lamp-server^ >> /var/log/snipeit-install.log 2>&1 
+		sudo DEBIAN_FRONTEND=noninteractive apt-get install -y lamp-server^ >> /var/log/snipeit-install.log 2>&1
 
 		#  Get files and extract to web dir
 		echo ""
 		echo "##  Downloading snipeit and extract to web directory."
-		wget -P $tmp/ https://github.com/snipe/snipe-it/archive/$file >> /var/log/snipeit-install.log 2>&1 
+		wget -P $tmp/ https://github.com/snipe/snipe-it/archive/$file >> /var/log/snipeit-install.log 2>&1
 		unzip -qo $tmp/$file -d $tmp/
 		cp -R $tmp/snipe-it-master $webdir/$name
 
@@ -311,7 +311,7 @@ case $distro in
 
 		echo "##  Setting up hosts file."
 		echo >> $hosts "127.0.0.1 $hostname $fqdn"
-		a2ensite $name.conf >> /var/log/snipeit-install.log 2>&1 
+		a2ensite $name.conf >> /var/log/snipeit-install.log 2>&1
 
 		#Modify the Snipe-It files necessary for a production environment.
 		echo "##  Modify the Snipe-It files necessary for a production environment."
@@ -373,23 +373,29 @@ case $distro in
 
 		webdir=/var/www/html
 
-##TODO make sure the repo doesnt exhist isnt already in there
+##TODO make sure the repo doesnt exist isnt already in there
 
 		#Allow us to get the mysql engine
 		echo ""
 		echo "##  Adding IUS, epel-release and mariaDB repos.";
 		mariadbRepo=/etc/yum.repos.d/MariaDB.repo
-		touch $mariadbRepo
-		echo >> $mariadbRepo "[mariadb]"
-		echo >> $mariadbRepo "name = MariaDB"
-		echo >> $mariadbRepo "baseurl = http://yum.mariadb.org/10.0/centos6-amd64"
-		echo >> $mariadbRepo "gpgkey=https://yum.mariadb.org/RPM-GPG-KEY-MariaDB"
-		echo >> $mariadbRepo "gpgcheck=1"
-		echo >> $mariadbRepo "enable=1"
 
-		yum -y install wget epel-release >> /var/log/snipeit-install.log 2>&1 
-		wget -P $tmp/ https://centos6.iuscommunity.org/ius-release.rpm >> /var/log/snipeit-install.log 2>&1 
-		rpm -Uvh $tmp/ius-release*.rpm >> /var/log/snipeit-install.log 2>&1 
+		if [$mariadbRepo]
+		then
+			echo "    Repo already exists. $apachefile"
+		else
+			touch $mariadbRepo
+			echo >> $mariadbRepo "[mariadb]"
+			echo >> $mariadbRepo "name = MariaDB"
+			echo >> $mariadbRepo "baseurl = http://yum.mariadb.org/10.0/centos6-amd64"
+			echo >> $mariadbRepo "gpgkey=https://yum.mariadb.org/RPM-GPG-KEY-MariaDB"
+			echo >> $mariadbRepo "gpgcheck=1"
+			echo >> $mariadbRepo "enable=1"
+		fi
+
+		yum -y install wget epel-release >> /var/log/snipeit-install.log 2>&1
+		wget -P $tmp/ https://centos6.iuscommunity.org/ius-release.rpm >> /var/log/snipeit-install.log 2>&1
+		rpm -Uvh $tmp/ius-release*.rpm >> /var/log/snipeit-install.log 2>&1
 
 
 		#Install PHP and other needed stuff.
@@ -401,7 +407,7 @@ case $distro in
 				echo " ##" $p "Installed"
 			else
 				echo -n " ##" $p "Installing... "
-				yum -y install $p >> /var/log/snipeit-install.log 2>&1 
+				yum -y install $p >> /var/log/snipeit-install.log 2>&1
 				echo "";
 			fi
 		done;
@@ -409,7 +415,7 @@ case $distro in
         echo ""
 		echo "##  Downloading Snipe-IT from github and putting it in the web directory.";
 
-		wget -P $tmp/ https://github.com/snipe/snipe-it/archive/$file >> /var/log/snipeit-install.log 2>&1 
+		wget -P $tmp/ https://github.com/snipe/snipe-it/archive/$file >> /var/log/snipeit-install.log 2>&1
 		unzip -qo $tmp/$file -d $tmp/
 		cp -R $tmp/snipe-it-master $webdir/$name
 
@@ -424,31 +430,43 @@ case $distro in
 		echo "##  Securing mariaDB server.";
 		/usr/bin/mysql_secure_installation
 
-##TODO make sure the apachefile doesnt exhist isnt already in there
+##TODO make sure the apachefile doesnt exist isnt already in there
 		#Create the new virtual host in Apache and enable rewrite
+
+
 		echo "##  Creating the new virtual host in Apache.";
 		apachefile=/etc/httpd/conf.d/$name.conf
 
-		echo >> $apachefile ""
-		echo >> $apachefile ""
-		echo >> $apachefile "LoadModule rewrite_module modules/mod_rewrite.so"
-		echo >> $apachefile ""
-		echo >> $apachefile "<VirtualHost *:80>"
-		echo >> $apachefile "ServerAdmin webmaster@localhost"
-		echo >> $apachefile "    <Directory $webdir/$name/public>"
-		echo >> $apachefile "        Allow From All"
-		echo >> $apachefile "        AllowOverride All"
-		echo >> $apachefile "        Options +Indexes"
-		echo >> $apachefile "   </Directory>"
-		echo >> $apachefile "    DocumentRoot $webdir/$name/public"
-		echo >> $apachefile "    ServerName $fqdn"
-		echo >> $apachefile "        ErrorLog /var/log/httpd/snipeIT.error.log"
-		echo >> $apachefile "        CustomLog /var/log/access.log combined"
-		echo >> $apachefile "</VirtualHost>"
+		if [$apachefile]
+		then
+			echo "    VirtualHost already exists. $apachefile"
+		else
+			echo >> $apachefile ""
+			echo >> $apachefile ""
+			echo >> $apachefile "LoadModule rewrite_module modules/mod_rewrite.so"
+			echo >> $apachefile ""
+			echo >> $apachefile "<VirtualHost *:80>"
+			echo >> $apachefile "ServerAdmin webmaster@localhost"
+			echo >> $apachefile "    <Directory $webdir/$name/public>"
+			echo >> $apachefile "        Allow From All"
+			echo >> $apachefile "        AllowOverride All"
+			echo >> $apachefile "        Options +Indexes"
+			echo >> $apachefile "   </Directory>"
+			echo >> $apachefile "    DocumentRoot $webdir/$name/public"
+			echo >> $apachefile "    ServerName $fqdn"
+			echo >> $apachefile "        ErrorLog /var/log/httpd/snipeIT.error.log"
+			echo >> $apachefile "        CustomLog /var/log/access.log combined"
+			echo >> $apachefile "</VirtualHost>"
+		fi
 
 ##TODO make sure hosts file doesnt already contain this info
 		echo "##  Setting up hosts file.";
-		echo >> $hosts "127.0.0.1 $hostname $fqdn"
+		if grep -q "127.0.0.1 $hostname $fqdn" "$hosts"; then
+			echo "    Hosts file already setup."
+		else
+			echo >> $hosts "127.0.0.1 $hostname $fqdn"
+		fi
+
 
 		# Make apache start on boot and restart the daemon
 		echo "##  Starting the apache server.";
@@ -511,9 +529,9 @@ case $distro in
 		#Allow us to get the mysql engine
 		echo ""
 		echo "##  Add IUS, epel-release and mariaDB repos.";
-		yum -y install wget epel-release >> /var/log/snipeit-install.log 2>&1 
-		wget -P $tmp/ https://centos7.iuscommunity.org/ius-release.rpm >> /var/log/snipeit-install.log 2>&1 
-		rpm -Uvh $tmp/ius-release*.rpm >> /var/log/snipeit-install.log 2>&1 
+		yum -y install wget epel-release >> /var/log/snipeit-install.log 2>&1
+		wget -P $tmp/ https://centos7.iuscommunity.org/ius-release.rpm >> /var/log/snipeit-install.log 2>&1
+		rpm -Uvh $tmp/ius-release*.rpm >> /var/log/snipeit-install.log 2>&1
 
 		#Install PHP and other needed stuff.
 		echo "##  Installing PHP and other needed stuff";
@@ -524,7 +542,7 @@ case $distro in
 				echo " ##" $p "Installed"
 			else
 				echo -n " ##" $p "Installing... "
-				yum -y install $p >> /var/log/snipeit-install.log 2>&1 
+				yum -y install $p >> /var/log/snipeit-install.log 2>&1
 			echo "";
 			fi
 		done;
@@ -532,7 +550,7 @@ case $distro in
         echo ""
 		echo "##  Downloading Snipe-IT from github and put it in the web directory.";
 
-		wget -P $tmp/ https://github.com/snipe/snipe-it/archive/$file >> /var/log/snipeit-install.log 2>&1 
+		wget -P $tmp/ https://github.com/snipe/snipe-it/archive/$file >> /var/log/snipeit-install.log 2>&1
 		unzip -qo $tmp/$file -d $tmp/
 		cp -R $tmp/snipe-it-master $webdir/$name
 
@@ -550,7 +568,7 @@ case $distro in
 		/usr/bin/mysql_secure_installation
 
 
-##TODO make sure the apachefile doesnt exhist isnt already in there
+##TODO make sure the apachefile doesnt exist isnt already in there
 		#Create the new virtual host in Apache and enable rewrite
 		apachefile=/etc/httpd/conf.d/$name.conf
 
