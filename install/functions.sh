@@ -1,6 +1,6 @@
 #!/bin/bash
 # shellcheck disable=SC2154,SC2034
-
+set -o nounset errexit pipefail
 
 
 function ShowProgressOf ()
