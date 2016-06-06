@@ -136,33 +136,37 @@ if [ -d "$webdir" ]; then #If webdir exists
 
         php composer.phar install --no-dev --prefer-source
         php composer.phar dump-autoload
-
-        ans=""
-        until [[ $ans == "no" ]]; do
+        echo "##  Running migrations."
+        echo
         php artisan migrate
-        chkfail="$(tail -n 1 $log)"
-        if grep "Cancelled!" <<< "$chkfail" > /dev/null 2>&1; then
-            printf "${RED}  --  Migrations Cancelled!${NORMAL}\n"
-            printf "${RED}    Q. Do you want to run migrations? (y/n) ${NORMAL}"
-        read -r cont
-        fi
-        shopt -s nocasematch
-        case $cont in
-                y | yes )
-                    echo "Running migrations."
-                    ;;
-                n | no )
-                    ans="no"
-                    printf "${YELLOW}    You are now on Version $newtag of $si.${NORMAL}\n"
-                    printf "${YELLOW}     However migrations have to be run before using the software${NORMAL}\n"
-                    printf "${YELLOW}     Please run: php artisan migrate${NORMAL}\n"
-                    exit
-                    ;;
-                *)
-                    echo "    Invalid answer. Please type y or n"
-                    ;;
-        esac
-        done
+
+# I'm not sure what this is for?
+        # ans=""
+        # until [[ $ans == "no" ]]; do
+        # php artisan migrate
+        # chkfail="$(tail -n 1 $log)"
+        # if grep "Cancelled!" <<< "$chkfail" > /dev/null 2>&1; then
+        #     printf "${RED}  --  Migrations Cancelled!${NORMAL}\n"
+        #     printf "${RED}    Q. Do you want to run migrations? (y/n) ${NORMAL}"
+        # read -r cont
+        # fi
+        # shopt -s nocasematch
+        # case $cont in
+        #         y | yes )
+        #             echo "Running migrations."
+        #             ;;
+        #         n | no )
+        #             ans="no"
+        #             printf "${YELLOW}    You are now on Version $newtag of $si.${NORMAL}\n"
+        #             printf "${YELLOW}     However migrations have to be run before using the software${NORMAL}\n"
+        #             printf "${YELLOW}     Please run: php artisan migrate${NORMAL}\n"
+        #             exit
+        #             ;;
+        #         *)
+        #             echo "    Invalid answer. Please type y or n"
+        #             ;;
+        # esac
+        # done
 else
     printf "${RED} --  No previous version of $si found. Continuing...${NORMAL}\n"
 fi

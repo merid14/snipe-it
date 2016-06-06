@@ -441,6 +441,7 @@ case "$distro" in
         rollbackExit
         ;;
 esac
+
     if [ "$apacheversion" ]; then
         apacheaccess="Require all granted"
     else
@@ -469,6 +470,11 @@ esac
         echo >> "$apachefile" "        CustomLog $apachelog/snipeit-access.log combined"
         echo >> "$apachefile" "</VirtualHost>"
     fi
+
+if [[ "$distro" == *Ubuntu*||*Debian* ]]; then
+    sudo a2dissite 000-default.conf
+    sudo a2ensite "$name".conf
+fi
 }
 
 function setupFiles ()
