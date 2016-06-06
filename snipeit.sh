@@ -161,10 +161,10 @@ case $distro in
 		sudo service apache2 restart
 
 		#We already established MySQL root & user PWs, so we dont need to be prompted. Let's go ahead and install Apache, PHP and MySQL.
-		# echo "##  Setting up LAMP."
+		echo "##  Setting up LAMP."
 		#sudo DEBIAN_FRONTEND=noninteractive apt-get install -y lamp-server^ >> /var/log/snipeit-install.log 2>&1
 
-    	#  Get files and extract to web dir
+		#  Get files and extract to web dir
 		echo ""
 		echo "##  Cloning Snipe-IT from github to the web directory.";
 		git clone https://github.com/$fork/snipe-it $webdir/$name >> /var/log/snipeit-install.log 2>&1
@@ -270,16 +270,18 @@ case $distro in
 		#####################################  Install for Ubuntu  ##############################################
 
 		webdir=/var/www
+		apachefile=/etc/apache2/sites-available/$name.conf
 
 		#Update/upgrade Debian/Ubuntu repositories, get the latest version of git.
 		echo ""
 		echo "##  Updating ubuntu in the background. Please be patient."
 		echo ""
-		apachefile=/etc/apache2/sites-available/$name.conf
+
 		sudo apt-get update >> /var/log/snipeit-install.log 2>&1
 		sudo apt-get -y upgrade >> /var/log/snipeit-install.log 2>&1
 
 		if [ "$version" == "16.04" ]; then
+		    echo "##  Installing packages."
 			sudo apt-get install -y git unzip php php-mcrypt php-curl php-mysql php-gd php-ldap php-mbstring >> /var/log/snipeit-install.log 2>&1
 			#Enable mcrypt and rewrite
 			echo "##  Enabling mcrypt and rewrite"
@@ -287,6 +289,7 @@ case $distro in
 			sudo phpenmod mbstring >> /var/log/snipeit-install 2>&1
 			sudo a2enmod rewrite >> /var/log/snipeit-install.log 2>&1
 		else
+		    echo "##  Installing packages."
 			sudo apt-get install -y git unzip php5 php5-mcrypt php5-curl php5-mysql php5-gd php5-ldap >> /var/log/snipeit-install.log 2>&1
 			#Enable mcrypt and rewrite
 			echo "##  Enabling mcrypt and rewrite"
@@ -294,39 +297,54 @@ case $distro in
 			sudo a2enmod rewrite >> /var/log/snipeit-install.log 2>&1
   		#  Get files and extract to web dir
 		fi
-		echo "##  Installing packages."
+
 		#We already established MySQL root & user PWs, so we dont need to be prompted. Let's go ahead and install Apache, PHP and MySQL.
 		echo "##  Setting up LAMP."
 		sudo DEBIAN_FRONTEND=noninteractive apt-get install -y lamp-server^ >> /var/log/snipeit-install.log 2>&1
 
 		#  Get files and extract to web dir
 		echo ""
-		echo "##  Downloading snipeit and extract to web directory."
-		wget -P $tmp/ https://github.com/snipe/snipe-it/archive/$file >> /var/log/snipeit-install.log 2>&1
-		unzip -qo $tmp/$file -d $tmp/
-		cp -R $tmp/snipe-it-master $webdir/$name
+		echo "##  Cloning Snipe-IT from github to the web directory.";
+		git clone https://github.com/$fork/snipe-it $webdir/$name >> /var/log/snipeit-install.log 2>&1
+        # get latest stable release
+        cd $webdir/$name
+        branch=$(git tag | grep -v 'pre' | tail -1)
+        git checkout -b $branch $branch
 
-		##  TODO make sure apache is set to start on boot and go ahead and start it
+##  TODO make sure apache is set to start on boot and go ahead and start it
 
-		#Create a new virtual host for Apache.
-		echo "##  Create Virtual host for apache."
-		echo >> $apachefile ""
-		echo >> $apachefile ""
-		echo >> $apachefile "<VirtualHost *:80>"
-		echo >> $apachefile "ServerAdmin webmaster@localhost"
-		echo >> $apachefile "    <Directory $webdir/$name/public>"
-		echo >> $apachefile "        Require all granted"
-		echo >> $apachefile "        AllowOverride All"
-		echo >> $apachefile "   </Directory>"
-		echo >> $apachefile "    DocumentRoot $webdir/$name/public"
-		echo >> $apachefile "    ServerName $fqdn"
-		echo >> $apachefile "        ErrorLog /var/log/apache2/snipeIT.error.log"
-		echo >> $apachefile "        CustomLog /var/log/apache2/access.log combined"
-		echo >> $apachefile "</VirtualHost>"
+		#Enable mcrypt and rewrite
+		echo "##  Enabling mcrypt and rewrite"
+		sudo php5enmod mcrypt >> /var/log/snipeit-install.log 2>&1
+		sudo a2enmod rewrite >> /var/log/snipeit-install.log 2>&1
+		sudo ls -al /etc/apache2/mods-enabled/rewrite.load >> /var/log/snipeit-install.log 2>&1
 
-		echo "##  Setting up hosts file."
-		echo >> $hosts "127.0.0.1 $hostname $fqdn"
-		a2ensite $name.conf >> /var/log/snipeit-install.log 2>&1
+		if [$apachefile]
+		then
+			echo "    VirtualHost already exists. $apachefile"
+		else
+			echo >> $apachefile ""
+			echo >> $apachefile ""
+			echo >> $apachefile "<VirtualHost *:80>"
+			echo >> $apachefile "ServerAdmin webmaster@localhost"
+			echo >> $apachefile "    <Directory $webdir/$name/public>"
+			echo >> $apachefile "        Require all granted"
+			echo >> $apachefile "        AllowOverride All"
+			echo >> $apachefile "   </Directory>"
+			echo >> $apachefile "    DocumentRoot $webdir/$name/public"
+			echo >> $apachefile "    ServerName $fqdn"
+			echo >> $apachefile "        ErrorLog /var/log/apache2/snipeIT.error.log"
+			echo >> $apachefile "        CustomLog /var/log/apache2/access.log combined"
+			echo >> $apachefile "</VirtualHost>"
+		fi
+
+		echo "##  Setting up hosts file.";
+		if grep -q "127.0.0.1 $hostname $fqdn" "$hosts"; then
+			echo "    Hosts file already setup."
+		else
+			echo >> $hosts "127.0.0.1 $hostname $fqdn"
+			a2ensite $name.conf >> /var/log/snipeit-install.log 2>&1
+		fi
 
 		#Modify the Snipe-It files necessary for a production environment.
 		echo "##  Modify the Snipe-It files necessary for a production environment."
@@ -683,4 +701,3 @@ rm -f snipeit.sh
 rm -f install.sh
 rm -rf $tmp/
 echo "##  Done!"
-sleep 1
