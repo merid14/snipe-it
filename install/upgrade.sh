@@ -2,7 +2,7 @@
 # shellcheck disable=SC2154,SC2034
 #  This is a script to upgrade snipeit
 #  Written by: Walter Wahlstedt (merid14)
-
+set -o nounset errexit pipefail
 
 ans=""
 #cd "$webdir" ##TODO this needs to check if the dir exists first cant exit wihout breaking the script
