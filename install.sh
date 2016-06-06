@@ -15,7 +15,7 @@
 #                   tail -f /var/log/snipeit-install.log
 #
 # -----------------------------------------------------------------------------
-set -o nounset errexit pipefail
+
 
 # ensure running as root
 if [ "$(id -u)" != "0" ]; then
@@ -93,10 +93,14 @@ arg="$1"
             shift # past argument=value
             echo "Using file-copy method"
             ;;
+        * )
+            echo "Try ./install.sh --help"
+            exit
     esac
     shift # past argument or value
 done
 
+set -o nounset errexit pipefail
 link="https://raw.githubusercontent.com/$fork/snipe-it/$branch/install/"
 tmp=/tmp/snipeit/
 tmpinstall=/tmp/snipe-it/install/
