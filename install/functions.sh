@@ -527,11 +527,14 @@ echo >> "$dbsetup" "GRANT ALL PRIVILEGES ON snipeit.* TO snipeit@localhost IDENT
 
 startMariadb
 
+echo
+echo "##  Securing mariaDB server";
+/usr/bin/mysql_secure_installation
+echo
+
 echo "##  Setting up your database"
-    echo -n "   Q. Enter MySQL/MariaDB root password:  pw"
-    read -sr mysqlrootpw
-# dbnopass=""
-# dbwpass=""
+echo -n "   Q. Enter MySQL/MariaDB root password:  pw"
+read -sr mysqlrootpw
 
 
     if mysql -u root -p"$mysqlrootpw" -e 'use snipeit';then
@@ -591,10 +594,7 @@ echo "##  Setting up your database"
 #     fi
 # done
 
-echo
-echo "##  Securing mariaDB server";
-/usr/bin/mysql_secure_installation
-echo
+
 
 
 #     echo "##  Setting up your database."
