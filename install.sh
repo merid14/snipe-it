@@ -1,3 +1,21 @@
+#!/bin/bash
+# shellcheck disable=SC2154,SC2034
+# -----------------------------------------------------------------------------
+#   Snipe-It Installer
+#   Mike Tucker | mtucker6784@gmail.com
+#   Walter Wahlstedt | merid14@gmail.com
+#
+#   This installer is for Debian and CentOS based distributions.
+#   We assume you will be installing as a subdomain on a fresh OS install.
+#   Mail is setup separately. SELinux is assumed to be disabled
+#
+#   NOTICE: If you would like to see whats going on in the background
+#           while running the script please open a new shell and run:
+#
+#                   tail -f /var/log/snipeit-install.log
+#
+# -----------------------------------------------------------------------------
+
 # ensure running as root
 if [ "$(id -u)" != "0" ]; then
   exec sudo "$0" "$@"
@@ -25,6 +43,9 @@ arg="$1"
             echo "             -t or --tag          Set the tag to pull from";
             echo "             -T or --get-tags     List and set the tag to pull from";
             echo "             --file-copy          Set the install method to file copy";
+            echo "";
+            echo "             To follow the log while running this script open new shell";
+            echo "             and execute 'tail -f /var/log/snipeit-install.log'";
 #           echo "                                  from previous version.";
 #           echo "             --uninstall         Not yet supported";
 #           echo "             --no-htmldoc        Don't try to install htmldoc";
@@ -92,6 +113,16 @@ if [ ! -e "$tmpinstall/snipeit.sh" ] && [ ! -e "$tmpinstall/upgrade.sh" ] && [ !
     exit
 fi
 
+echo ""
+echo "   This installer is for Debian and CentOS based distributions."
+echo "   We assume you will be installing as a subdomain on a fresh OS install."
+echo "   Mail is setup separately. SELinux is assumed to be disabled"
+echo ""
+echo "   NOTICE: If you would like to see whats going on in the background "
+echo "           while running the script please open a new shell and run:"
+echo ""
+echo "                   tail -f /var/log/snipeit-install.log"
+echo ""
 echo "Press enter to continue."
 read test
 

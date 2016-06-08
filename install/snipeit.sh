@@ -53,6 +53,7 @@ newtag="$tag" && echo "$newtag" >> "$log" 2>&1
 appkey="$(< /dev/urandom tr -dc _A-Za-z-0-9 | head -c32)" && echo "$appkey" >> "$log" 2>&1
 dbsetup="$tmp"/db_setup.sql && echo "$dbsetup" >> "$log" 2>&1
 mariadbRepo=/etc/yum.repos.d/MariaDB.repo && echo "$mariadbRepo" >> "$log" 2>&1
+
 . "$tmpinstall"/functions.sh
 echo "--------------  Start Installer  -----------------" >> "$log" 2>&1
 showBanner
