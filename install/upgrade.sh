@@ -44,7 +44,7 @@ if [ -d "$webdir" ]; then #If webdir exists
             rm -rf "$webdir"/app/storage/views/*
             # rm -rf "${$webdir:?}"/"${$name:?}"/app/storage/cache/*
             # rm -rf "${$webdir:?}"/"${$name:?}"/app/storage/views/*
-
+            if $newtag
             echo "##  Restoring app.php file."
             cp "$backup"/app.php "$webdir"/app/config/
         else
