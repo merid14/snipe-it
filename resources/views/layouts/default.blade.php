@@ -7,7 +7,7 @@
       @section('title')
       @show
 
-      :: {{ \App\Models\Setting::getSettings()->site_name }}
+      :: {{ $snipeSettings->site_name }}
     </title>
     <!-- Tell the browser to be responsive to screen width -->
     <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
@@ -32,28 +32,32 @@
 
     <link rel="stylesheet" href="{{ asset(elixir('assets/css/app.css')) }}">
 
+    <link rel="shortcut icon" type="image/ico" href="{{ asset('favicon.ico') }}">
+
     <style>
-    @if (\App\Models\Setting::getSettings()->header_color)
-    .main-header .navbar, .main-header .logo {
-    background-color: {{ \App\Models\Setting::getSettings()->header_color }};
-    background: -webkit-linear-gradient(top,  {{ \App\Models\Setting::getSettings()->header_color }} 0%,{{ \App\Models\Setting::getSettings()->header_color }} 100%);
-    background: linear-gradient(to bottom, {{ \App\Models\Setting::getSettings()->header_color }} 0%,{{ \App\Models\Setting::getSettings()->header_color }} 100%);
-    border-color: {{ \App\Models\Setting::getSettings()->header_color }};
-    }
-    .skin-blue .sidebar-menu > li:hover > a, .skin-blue .sidebar-menu > li.active > a {
-      border-left-color: {{ \App\Models\Setting::getSettings()->header_color }};
-    }
+        @if ($snipeSettings)
+            @if ($snipeSettings->header_color)
+            .main-header .navbar, .main-header .logo {
+            background-color: {{ $snipeSettings->header_color }};
+            background: -webkit-linear-gradient(top,  {{ $snipeSettings->header_color }} 0%,{{ $snipeSettings->header_color }} 100%);
+            background: linear-gradient(to bottom, {{ $snipeSettings->header_color }} 0%,{{ $snipeSettings->header_color }} 100%);
+            border-color: {{ $snipeSettings->header_color }};
+            }
+            .skin-blue .sidebar-menu > li:hover > a, .skin-blue .sidebar-menu > li.active > a {
+              border-left-color: {{ $snipeSettings->header_color }};
+            }
 
-    .btn-primary {
-      background-color: {{ \App\Models\Setting::getSettings()->header_color }};
-      border-color: {{ \App\Models\Setting::getSettings()->header_color }};
-    }
+            .btn-primary {
+              background-color: {{ $snipeSettings->header_color }};
+              border-color: {{ $snipeSettings->header_color }};
+            }
 
-    @endif
+            @endif
 
-    @if (\App\Models\Setting::getSettings()->custom_css)
-        {{ \App\Models\Setting::getSettings()->show_custom_css() }}
-    @endif
+        @if ($snipeSettings->custom_css)
+            {{ $snipeSettings->show_custom_css() }}
+        @endif
+     @endif
     @media (max-width: 400px) {
       .navbar-left {
        margin: 2px;
@@ -68,17 +72,25 @@
     <script>
           window.snipeit = {
               settings: {
-                  "per_page": {{ \App\Models\Setting::getSettings()->per_page }}
+                  "per_page": {{ $snipeSettings->per_page }}
               }
           };
       </script>
 
-    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
-    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-    <!--[if lt IE 9]>
-        <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
-        <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-    <![endif]-->
+      <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+      <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+      <!--[if lt IE 9]>
+
+      @if ($snipeSettings->load_remote=='1')
+
+            <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+            <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+
+       @else
+            <script src="{{ asset('assets/js/html5shiv.js') }}"></script>
+            <script src="{{ asset('assets/js/respond.js') }}"></script>
+       @endif
+       <![endif]-->
   </head>
   <body class="hold-transition skin-blue sidebar-mini sidebar-collapse">
     <div class="wrapper">
@@ -96,18 +108,18 @@
           </a>
           <ul class="nav navbar-nav navbar-left">
               <li class="left-navblock">
-                 @if (\App\Models\Setting::getSettings()->brand == '3')
+                 @if ($snipeSettings->brand == '3')
                       <a class="logo navbar-brand no-hover" href="{{ config('app.url') }}">
-                          <img class="navbar-brand-img" src="{{ config('app.url') }}/uploads/{{ \App\Models\Setting::getSettings()->logo }}">
-                          {{ \App\Models\Setting::getSettings()->site_name }}
+                          <img class="navbar-brand-img" src="{{ config('app.url') }}/uploads/{{ $snipeSettings->logo }}">
+                          {{ $snipeSettings->site_name }}
                       </a>
-                  @elseif (\App\Models\Setting::getSettings()->brand == '2')
+                  @elseif ($snipeSettings->brand == '2')
                       <a class="logo navbar-brand no-hover" href="{{ config('app.url') }}">
-                          <img class="navbar-brand-img" src="{{ config('app.url') }}/uploads/{{ \App\Models\Setting::getSettings()->logo }}">
+                          <img class="navbar-brand-img" src="{{ config('app.url') }}/uploads/{{ $snipeSettings->logo }}">
                       </a>
                   @else
                       <a class="logo no-hover" href="{{ config('app.url') }}">
-                          {{ \App\Models\Setting::getSettings()->site_name }}
+                          {{ $snipeSettings->site_name }}
                       </a>
                   @endif
               </li>
@@ -116,41 +128,41 @@
           <!-- Navbar Right Menu -->
             <div class="navbar-custom-menu">
               <ul class="nav navbar-nav">
-                          @can('assets.view')
-                              <li {!! (Request::is('hardware*') ? ' class="active"' : '') !!}>
-                                  <a href="{{ URL::to('hardware') }}">
-                                      <i class="fa fa-barcode"></i>
-                                  </a>
-                              </li>
-                          @endcan
-                          @can('licenses.view')
-                          <li {!! (Request::is('admin/licenses*') ? ' class="active"' : '') !!}>
-                              <a href="{{ URL::to('admin/licenses') }}">
-                                  <i class="fa fa-floppy-o"></i>
-                              </a>
-                          </li>
-                          @endcan
-                          @can('accessories.view')
-                          <li {!! (Request::is('admin/accessories*') ? ' class="active"' : '') !!}>
-                              <a href="{{ URL::to('admin/accessories') }}">
-                                  <i class="fa fa-keyboard-o"></i>
-                              </a>
-                          </li>
-                          @endcan
-                          @can('consumables.view')
-                          <li {!! (Request::is('admin/consumables*') ? ' class="active"' : '') !!}>
-                              <a href="{{ URL::to('admin/consumables') }}">
-                                  <i class="fa fa-tint"></i>
-                              </a>
-                          </li>
-                          @endcan
-                          @can('components.view')
-                          <li {!! (Request::is('admin/components*') ? ' class="active"' : '') !!}>
-                              <a href="{{ URL::to('admin/components') }}">
-                                  <i class="fa fa-hdd-o"></i>
-                              </a>
-                          </li>
-                          @endcan
+                  @can('assets.view')
+                  <li {!! (Request::is('hardware*') ? ' class="active"' : '') !!}>
+                      <a href="{{ URL::to('hardware') }}">
+                          <i class="fa fa-barcode"></i>
+                      </a>
+                  </li>
+                  @endcan
+                  @can('licenses.view')
+                  <li {!! (Request::is('admin/licenses*') ? ' class="active"' : '') !!}>
+                      <a href="{{ URL::to('admin/licenses') }}">
+                          <i class="fa fa-floppy-o"></i>
+                      </a>
+                  </li>
+                  @endcan
+                  @can('accessories.view')
+                  <li {!! (Request::is('admin/accessories*') ? ' class="active"' : '') !!}>
+                      <a href="{{ URL::to('admin/accessories') }}">
+                          <i class="fa fa-keyboard-o"></i>
+                      </a>
+                  </li>
+                  @endcan
+                  @can('consumables.view')
+                  <li {!! (Request::is('admin/consumables*') ? ' class="active"' : '') !!}>
+                      <a href="{{ URL::to('admin/consumables') }}">
+                          <i class="fa fa-tint"></i>
+                      </a>
+                  </li>
+                  @endcan
+                  @can('components.view')
+                  <li {!! (Request::is('admin/components*') ? ' class="active"' : '') !!}>
+                      <a href="{{ URL::to('admin/components') }}">
+                          <i class="fa fa-hdd-o"></i>
+                      </a>
+                  </li>
+                  @endcan
 
                   @can('assets.view')
                   <form class="navbar-form navbar-left form-horizontal" role="search" action="{{ route('findbytag/hardware') }}" method="get">
@@ -166,6 +178,7 @@
                       </div>
                   </form>
                   @endcan
+
                   @can('admin')
                   <li class="dropdown">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown">
@@ -173,39 +186,52 @@
                       <b class="caret"></b>
                     </a>
                    <ul class="dropdown-menu">
+                     @can('assets.create')
                       <li {!! (Request::is('hardware/create') ? 'class="active>"' : '') !!}>
                               <a href="{{ route('create/hardware') }}">
                                   <i class="fa fa-barcode fa-fw"></i>
                                   @lang('general.asset')</a>
                       </li>
+                       @endcan
+                       @can('licenses.create')
                        <li {!! (Request::is('admin/licenses/create') ? 'class="active"' : '') !!}>
                            <a href="{{ route('create/licenses') }}">
                                <i class="fa fa-floppy-o fa-fw"></i>
                                @lang('general.license')</a>
                        </li>
+                       @endcan
+                       @can('accessories.create')
                        <li {!! (Request::is('admin/accessories/create') ? 'class="active"' : '') !!}>
                            <a href="{{ route('create/accessory') }}">
                                <i class="fa fa-keyboard-o fa-fw"></i>
                                @lang('general.accessory')</a>
                        </li>
+                       @endcan
+                       @can('consumables.create')
                        <li {!! (Request::is('admin/consumables/create') ? 'class="active"' : '') !!}>
                            <a href="{{ route('create/consumable') }}">
                                <i class="fa fa-tint fa-fw"></i>
                                @lang('general.consumable')</a>
                        </li>
+                       @endcan
+                       @can('users.create')
                        <li {!! (Request::is('admin/users/create') ? 'class="active"' : '') !!}>
                            <a href="{{ route('create/user') }}">
                            <i class="fa fa-user fa-fw"></i>
                            @lang('general.user')</a>
                        </li>
+                       @endcan
+                       @can('components.create')
                        <li {!! (Request::is('admin/components/create') ? 'class="active"' : '') !!}>
                            <a href="{{ route('create/component') }}">
                            <i class="fa fa-hdd-o"></i>
                            @lang('general.component')</a>
                        </li>
+                       @endcan
                    </ul>
-               </li>
+                </li>
                @endcan
+
                @can('admin')
                <!-- Tasks: style can be found in dropdown.less -->
                <?php $alert_items = \App\Helpers\Helper::checkLowInventory(); ?>
@@ -264,7 +290,6 @@
                  </a>
                  <ul class="dropdown-menu">
                    <!-- User image -->
-                   <li>
                      <li {!! (Request::is('account/profile') ? ' class="active"' : '') !!}>
                        <a href="{{ route('view-assets') }}">
                              <i class="fa fa-check fa-fw"></i> @lang('general.viewassets')
@@ -280,7 +305,6 @@
                              @lang('general.logout')
                          </a>
                      </li>
-                   </li>
                  </ul>
                </li>
 
@@ -389,26 +413,47 @@
                   <li>
                     <a href="{{ URL::to('hardware') }}">@lang('general.list_all')</a>
                   </li>
-                  <li>
-                    <a href="{{ URL::to('hardware?status=Deployed') }}" {!! (Request::query('status') == 'Deployed' ? ' class="active"' : '') !!} >@lang('general.deployed')
+
+                    <?php $status_navs = \App\Models\Statuslabel::where('show_in_nav','=',1)->get(); ?>
+                    @if (count($status_navs) > 0)
+                        <li class="divider">&nbsp;</li>
+                        @foreach ($status_navs as $status_nav)
+                            <li><a href="{{ URL::to('hardware?status_id='.$status_nav->id) }}"}> {{ $status_nav->name }}</a></li>
+                        @endforeach
+                    @endif
+
+
+                  <li{!! (Request::query('status') == 'Deployed' ? ' class="active"' : '') !!}>
+                    <a href="{{ URL::to('hardware?status=Deployed') }}">@lang('general.deployed')
                     </a>
                   </li>
-                  <li>
-                    <a href="{{ URL::to('hardware?status=RTD') }}" {!! (Request::query('status') == 'RTD' ? ' class="active"' : '') !!}>
+                  <li{!! (Request::query('status') == 'RTD' ? ' class="active"' : '') !!}>
+                    <a href="{{ URL::to('hardware?status=RTD') }}">
                     @lang('general.ready_to_deploy')</a>
                   </li>
-                  <li><a href="{{ URL::to('hardware?status=Pending') }}"
-                  {!! (Request::query('status') == 'Pending' ? ' class="active"' : '') !!} >@lang('general.pending')</a></li>
-                  <li><a href="{{ URL::to('hardware?status=Undeployable') }}" {!! (Request::query('status') == 'Undeployable' ? ' class="active"' : '') !!} >@lang('general.undeployable')</a></li>
-                  <li><a href="{{ URL::to('hardware?status=Archived') }}" {!! (Request::query('status') == 'Archived' ? ' class="active"' : '') !!} >@lang('admin/hardware/general.archived')</a></li>
-                  <li><a href="{{ URL::to('hardware?status=Requestable') }}" {!! (Request::query('status') == 'Requestable' ? ' class="active"' : '') !!} >@lang('admin/hardware/general.requestable')</a></li>
+                  <li{!! (Request::query('status') == 'Pending' ? ' class="active"' : '') !!}><a href="{{ URL::to('hardware?status=Pending') }}">@lang('general.pending')</a></li>
+                  <li{!! (Request::query('status') == 'Undeployable' ? ' class="active"' : '') !!} ><a href="{{ URL::to('hardware?status=Undeployable') }}">@lang('general.undeployable')</a></li>
+                  <li{!! (Request::query('status') == 'Archived' ? ' class="active"' : '') !!}><a href="{{ URL::to('hardware?status=Archived') }}">@lang('admin/hardware/general.archived')</a></li>
+                    <li{!! (Request::query('status') == 'Requestable' ? ' class="active"' : '') !!}><a href="{{ URL::to('hardware?status=Requestable') }}">@lang('admin/hardware/general.requestable')</a></li>
 
                   <li class="divider">&nbsp;</li>
-                  <li><a href="{{ URL::to('hardware/models') }}" {!! (Request::is('hardware/models*') ? ' class="active"' : '') !!} >@lang('general.asset_models')</a></li>
+                    @can('assets.checkout')
+                    <li{!! (Request::is('hardware/bulkcheckout') ? ' class="active>"' : '') !!}>
+                        <a href="{{ route('hardware/bulkcheckout') }}">
+                            {{ trans('general.bulk_checkout') }}</a>
+                    </li>
+                    @endcan
+
+                    @can('superuser')
+                    <li{!! (Request::is('hardware/models*') ? ' class="active"' : '') !!}><a href="{{ URL::to('hardware/models') }}">@lang('general.asset_models')</a></li>
                   <li><a href="{{ URL::to('admin/settings/categories') }}" {!! (Request::is('admin/settings/categories*') ? ' class="active"' : '') !!} >@lang('general.categories')</a></li>
-                  <li><a href="{{ URL::to('hardware?status=Deleted') }}" {!! (Request::query('Deleted') ? ' class="active"' : '') !!} >@lang('general.deleted')</a></li>
-                  <li><a href="{{ URL::to('admin/asset_maintenances') }}"  >@lang('general.asset_maintenances') </a></li>
-                  <li><a href="{{ URL::to('hardware/import') }}"  >@lang('general.import') </a></li>
+                    @endcan
+                    @can('assets.create')
+                      <li{!! (Request::query('Deleted') ? ' class="active"' : '') !!}><a href="{{ URL::to('hardware?status=Deleted') }}">@lang('general.deleted')</a></li>
+                      <li><a href="{{ URL::to('admin/asset_maintenances') }}"  >@lang('general.asset_maintenances') </a></li>
+                      <li><a href="{{ URL::to('hardware/import') }}">@lang('general.import') </a></li>
+                      <li><a href="{{ URL::to('hardware/history') }}">@lang('general.import-history') </a></li>
+                    @endcan
                 </ul>
               </li>
               @endcan
@@ -469,8 +514,7 @@
                     <li><a href="{{ URL::to('reports/assets') }}" {{ (Request::is('reports/assets') ? ' class="active"' : '') }} >@lang('general.asset_report')</a></li>
                     <li><a href="{{ URL::to('reports/unaccepted_assets') }}" {{ (Request::is('reports/unaccepted_assets') ? ' class="active"' : '') }} >@lang('general.unaccepted_asset_report')</a></li>
                     <li><a href="{{ URL::to('reports/accessories') }}" {{ (Request::is('reports/accessories') ? ' class="active"' : '') }} >@lang('general.accessory_report')</a></li>
-                    <li><a href="{{ URL::to('reports/custom') }}" {{ (Request::is('reports/custom') ? ' class="active"' : '') }} >@lang('general.custom_report')</a></li>
-
+                    <li><a href="{{ URL::to('reports/custom') }}" {{ (Request::is('reports/custom') ? ' class="active"' : '') }}>@lang('general.custom_report')</a></li>
                 </ul>
             </li>
             @endcan
@@ -491,24 +535,42 @@
 
       <div class="content-wrapper">
 
+          @if ($debug_in_production)
+              <div class="row" style="margin-bottom: 0px; background-color: red; color: white; font-size: 15px;">
+                  <div class="col-md-12" style="margin-bottom: 0px; background-color: red; color: white; padding: 10px 20px 10px 30px; font-size: 16px;">
+                      <i class="fa fa-warning fa-3x pull-left"></i> <strong>{{ strtoupper(trans('general.debug_warning')) }}:</strong>
+                      {!! trans('general.debug_warning_text') !!}
+                  </div>
+              </div>
+      @endif
+
         <!-- Content Header (Page header) -->
         <section class="content-header" style="padding-bottom: 30px;">
           <h1 class="pull-left">
             @yield('title')
-            @if (config('app.lock_passwords'))
-               <p class="help-block">{{ trans('general.feature_disabled') }}</p>
-            @endif
+
 
           </h1>
           <div class="pull-right">
             @yield('header_right')
           </div>
+
+
+
         </section>
 
 
         <section class="content">
           <!-- Notifications -->
           <div class="row">
+              @if (config('app.lock_passwords'))
+                  <div class="col-md-12">
+                      <div class="callout callout-info">
+                          {{ trans('general.some_features_disabled') }}
+                      </div>
+                  </div>
+              @endif
+
           @include('notifications')
           </div>
 
@@ -522,12 +584,12 @@
 
       <footer class="main-footer">
         <div class="pull-right hidden-xs">
-          <b>Version</b> {{  config('version.app_version') }}
+          <b>Version</b> {{ config('version.app_version') }}  build {{ config('version.build_version') }} ({{ config('version.hash_version') }})
           <a target="_blank" class="btn btn-default btn-xs" href="https://snipe-it.readme.io">Documentation</a>
           <a target="_blank" class="btn btn-default btn-xs" href="https://snipe-it-manual.readme.io">User's Manual</a>
           <a target="_blank" class="btn btn-default btn-xs" href="https://snipeitapp.com/support/">Report a Bug</a>
         </div>
-        <a target="_blank" href="https://snipeitapp.com">Snipe IT</a> is an open source
+        <a target="_blank" href="https://snipeitapp.com">Snipe-IT</a> is an open source
         project, made with <i class="fa fa-heart" style="color: #a94442; font-size: 10px"></i> by <a href="https://twitter.com/snipeyhead">@snipeyhead</a>.
       </footer>
 
@@ -560,7 +622,11 @@
     <script>
        $(function () {
          //Initialize Select2 Elements
-         $(".select2").select2();
+         var iOS = /iPhone|iPad|iPod/.test(navigator.userAgent)  && !window.MSStream;
+         if(!iOS)
+         {
+          $(".select2").select2();
+         }
          $('.datepicker').datepicker();
        });
 

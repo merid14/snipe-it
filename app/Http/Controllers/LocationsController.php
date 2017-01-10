@@ -61,7 +61,7 @@ class LocationsController extends Controller
 
         return View::make('locations/edit')
         ->with('location_options', $location_options)
-        ->with('location', new Location);
+        ->with('item', new Location);
     }
 
 
@@ -159,7 +159,7 @@ class LocationsController extends Controller
     public function getEdit($locationId = null)
     {
         // Check if the location exists
-        if (is_null($location = Location::find($locationId))) {
+        if (is_null($item = Location::find($locationId))) {
             return redirect()->to('admin/settings/locations')->with('error', trans('admin/locations/message.does_not_exist'));
         }
 
@@ -169,7 +169,7 @@ class LocationsController extends Controller
         $location_options = Location::flattenLocationsArray($location_options_array);
         $location_options = array('' => 'Top Level') + $location_options;
 
-        return View::make('locations/edit', compact('location'))->with('location_options', $location_options);
+        return View::make('locations/edit', compact('item'))->with('location_options', $location_options);
     }
 
 
@@ -318,7 +318,7 @@ class LocationsController extends Controller
                 $locations = $locations->OrderParent($order);
                 break;
             default:
-                $allowed_columns = ['id','name','address','city','state','country','currency'];
+                $allowed_columns = ['id','name','address','city','state','country','currency','zip'];
 
                 $sort = in_array(Input::get('sort'), $allowed_columns) ? Input::get('sort') : 'created_at';
                 $locations = $locations->orderBy($sort, $order);
@@ -344,6 +344,7 @@ class LocationsController extends Controller
                 'address'       => ($location->address) ? e($location->address): '',
                 'city'          => e($location->city),
                 'state'         => e($location->state),
+                'zip'           => e($location->zip),
                 'country'       => e($location->country),
                 'currency'      => e($location->currency),
                 'actions'       => $actions
@@ -370,7 +371,7 @@ class LocationsController extends Controller
     public function getDataViewUsers($locationID)
     {
         $location = Location::find($locationID);
-        $users = User::where('location_id','=',$location->id);
+        $users = User::where('location_id', '=', $location->id);
 
         if (Input::has('search')) {
             $users = $users->TextSearch(e(Input::get('search')));

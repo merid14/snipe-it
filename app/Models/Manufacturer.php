@@ -1,11 +1,12 @@
 <?php
 namespace App\Models;
 
+use App\Models\SnipeModel;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Watson\Validating\ValidatingTrait;
 
-class Manufacturer extends Model
+class Manufacturer extends SnipeModel
 {
     use SoftDeletes;
     protected $dates = ['deleted_at'];
@@ -44,6 +45,26 @@ class Manufacturer extends Model
     public function assets()
     {
         return $this->hasManyThrough('\App\Models\Asset', '\App\Models\AssetModel', 'manufacturer_id', 'model_id');
+    }
+
+    public function models()
+    {
+        return $this->hasMany('\App\Models\AssetModel', 'manufacturer_id');
+    }
+
+    public function licenses()
+    {
+        return $this->hasMany('\App\Models\License', 'manufacturer_id');
+    }
+
+    public function accessories()
+    {
+        return $this->hasMany('\App\Models\Accessory', 'manufacturer_id');
+    }
+
+    public function consumables()
+    {
+        return $this->hasMany('\App\Models\Consumable', 'manufacturer_id');
     }
 
     /**

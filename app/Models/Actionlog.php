@@ -2,9 +2,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Auth;
+use Response;
 
 /**
  * Model for the Actionlog (the table that keeps a historical log of
@@ -12,102 +12,95 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  *
  * @version    v1.0
  */
-class Actionlog extends Model implements ICompanyableChild
+class Actionlog extends Model
 {
     use SoftDeletes;
-    use CompanyableChildTrait;
 
     protected $dates = [ 'deleted_at' ];
 
-    protected $table      = 'asset_logs';
+    protected $table      = 'action_logs';
     public $timestamps = true;
-    protected $fillable   = [ 'created_at', 'asset_type' ];
+    protected $fillable   = [ 'created_at', 'item_type','user_id','item_id','action_type','note','target_id', 'target_type' ];
 
-    public function getCompanyableParents()
+    // Overridden from Builder to automatically add the company
+    public static function boot()
     {
-        return [ 'accessorylog', 'assetlog', 'licenselog', 'consumablelog' ];
+        parent::boot();
+        static::creating( function (Actionlog $actionlog) {
+            // If the admin is a superadmin, let's see if the target instead has a company.
+            if (Auth::user() && Auth::user()->isSuperUser()) {
+                if ($actionlog->target) {
+                    $actionlog->company_id = $actionlog->target->company_id;
+                } else if ($actionlog->item) {
+                    $actionlog->company_id = $actionlog->item->company_id;
+                }
+            } else if (Auth::user() && Auth::user()->company) {
+                $actionlog->company_id = Auth::user()->company_id;
+            }
+        });
+    }
+    // Eloquent Relationships below
+    public function item()
+    {
+        return $this->morphTo('item')->withTrashed();
     }
 
-    public function assetlog()
+    public function company() {
+        return $this->hasMany('\App\Models\Company', 'id','company_id');
+    }
+
+    public function itemType()
     {
 
-        return $this->belongsTo('\App\Models\Asset', 'asset_id')
-                    ->withTrashed();
+        if($this->item_type == AssetModel::class) {
+            return "model";
+        }
+        return camel_case(class_basename($this->item_type));
     }
 
     public function uploads()
     {
-
-        return $this->belongsTo('\App\Models\Asset', 'asset_id')
+        return $this->morphTo('item')
                     ->where('action_type', '=', 'uploaded')
-                    ->withTrashed();
-    }
-
-    public function licenselog()
-    {
-
-        return $this->belongsTo('\App\Models\License', 'asset_id')
-                    ->withTrashed();
-    }
-
-    public function componentlog()
-    {
-
-        return $this->belongsTo('\App\Models\Component', 'component_id')
-            ->withTrashed();
-    }
-
-    public function accessorylog()
-    {
-
-        return $this->belongsTo('\App\Models\Accessory', 'accessory_id')
-                    ->withTrashed();
-    }
-
-    public function consumablelog()
-    {
-
-        return $this->belongsTo('\App\Models\Consumable', 'consumable_id')
-                    ->withTrashed();
-    }
-
-    public function adminlog()
-    {
-
-        return $this->belongsTo('\App\Models\User', 'user_id')
                     ->withTrashed();
     }
 
     public function userlog()
     {
+        return $this->target();
+    }
 
-        return $this->belongsTo('\App\Models\User', 'checkedout_to')
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id')
                     ->withTrashed();
+    }
+
+    public function target()
+    {
+        return $this->morphTo('target');
     }
 
     public function childlogs()
     {
-
         return $this->hasMany('\App\Models\ActionLog', 'thread_id');
     }
 
     public function parentlog()
     {
-
         return $this->belongsTo('\App\Models\ActionLog', 'thread_id');
     }
 
     /**
        * Check if the file exists, and if it does, force a download
        **/
-    public function get_src($type = 'assets')
+    public function get_src($type = 'assets', $fieldname = 'filename')
     {
-
-        $file = config('app.private_uploads') . '/' . $type . '/' . $this->filename;
-
+        $file = config('app.private_uploads') . '/' . $type . '/' . $this->{$fieldname};
         return $file;
-
     }
+
+
 
     /**
        * Get the parent category name
@@ -134,44 +127,36 @@ class Actionlog extends Model implements ICompanyableChild
     public function getListingOfActionLogsChronologicalOrder()
     {
 
-        return DB::table('asset_logs')
-                 ->select('*')
+        return $this->all()
                  ->where('action_type', '!=', 'uploaded')
-                 ->orderBy('asset_id', 'asc')
+                 ->orderBy('item_id', 'asc')
                  ->orderBy('created_at', 'asc')
                  ->get();
     }
 
     /**
-       * getLatestCheckoutActionForAssets
-       *
-       * @return mixed
-       * @author  Vincent Sposato <vincent.sposato@gmail.com>
-       * @version v1.0
-       */
-    public function getLatestCheckoutActionForAssets()
+     * Query builder scope to search on text for complex Bootstrap Tables API
+     *
+     * @param  Illuminate\Database\Query\Builder  $query  Query builder instance
+     * @param  text                              $search      Search term
+     *
+     * @return Illuminate\Database\Query\Builder          Modified query builder
+     */
+    public function scopeTextSearch($query, $search)
     {
+        $search = explode(' OR ', $search);
 
-        return DB::table('asset_logs')
-                 ->select(DB::raw('asset_id, MAX(created_at) as last_created'))
-                 ->where('action_type', '=', 'checkout')
-                 ->groupBy('asset_id')
-                 ->get();
-    }
+        return $query->where(function ($query) use ($search) {
 
-    /**
-       * scopeCheckoutWithoutAcceptance
-       *
-       * @param $query
-       *
-       * @return mixed
-       * @author  Vincent Sposato <vincent.sposato@gmail.com>
-       * @version v1.0
-       */
-    public function scopeCheckoutWithoutAcceptance($query)
-    {
+            foreach ($search as $search) {
+                $query->where(function ($query) use ($search) {
+                    $query->whereHas('company', function ($query) use ($search) {
+                        $query->where('companies.name', 'LIKE', '%'.$search.'%');
+                    });
+                })->orWhere('action_type', 'LIKE', '%'.$search.'%')
+                    ->orWhere('note', 'LIKE', '%'.$search.'%');
+            }
 
-        return $query->where('action_type', '=', 'checkout')
-                     ->where('accepted_id', '=', null);
+        });
     }
 }

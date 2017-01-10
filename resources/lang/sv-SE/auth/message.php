@@ -3,10 +3,11 @@
 return array(
 
     'account_already_exists' => 'Ett konto med denna epostadressen finns redan.',
-    'account_not_found'      => 'The username or password is incorrect.',
+    'account_not_found'      => 'Användarnamnet eller lösenordet är felaktigt.',
     'account_not_activated'  => 'Detta användarkonto är inte aktiverat.',
     'account_suspended'      => 'Detta användarkontot har blivit suspenderat.',
     'account_banned'         => 'Detta användarkontot har blivit avstängt.',
+    'throttle'               => 'Too many failed login attempts. Please try again in :seconds seconds.',
 
     'signin' => array(
         'error'   => 'Det uppstod ett problem när du försökte logga in, försök igen.',

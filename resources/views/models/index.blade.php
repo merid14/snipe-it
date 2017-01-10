@@ -28,7 +28,7 @@
       <div class="box-body">
         <table
         name="models"
-        class="table table-striped"
+        class="table table-striped snipe-table"
         id="table"
         data-url="{{ route('api.models.list',array('status'=>e(Input::get('status')))) }}"
         data-cookie="true"
@@ -45,6 +45,7 @@
               <th data-sortable="false" data-field="depreciation">{{ trans('general.depreciation') }}</th>
               <th data-sortable="false" data-field="category">{{ trans('general.category') }}</th>
               <th data-sortable="true" data-field="eol">{{ trans('general.eol') }}</th>
+              <th data-sortable="false" data-field="fieldset">{{ trans('admin/models/general.fieldset') }}</th>
               <th data-sortable="false" data-field="note">{{ trans('general.notes') }}</th>
               <th data-switchable="false" data-searchable="false" data-sortable="false" data-field="actions">{{ trans('table.actions') }}</th>
             </tr>
@@ -57,43 +58,8 @@
   </div>
 </div>
 
-
-@section('moar_scripts')
-<script src="{{ asset('assets/js/bootstrap-table.js') }}"></script>
-<script src="{{ asset('assets/js/extensions/mobile/bootstrap-table-mobile.js') }}"></script>
-<script src="{{ asset('assets/js/extensions/export/bootstrap-table-export.js?v=1') }}"></script>
-<script src="{{ asset('assets/js/extensions/cookie/bootstrap-table-cookie.js?v=1') }}"></script>
-<script src="{{ asset('assets/js/extensions/export/tableExport.js') }}"></script>
-<script src="{{ asset('assets/js/extensions/export/jquery.base64.js') }}"></script>
-<script type="text/javascript">
-    $('#table').bootstrapTable({
-        classes: 'table table-hover table-no-bordered',
-        undefinedText: '',
-        iconsPrefix: 'fa',
-        showRefresh: true,
-        search: true,
-        pageSize: {{ \App\Models\Setting::getSettings()->per_page }},
-        pagination: true,
-        sidePagination: 'server',
-        sortable: true,
-        mobileResponsive: true,
-        showExport: true,
-        cookie: true,
-        cookieExpire: '2y',
-        showColumns: true,
-        maintainSelected: true,
-        paginationFirstText: "{{ trans('general.first') }}",
-        paginationLastText: "{{ trans('general.last') }}",
-        paginationPreText: "{{ trans('general.previous') }}",
-        paginationNextText: "{{ trans('general.next') }}",
-        pageList: ['10','25','50','100','150','200'],
-        icons: {
-            paginationSwitchDown: 'fa-caret-square-o-down',
-            paginationSwitchUp: 'fa-caret-square-o-up',
-            columns: 'fa-columns',
-            refresh: 'fa-refresh'
-        },
-    });
-</script>
 @stop
+@section('moar_scripts')
+@include ('partials.bootstrap-table', ['exportFile' => 'models-export', 'search' => true])
+
 @stop

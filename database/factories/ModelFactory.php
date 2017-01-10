@@ -11,6 +11,11 @@
 |
 */
 
+use App\Models\Company;
+use App\Models\Location;
+use App\Models\Manufacturer;
+use App\Models\Supplier;
+
 $factory->defineAs(App\Models\Asset::class, 'asset', function (Faker\Generator $faker) {
   return [
     'name' => $faker->catchPhrase,
@@ -22,9 +27,12 @@ $factory->defineAs(App\Models\Asset::class, 'asset', function (Faker\Generator $
     'asset_tag' => $faker->unixTime('now'),
     'notes'   => $faker->sentence,
     'purchase_date' 		=> $faker->dateTime(),
+    'purchase_cost' 		=> $faker->randomFloat(2),
     'order_number' => $faker->numberBetween(1000000,50000000),
     'supplier_id' => $faker->numberBetween(1,5),
     'requestable' => $faker->numberBetween(0,1),
+    'company_id' => Company::inRandomOrder()->first()->id,
+    'requestable' => $faker->boolean()
   ];
 });
 
@@ -34,25 +42,33 @@ $factory->defineAs(App\Models\AssetModel::class, 'assetmodel', function (Faker\G
     'name' => $faker->catchPhrase,
     'manufacturer_id' => $faker->numberBetween(1,10),
     'category_id' => $faker->numberBetween(1,9),
-    'modelno' => $faker->numberBetween(1000000,50000000),
+    'model_number' => $faker->numberBetween(1000000,50000000),
     'eol' => 1,
+    'notes' => $faker->paragraph(),
+    'requestable' => $faker->boolean(),
   ];
 });
 
 $factory->defineAs(App\Models\Location::class, 'location', function (Faker\Generator $faker) {
-  return [
-    'name' => $faker->city,
-    'city' => $faker->city,
-    'state' => $faker->stateAbbr,
-    'country' => $faker->countryCode,
-    'currency' => $faker->currencyCode,
-  ];
+    return [
+        'name' => $faker->catchPhrase,
+        'address' => $faker->streetAddress,
+        'address2' => $faker->secondaryAddress,
+        'city' => $faker->city,
+        'state' => $faker->stateAbbr,
+        'country' => $faker->countryCode,
+        'currency' => $faker->currencyCode,
+        'zip' => $faker->postcode
+    ];
 });
 
 $factory->defineAs(App\Models\Category::class, 'asset-category', function (Faker\Generator $faker) {
   return [
     'name' => $faker->text(20),
     'category_type' => $faker->randomElement($array = array ('asset')),
+    'eula_text' => $faker->paragraph(),
+    'require_acceptance' => $faker->boolean(),
+    'checkin_email' => $faker->boolean()
   ];
 });
 
@@ -94,8 +110,14 @@ $factory->defineAs(App\Models\Component::class, 'component', function (Faker\Gen
   return [
     'name' => $faker->text(20),
     'category_id' => $faker->numberBetween(21,25),
-    'total_qty' => $faker->numberBetween(3, 10),
+    'location_id' => Location::inRandomOrder()->first()->id,
+    'serial'   => $faker->uuid,
+    'qty' => $faker->numberBetween(3, 10),
+    'order_number' => $faker->numberBetween(1000000,50000000),
+    'purchase_date' 		=> $faker->dateTime(),
+    'purchase_cost' 		=> $faker->randomFloat(2),
     'min_amt' => $faker->numberBetween($min = 1, $max = 2),
+    'company_id' => Company::inRandomOrder()->first()->id
   ];
 });
 
@@ -108,37 +130,52 @@ $factory->defineAs(App\Models\Depreciation::class, 'depreciation', function (Fak
 
 $factory->defineAs(App\Models\Accessory::class, 'accessory', function (Faker\Generator $faker) {
   return [
+    'company_id' => Company::inRandomOrder()->first()->id,
     'name' => $faker->text(20),
     'category_id' => $faker->numberBetween(11,15),
-    'qty' => $faker->numberBetween(5, 10),
+    'manufacturer_id' => Manufacturer::inRandomOrder()->first()->id,
     'location_id' => $faker->numberBetween(1,5),
+    'order_number' => $faker->numberBetween(1000000,50000000),
+    'purchase_date' 		=> $faker->dateTime(),
+    'purchase_cost' 		=> $faker->randomFloat(2),
+    'qty' => $faker->numberBetween(5, 10),
     'min_amt' => $faker->numberBetween($min = 1, $max = 2),
   ];
+
 });
 
 
 $factory->defineAs(App\Models\Supplier::class, 'supplier', function (Faker\Generator $faker) {
-  return [
-    'name' => $faker->company,
-    'address' => $faker->streetAddress,
-    'city' => $faker->city,
-    'state' => $faker->stateAbbr,
-    'country' => $faker->countryCode,
-    'contact' => $faker->name,
-    'phone' => $faker->phoneNumber,
-    'email' => $faker->safeEmail,
-  ];
+    return [
+        'name' => $faker->company,
+        'address' => $faker->streetAddress,
+        'address2' => $faker->secondaryAddress,
+        'city' => $faker->city,
+        'state' => $faker->stateAbbr,
+        'zip' => $faker->postCode,
+        'country' => $faker->countryCode,
+        'contact' => $faker->name,
+        'phone' => $faker->phoneNumber,
+        'fax'   => $faker->phoneNumber,
+        'email' => $faker->safeEmail,
+        'url'   => $faker->url,
+        'notes' => $faker->paragraph
+    ];
 });
 
 
 $factory->defineAs(App\Models\Consumable::class, 'consumable', function (Faker\Generator $faker) {
   return [
     'name' => $faker->text(20),
+    'company_id' => Company::inRandomOrder()->first()->id,
     'category_id' => $faker->numberBetween(16, 20),
-    'company_id' => $faker->numberBetween(1, 10),
+    'model_number' => $faker->numberBetween(1000000,50000000),
+    'item_no' => $faker->numberBetween(1000000,50000000),
+    'order_number' => $faker->numberBetween(1000000,50000000),
+    'purchase_date' 		=> $faker->dateTime(),
+    'purchase_cost' 		=> $faker->randomFloat(2),
     'qty' => $faker->numberBetween(5, 10),
     'min_amt' => $faker->numberBetween($min = 1, $max = 2),
-
   ];
 });
 
@@ -167,7 +204,7 @@ $factory->defineAs(App\Models\Statuslabel::class, 'pending', function (Faker\Gen
     'deployable'	=> 0,
     'pending'	=> 1,
     'archived' => 0,
-    'notes' => ''
+    'notes' => $faker->sentence
   ];
 });
 
@@ -242,16 +279,20 @@ $factory->defineAs(App\Models\Statuslabel::class, 'lost', function (Faker\Genera
 });
 
 $factory->defineAs(App\Models\License::class, 'license', function (Faker\Generator $faker) {
-  return [
-    'name'   => $faker->catchPhrase,
-    'serial'   => $faker->uuid,
-    'seats'   => $faker->numberBetween(1, 10),
-    'license_email'   => $faker->safeEmail,
-    'license_name'   => $faker->name,
-    'purchase_date' 		=> $faker->dateTime(),
-    'purchase_cost' 		=> $faker->randomFloat(2),
-    'notes'   => $faker->sentence,
-  ];
+    return [
+        'name'   => $faker->catchPhrase,
+        'serial'   => $faker->uuid,
+        'seats'   => $faker->numberBetween(1, 10),
+        'license_email'   => $faker->safeEmail,
+        'license_name'   => $faker->name,
+        'order_number' => $faker->numberBetween(1500, 13250),
+        'purchase_order' => $faker->numberBetween(1500, 13250),
+        'purchase_date' 		=> $faker->dateTime(),
+        'purchase_cost' 		=> $faker->randomFloat(2),
+        'notes'   => $faker->sentence,
+        'supplier_id' => Supplier::inRandomOrder()->first()->id,
+        'company_id' => Company::inRandomOrder()->first()->id
+    ];
 });
 
 $factory->defineAs(App\Models\LicenseSeat::class, 'license-seat', function (Faker\Generator $faker) {
@@ -265,18 +306,82 @@ $factory->defineAs(App\Models\LicenseSeat::class, 'license-seat', function (Fake
 });
 
 $factory->defineAs(App\Models\Actionlog::class, 'asset-checkout', function (Faker\Generator $faker) {
+  $company = Company::has('users')->has('assets')->inRandomOrder()->first();
   return [
-    'user_id'      	=> 1,
+    'user_id'      	=> $company->users()->inRandomOrder()->first()->id,
     'action_type' 		=> 'checkout',
-    'asset_id' 		=> $faker->numberBetween(1, 10),
-    'checkedout_to' => 1,
+    'item_id' 		=> $company->assets()->inRandomOrder()->first()->id,
+    'target_id' => $company->users()->inRandomOrder()->first()->id,
+    'target_type' => 'App\\Models\\User',
     'created_at'  => $faker->dateTime(),
-    'asset_type'  => 'hardware',
+    'item_type'  => 'App\\Models\\Asset',
     'note' 			=> $faker->sentence,
-    'user_id' 			=> '1',
+    'company_id' => $company->id
   ];
 });
 
+$factory->defineAs(App\Models\Actionlog::class, 'license-checkout-asset', function (Faker\Generator $faker) {
+  $company = Company::has('users')->has('licenses')->inRandomOrder()->first();
+
+  return [
+    'user_id'      	=> $company->users()->inRandomOrder()->first()->id,
+    'action_type' 		=> 'checkout',
+    'item_id' 		=> $company->licenses()->whereNotNull('company_id')->inRandomOrder()->first()->id,
+    'target_id' => $company->assets()->inRandomOrder()->first()->id,
+    'target_type' => 'App\\Models\\Asset',
+    'created_at'  => $faker->dateTime(),
+    'item_type'  => 'App\\Models\\License',
+    'note' 			=> $faker->sentence,
+    'company_id' => $company->id
+  ];
+});
+
+$factory->defineAs(App\Models\Actionlog::class, 'accessory-checkout', function (Faker\Generator $faker) {
+    $company = Company::has('users')->has('accessories')->inRandomOrder()->first();
+  return [
+    'user_id'      	=> $company->users()->inRandomOrder()->first()->id,
+    'action_type' 		=> 'checkout',
+    'item_id' 		=> $company->accessories()->whereNotNull('company_id')->inRandomOrder()->first()->id,
+    'target_id' => $company->users()->inRandomOrder()->first()->id,
+    'target_type' => 'App\\Models\\User',
+    'created_at'  => $faker->dateTime(),
+    'item_type'  => 'App\\Models\\Accessory',
+    'note' 			=> $faker->sentence,
+    'company_id' => $company->id
+  ];
+});
+
+$factory->defineAs(App\Models\Actionlog::class, 'consumable-checkout', function (Faker\Generator $faker) {
+    $company = Company::has('users')->has('consumables')->inRandomOrder()->first();
+
+  return [
+    'user_id'      	=> $company->users()->inRandomOrder()->first()->id,
+    'action_type' 		=> 'checkout',
+    'item_id' 		=> $company->consumables()->whereNotNull('company_id')->inRandomOrder()->first()->id,
+    'target_id' => $company->users()->inRandomOrder()->first()->id,
+    'target_type' => 'App\\Models\\User',
+    'created_at'  => $faker->dateTime(),
+    'item_type'  => 'App\\Models\\Consumable',
+    'note' 			=> $faker->sentence,
+    'company_id' => $company->id
+  ];
+});
+
+$factory->defineAs(App\Models\Actionlog::class, 'component-checkout', function (Faker\Generator $faker) {
+   $company = Company::has('users')->has('components')->inRandomOrder()->first();
+
+  return [
+    'user_id'      	=> $company->users()->inRandomOrder()->first()->id,
+    'action_type' 		=> 'checkout',
+    'item_id' 		=> $company->components()->whereNotNull('company_id')->inRandomOrder()->first()->id,
+    'target_id' => $company->users()->inRandomOrder()->first()->id,
+    'target_type' => 'App\\Models\\User',
+    'created_at'  => $faker->dateTime(),
+    'item_type'  => 'App\\Models\\Component',
+    'note' 			=> $faker->sentence,
+    'company_id' => $company->id
+  ];
+});
 
 $factory->defineAs(App\Models\CustomField::class, 'customfield-ip', function (Faker\Generator $faker) {
   return [
@@ -288,11 +393,17 @@ $factory->defineAs(App\Models\CustomField::class, 'customfield-ip', function (Fa
 
 
 $factory->defineAs(App\Models\User::class, 'valid-user', function (Faker\Generator $faker) {
-  return [
-    'first_name' => $faker->firstName,
-    'last_name' => $faker->lastName,
-    'email' => $faker->safeEmail,
-    'password' => $faker->password,
-    'username' => $faker->username,
-  ];
+    return [
+        'first_name' => $faker->firstName,
+        'last_name' => $faker->lastName,
+        'username' => $faker->username,
+        'password' => $faker->password,
+        'email' => $faker->safeEmail,
+        'company_id' => Company::inRandomOrder()->first()->id,
+        'locale' => $faker->locale,
+        'employee_num' => $faker->numberBetween(3500, 35050),
+        'jobtitle' => $faker->word,
+        'phone' => $faker->phoneNumber,
+        'notes' => $faker->sentence
+    ];
 });

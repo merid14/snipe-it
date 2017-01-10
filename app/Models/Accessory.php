@@ -1,19 +1,22 @@
 <?php
 namespace App\Models;
 
+use App\Models\Loggable;
+use App\Models\SnipeModel;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Watson\Validating\ValidatingTrait;
 
 /**
  * Model for Accessories.
- * 
+ *
  * @version    v1.0
  */
-class Accessory extends Model
+class Accessory extends SnipeModel
 {
-    use SoftDeletes;
     use CompanyableTrait;
+    use Loggable;
+    use SoftDeletes;
 
     protected $dates = ['deleted_at'];
     protected $table = 'accessories';
@@ -22,11 +25,12 @@ class Accessory extends Model
     * Accessory validation rules
     */
     public $rules = array(
-      'name'        => 'required|min:3|max:255',
-      'qty'         => 'required|integer|min:1',
-      'category_id' => 'required|integer',
-      'company_id'  => 'integer',
-      'min_amt'     => 'integer|min:1',
+        'name'              => 'required|min:3|max:255',
+        'qty'               => 'required|integer|min:1',
+        'category_id'       => 'required|integer',
+        'company_id'        => 'integer',
+        'min_amt'           => 'integer|min:0',
+        'purchase_cost'     => 'numeric',
     );
 
 
@@ -67,7 +71,7 @@ class Accessory extends Model
     */
     public function assetlog()
     {
-        return $this->hasMany('\App\Models\Actionlog', 'accessory_id')->where('asset_type', '=', 'accessory')->orderBy('created_at', 'desc')->withTrashed();
+        return $this->hasMany('\App\Models\Actionlog', 'item_id')->where('item_type', Accessory::class)->orderBy('created_at', 'desc')->withTrashed();
     }
 
 
@@ -79,6 +83,11 @@ class Accessory extends Model
     public function hasUsers()
     {
         return $this->belongsToMany('\App\Models\User', 'accessories_users', 'accessory_id', 'assigned_to')->count();
+    }
+
+    public function manufacturer()
+    {
+        return $this->belongsTo('\App\Models\Manufacturer', 'manufacturer_id');
     }
 
     public function checkin_email()

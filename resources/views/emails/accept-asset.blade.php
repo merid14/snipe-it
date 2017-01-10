@@ -1,91 +1,91 @@
 @extends('emails/layouts/default')
 
 @section('content')
-<p>Hello {{ $first_name }},</p>
+	<p>{{ trans('mail.hello') }} {{ $first_name }},</p>
 
 
-<p>A new item has been checked out under your name, details are below.</p>
+	<p>{{ trans('mail.new_item_checked') }}</p>
 
-<table>
-	<tr>
-		<td>
-			Asset Name:
-		</td>
-		<td>
-			<strong>{{ $item_name }}</strong>
-		</td>
-	</tr>
-	@if ($item_tag)
+	<table>
 		<tr>
 			<td>
-				Asset Tag:
+				{{ trans('mail.asset_name') }}
 			</td>
 			<td>
-				<strong>{{ $item_tag }}</strong>
+				<strong>{{ $item_name }}</strong>
 			</td>
 		</tr>
-	@endif
-  @if ($item_serial)
+		@if (isset($item_tag))
+			<tr>
+				<td>
+					{{ trans('mail.asset_tag') }}
+				</td>
+				<td>
+					<strong>{{ $item_tag }}</strong>
+				</td>
+			</tr>
+		@endif
+		@if (isset($item_serial))
+			<tr>
+				<td>
+					{{ trans('mail.serial') }}
+				</td>
+				<td>
+					<strong>{{ $item_serial }}</strong>
+				</td>
+			</tr>
+		@endif
 		<tr>
 			<td>
-				Serial:
+				{{ trans('mail.checkout_date') }}
 			</td>
 			<td>
-				<strong>{{ $item_serial }}</strong>
+				<strong>{{ $checkout_date }}</strong>
 			</td>
 		</tr>
+		@if (isset($expected_checkin))
+			<tr>
+				<td>
+					{{ trans('mail.expecting_checkin_date') }}
+				</td>
+				<td>
+					<strong>{{ $expected_checkin }}</strong>
+				</td>
+			</tr>
+		@endif
+		@if (isset($note))
+			<tr>
+				<td>
+					{{ trans('mail.additional_notes') }}
+				</td>
+				<td>
+					<strong>{{ $note }}</strong>
+				</td>
+			</tr>
+		@endif
+	</table>
+	<p>
+	@if (($require_acceptance==1) && ($eula!=''))
+
+		{{ trans('mail.read_the_terms_and_click') }}
+
+	@elseif (($require_acceptance==1) && ($eula==''))
+
+		{{ trans('mail.click_on_the_link_asset') }}
+
+	@elseif (($require_acceptance==0) && ($eula!=''))
+
+		{{ trans('mail.read_the_terms') }}
+
 	@endif
-	<tr>
-		<td>
-			Checkout Date:
-		</td>
-		<td>
-			<strong>{{ $checkout_date }}</strong>
-		</td>
-	</tr>
-	@if ($expected_checkin)
-		<tr>
-			<td>
-				Expected Checkin Date:
-			</td>
-			<td>
-				<strong>{{ $expected_checkin }}</strong>
-			</td>
-		</tr>
-	@endif
-	@if ($note)
-		<tr>
-			<td>
-				Additional Notes:
-			</td>
-			<td>
-				<strong>{{ $note }}</strong>
-			</td>
-		</tr>
-	@endif
-</table>
 
-@if (($require_acceptance==1) && ($eula!=''))
+		</p>
 
-	Please read the terms of use below, and click on the link at the bottom to confirm that you read and agree to the terms of use, and have received the asset.
+		<p><blockquote>{!! $eula !!}</blockquote></p>
 
-@elseif (($require_acceptance==1) && ($eula==''))
+		@if ($require_acceptance==1)
+			<p><strong><a href="{{ config('app.url') }}/account/accept-asset/{{ $log_id }}">{{ trans('mail.i_have_read') }}</a></strong></p>
+		@endif
 
-	Please click on the link at the bottom to confirm that you have received the asset.
-
-@elseif (($require_acceptance==0) && ($eula!=''))
-
-	Please read the terms of use below.
-
-@endif
-
-</p>
-
-<p><blockquote>{!! $eula !!}</blockquote></p>
-
-@if ($require_acceptance==1)
-<p><strong><a href="{{ config('app.url') }}/account/accept-asset/{{ $log_id }}">I have read and agree to the terms of use, and have received this item.</a></strong></p>
-@endif
-
-<p>{{ \App\Models\Setting::getSettings()->site_name }}</p>
+		<p>{{ $snipeSettings->site_name }}</p>
 @stop

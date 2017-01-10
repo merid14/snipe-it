@@ -1,6 +1,7 @@
 <?php
-use App\Models\Statuslabel;
+use App\Models\CheckoutRequest;
 use App\Models\Location;
+use App\Models\Statuslabel;
 
 /*
 |--------------------------------------------------------------------------
@@ -78,7 +79,7 @@ Route::group([ 'prefix' => 'api', 'middleware' => 'auth' ], function () {
     /*---Manufacturers API---*/
     Route::group(array('prefix'=>'manufacturers'), function () {
         Route::get('list', array('as'=>'api.manufacturers.list', 'uses'=>'ManufacturersController@getDatatable'));
-        Route::get('{manufacturerID}/view', array('as'=>'api.manufacturers.view', 'uses'=>'ManufacturersController@getDataView'));
+        Route::get('{manufacturerID}/view/{itemtype}', array('as'=>'api.manufacturers.view', 'uses'=>'ManufacturersController@getDataView'));
     });
 
     /*---Suppliers API---*/
@@ -89,6 +90,7 @@ Route::group([ 'prefix' => 'api', 'middleware' => 'auth' ], function () {
     /*---Users API---*/
     Route::group([ 'prefix' => 'users' ], function () {
         Route::post('/', [ 'as' => 'api.users.store', 'uses' => 'UsersController@store' ]);
+        Route::post('two_factor_reset', [ 'as' => 'api.users.two_factor_reset', 'uses' => 'UsersController@postTwoFactorReset' ]);
         Route::get('list/{status?}', [ 'as' => 'api.users.list', 'uses' => 'UsersController@getDatatable' ]);
         Route::get('{userId}/assets', [ 'as' => 'api.users.assetlist', 'uses' => 'UsersController@getAssetList' ]);
         Route::post('{userId}/upload', [ 'as' => 'upload/user', 'uses' => 'UsersController@postUpload' ]);
@@ -138,14 +140,22 @@ Route::group([ 'prefix' => 'api', 'middleware' => 'auth' ], function () {
     Route::group([ 'prefix' => 'categories' ], function () {
 
         Route::get('list', [ 'as' => 'api.categories.list', 'uses' => 'CategoriesController@getDatatable' ]);
-        Route::get( '{categoryID}/asset/view',
-            [ 'as' => 'api.categories.asset.view', 'uses' => 'CategoriesController@getDataViewAssets' ] );
-        Route::get( '{categoryID}/accessory/view',
-            [ 'as' => 'api.categories.accessory.view', 'uses' => 'CategoriesController@getDataViewAccessories' ] );
-        Route::get( '{categoryID}/consumable/view',
-            [ 'as' => 'api.categories.consumable.view', 'uses' => 'CategoriesController@getDataViewConsumables' ] );
-        Route::get( '{categoryID}/component/view',
-            [ 'as' => 'api.categories.component.view', 'uses' => 'CategoriesController@getDataViewComponent' ] );
+        Route::get(
+            '{categoryID}/asset/view',
+            [ 'as' => 'api.categories.asset.view', 'uses' => 'CategoriesController@getDataViewAssets' ]
+        );
+        Route::get(
+            '{categoryID}/accessory/view',
+            [ 'as' => 'api.categories.accessory.view', 'uses' => 'CategoriesController@getDataViewAccessories' ]
+        );
+        Route::get(
+            '{categoryID}/consumable/view',
+            [ 'as' => 'api.categories.consumable.view', 'uses' => 'CategoriesController@getDataViewConsumables' ]
+        );
+        Route::get(
+            '{categoryID}/component/view',
+            [ 'as' => 'api.categories.component.view', 'uses' => 'CategoriesController@getDataViewComponent' ]
+        );
     });
 
     /*-- Suppliers API (mostly for creating new ones in-line while creating an asset) --*/
@@ -176,79 +186,142 @@ Route::group([ 'prefix' => 'api', 'middleware' => 'auth' ], function () {
 Route::group(
     [ 'prefix' => 'hardware',
     'middleware' => ['web',
-    'auth',
-    'authorize:assets.view']],
+    'auth']],
     function () {
+
+        Route::get('history', [
+            'as' => 'asset.import-history',
+            'middleware' => 'authorize:assets.checkout',
+            'uses' => 'AssetsController@getImportHistory'
+        ]);
+
+        Route::post('history', [
+            'as' => 'asset.process-import-history',
+            'middleware' => 'authorize:assets.checkout',
+            'uses' => 'AssetsController@postImportHistory'
+        ]);
+
 
         Route::get('create/{model?}', [
                 'as'   => 'create/hardware',
+                'middleware' => 'authorize:assets.create',
                 'uses' => 'AssetsController@getCreate'
             ]);
 
         Route::post('create', [
                 'as'   => 'savenew/hardware',
+                'middleware' => 'authorize:assets.create',
                 'uses' => 'AssetsController@postCreate'
             ]);
 
         Route::get('{assetId}/edit', [
                 'as'   => 'update/hardware',
+                'middleware' => 'authorize:assets.edit',
                 'uses' => 'AssetsController@getEdit'
             ]);
         Route::get('/bytag', [
             'as'   => 'findbytag/hardware',
+            'middleware' => 'authorize:assets.view',
             'uses' => 'AssetsController@getAssetByTag'
         ]);
 
-        Route::get('{assetId}/clone', [ 'as' => 'clone/hardware', 'uses' => 'AssetsController@getClone' ]);
+        Route::get('{assetId}/clone', [
+            'as' => 'clone/hardware',
+            'middleware' => 'authorize:assets.create',
+            'uses' => 'AssetsController@getClone'
+        ]);
+
         Route::post('{assetId}/clone', 'AssetsController@postCreate');
-        Route::get('{assetId}/delete', [ 'as' => 'delete/hardware', 'uses' => 'AssetsController@getDelete' ]);
-        Route::get(
-            '{assetId}/checkout',
-            [ 'as' => 'checkout/hardware', 'uses' => 'AssetsController@getCheckout' ]
-        );
-        Route::post('{assetId}/checkout', 'AssetsController@postCheckout');
-        Route::get(
-            '{assetId}/checkin/{backto?}',
-            [ 'as' => 'checkin/hardware', 'uses' => 'AssetsController@getCheckin' ]
-        );
-        Route::post('{assetId}/checkin/{backto?}', 'AssetsController@postCheckin');
-        Route::get('{assetId}/view', [ 'as' => 'view/hardware', 'uses' => 'AssetsController@getView' ]);
+        Route::get('{assetId}/delete', [
+            'as' => 'delete/hardware',
+            'middleware' => 'authorize:assets.delete',
+            'uses' => 'AssetsController@getDelete'
+        ]);
+        Route::get('{assetId}/checkout', [
+            'as' => 'checkout/hardware',
+            'middleware' => 'authorize:assets.checkout',
+            'uses' => 'AssetsController@getCheckout'
+        ]);
+        Route::post('{assetId}/checkout', [
+            'as' => 'checkout/hardware',
+            'middleware' => 'authorize:assets.checkout',
+            'uses' => 'AssetsController@postCheckout'
+        ]);
+        Route::get('{assetId}/checkin/{backto?}', [
+            'as' => 'checkin/hardware',
+            'middleware' => 'authorize:assets.checkin',
+            'uses' => 'AssetsController@getCheckin'
+        ]);
+
+        Route::post('{assetId}/checkin/{backto?}', [
+            'as' => 'checkin/hardware',
+            'middleware' => 'authorize:assets.checkin',
+            'uses' => 'AssetsController@postCheckin'
+        ]);
+        Route::get('{assetId}/view', [
+            'as' => 'view/hardware',
+            'middleware' => ['authorize:assets.view'],
+            'uses' => 'AssetsController@getView'
+        ]);
         Route::get('{assetId}/qr-view', [ 'as' => 'qr-view/hardware', 'uses' => 'AssetsController@getView' ]);
         Route::get('{assetId}/qr_code', [ 'as' => 'qr_code/hardware', 'uses' => 'AssetsController@getQrCode' ]);
         Route::get('{assetId}/barcode', [ 'as' => 'barcode/hardware', 'uses' => 'AssetsController@getBarCode' ]);
-        Route::get('{assetId}/restore', [ 'as' => 'restore/hardware', 'uses' => 'AssetsController@getRestore' ]);
-        Route::post('{assetId}/upload', [ 'as' => 'upload/asset', 'uses' => 'AssetsController@postUpload' ]);
-        Route::get(
-            '{assetId}/deletefile/{fileId}',
-            [ 'as' => 'delete/assetfile', 'uses' => 'AssetsController@getDeleteFile' ]
-        );
-        Route::get(
-            '{assetId}/showfile/{fileId}',
-            [ 'as' => 'show/assetfile', 'uses' => 'AssetsController@displayFile' ]
-        );
+        Route::get('{assetId}/restore', [
+            'as' => 'restore/hardware',
+            'middleware' => 'authorize:assets.delete',
+            'uses' => 'AssetsController@getRestore'
+        ]);
+        Route::post('{assetId}/upload', [
+            'as' => 'upload/asset',
+            'middleware' => 'authorize:assets.edit',
+            'uses' => 'AssetsController@postUpload'
+        ]);
 
-        Route::get(
-            'import/delete-import/{filename}',
-            [ 'as' => 'assets/import/delete-file', 'uses' => 'AssetsController@getDeleteImportFile' ]
-        );
+        Route::get('{assetId}/deletefile/{fileId}', [
+            'as' => 'delete/assetfile',
+            'middleware' => 'authorize:assets.edit',
+            'uses' => 'AssetsController@getDeleteFile'
+        ]);
 
-        Route::get(
-            'import/process/{filename}',
-            [ 'as' => 'assets/import/process-file', 'uses' => 'AssetsController@getProcessImportFile' ]
-        );
+        Route::get('{assetId}/showfile/{fileId}', [
+            'as' => 'show/assetfile',
+            'middleware' => 'authorize:assets.view',
+            'uses' => 'AssetsController@displayFile'
+        ]);
 
-        Route::get(
-            'import',
-            [ 'as' => 'assets/import', 'uses' => 'AssetsController@getImportUpload' ]
-        );
+        Route::get('import/delete-import/{filename}',  [
+                'as' => 'assets/import/delete-file',
+                'middleware' => 'authorize:assets.create',
+                'uses' => 'AssetsController@getDeleteImportFile'
+        ]);
+
+        Route::post( 'import/process/', [ 'as' => 'assets/import/process-file',
+                'middleware' => 'authorize:assets.create',
+                'uses' => 'AssetsController@postProcessImportFile'
+        ]);
+        Route::get( 'import/delete/{filename}', [ 'as' => 'assets/import/delete-file',
+                'middleware' => 'authorize:assets.create', // TODO What permissions should this require?
+                'uses' => 'AssetsController@getDeleteImportFile'
+        ]);
+
+        Route::get('import',[
+                'as' => 'assets/import',
+                'middleware' => 'authorize:assets.create',
+                'uses' => 'AssetsController@getImportUpload'
+        ]);
 
 
-        Route::post('{assetId}/edit', 'AssetsController@postEdit');
+        Route::post('{assetId}/edit',[
+            'as' => 'assets/import',
+            'middleware' => 'authorize:assets.edit',
+            'uses' => 'AssetsController@postEdit'
+        ]);
 
         Route::post(
             'bulkedit',
             [
                 'as'   => 'hardware/bulkedit',
+                'middleware' => 'authorize:assets.edit',
                 'uses' => 'AssetsController@postBulkEdit'
             ]
         );
@@ -256,6 +329,7 @@ Route::group(
             'bulkdelete',
             [
                 'as'   => 'hardware/bulkdelete',
+                'middleware' => 'authorize:assets.delete',
                 'uses' => 'AssetsController@postBulkDelete'
             ]
         );
@@ -263,33 +337,71 @@ Route::group(
             'bulksave',
             [
                 'as'   => 'hardware/bulksave',
+                'middleware' => 'authorize:assets.edit',
                 'uses' => 'AssetsController@postBulkSave'
             ]
         );
 
-        # Asset Model Management
-        Route::group([ 'prefix' => 'models', 'middleware' => 'auth' ], function () {
+        # Bulk checkout / checkin
+         Route::get( 'bulkcheckout',  [
+                 'as' => 'hardware/bulkcheckout',
+                 'middleware' => 'authorize:assets.checkout',
+                 'uses' => 'AssetsController@getBulkCheckout'
+         ]);
+        Route::post( 'bulkcheckout',  [
+            'as' => 'hardware/bulkcheckout',
+            'middleware' => 'authorize:assets.checkout',
+            'uses' => 'AssetsController@postBulkCheckout'
+        ]);
 
-            Route::get('/', [ 'as' => 'models', 'uses' => 'AssetModelsController@getIndex' ]);
-            Route::get('create', [ 'as' => 'create/model', 'uses' => 'AssetModelsController@getCreate' ]);
+        # Asset Model Management
+        Route::group([ 'prefix' => 'models', 'middleware' => ['auth'] ], function () {
+
+            Route::get('create', [ 'as' => 'create/model', 'uses' => 'AssetModelsController@getCreate', 'middleware' => ['authorize:superuser'] ]);
             Route::post('create', 'AssetModelsController@postCreate');
-            Route::get('{modelId}/edit', [ 'as' => 'update/model', 'uses' => 'AssetModelsController@getEdit' ]);
-            Route::post('{modelId}/edit', 'AssetModelsController@postEdit');
+            Route::get('{modelId}/edit', [ 'as' => 'update/model', 'uses' => 'AssetModelsController@getEdit' , 'middleware' => ['authorize:superuser']]);
+            Route::post('{modelId}/edit', [ 'uses' => 'AssetModelsController@postEdit', 'middleware' => ['authorize:superuser']]);
             Route::get('{modelId}/clone', [ 'as' => 'clone/model', 'uses' => 'AssetModelsController@getClone' ]);
             Route::post('{modelId}/clone', 'AssetModelsController@postCreate');
-            Route::get('{modelId}/delete', [ 'as' => 'delete/model', 'uses' => 'AssetModelsController@getDelete' ]);
+            Route::get('{modelId}/delete', [ 'as' => 'delete/model', 'uses' => 'AssetModelsController@getDelete', 'middleware' => ['authorize:superuser'] ]);
             Route::get('{modelId}/view', [ 'as' => 'view/model', 'uses' => 'AssetModelsController@getView' ]);
-            Route::get('{modelID}/restore', [ 'as' => 'restore/model', 'uses' => 'AssetModelsController@getRestore' ]);
+            Route::get('{modelID}/restore', [ 'as' => 'restore/model', 'uses' => 'AssetModelsController@getRestore', 'middleware' => ['authorize:superuser'] ]);
             Route::get('{modelId}/custom_fields', ['as' => 'custom_fields/model','uses' => 'AssetModelsController@getCustomFields']);
+            Route::get('/', [ 'as' => 'models', 'uses' => 'AssetModelsController@getIndex' ,'middleware' => ['authorize:superuser'] ]);
         });
 
         Route::get('/', [
                 'as'   => 'hardware',
+                'middleware' => 'authorize:assets.view',
                 'uses' => 'AssetsController@getIndex'
             ]);
 
     }
 );
+
+/*
+|--------------------------------------------------------------------------
+| Log Routes
+|--------------------------------------------------------------------------
+|
+| Register all the admin routes.
+|
+*/
+
+Route::group(['middleware' => 'auth'], function () {
+
+    Route::get(
+        'display-sig/{filename}',
+        [
+            'as' => 'log.signature.view',
+            'middleware' => 'authorize:assets.view',
+            'uses' => 'ActionlogController@displaySig' ]
+    );
+
+
+});
+
+
 
 /*
 |--------------------------------------------------------------------------
@@ -302,60 +414,97 @@ Route::group(
 
 Route::group([ 'prefix' => 'admin','middleware' => ['web','auth']], function () {
 
+    Route::get('requests',
+        // foreach( CheckoutRequest::with('user')->get() as $requestedItem) {
+        //     echo $requestedItem->user->username . ' requested ' . $requestedItem->requestedItem->name;
+            [
+            'as' => 'requests',
+            'middleware' => 'authorize:admin',
+            'uses' => 'ViewAssetsController@getRequestedIndex'
+            ]);
     # Licenses
     Route::group([ 'prefix' => 'licenses', 'middleware'=>'authorize:licenses.view' ], function () {
 
-        Route::get('create', [ 'as' => 'create/licenses', 'uses' => 'LicensesController@getCreate' ]);
-        Route::post('create', 'LicensesController@postCreate');
-        Route::get('{licenseId}/edit', [ 'as' => 'update/license', 'uses' => 'LicensesController@getEdit' ]);
-        Route::post('{licenseId}/edit', 'LicensesController@postEdit');
-        Route::get('{licenseId}/clone', [ 'as' => 'clone/license', 'uses' => 'LicensesController@getClone' ]);
-        Route::post('{licenseId}/clone', 'LicensesController@postCreate');
-        Route::get('{licenseId}/delete', [ 'as' => 'delete/license', 'uses' => 'LicensesController@getDelete' ]);
-        Route::get(
-            '{licenseId}/freecheckout',
-            [ 'as' => 'freecheckout/license', 'uses' => 'LicensesController@getFreeLicense' ]
-        );
+        Route::get('create', [ 'as' => 'create/licenses', 'middleware' => 'authorize:licenses.create','uses' => 'LicensesController@getCreate' ]);
+        Route::post('create', [ 'as' => 'create/licenses', 'middleware' => 'authorize:licenses.create','uses' => 'LicensesController@postCreate' ]);
+        Route::get('{licenseId}/edit', [ 'as' => 'update/license', 'middleware' => 'authorize:licenses.edit', 'uses' => 'LicensesController@getEdit' ]);
+        Route::post('{licenseId}/edit', [ 'as' => 'update/license', 'middleware' => 'authorize:licenses.edit', 'uses' => 'LicensesController@postEdit' ]);
+        Route::get('{licenseId}/clone', [ 'as' => 'clone/license', 'middleware' => 'authorize:licenses.create', 'uses' => 'LicensesController@getClone' ]);
+        Route::post('{licenseId}/clone', [ 'as' => 'clone/license', 'middleware' => 'authorize:licenses.create', 'uses' => 'LicensesController@postCreate' ]);
+        Route::get('{licenseId}/delete', [ 'as' => 'delete/license', 'middleware' => 'authorize:licenses.delete', 'uses' => 'LicensesController@getDelete' ]);
+        Route::get('{licenseId}/freecheckout', [
+            'as' => 'freecheckout/license',
+            'middleware' => 'authorize:licenses.checkout',
+            'uses' => 'LicensesController@getFreeLicense'
+        ]);
         Route::get(
             '{licenseId}/checkout',
-            [ 'as' => 'checkout/license', 'uses' => 'LicensesController@getCheckout' ]
+            [ 'as' => 'checkout/license', 'middleware' => 'authorize:licenses.checkout','uses' => 'LicensesController@getCheckout' ]
         );
-        Route::post('{licenseId}/checkout', 'LicensesController@postCheckout');
-        Route::get(
-            '{licenseId}/checkin/{backto?}',
-            [ 'as' => 'checkin/license', 'uses' => 'LicensesController@getCheckin' ]
+        Route::post(
+            '{licenseId}/checkout',
+            [ 'as' => 'checkout/license', 'middleware' => 'authorize:licenses.checkout','uses' => 'LicensesController@postCheckout' ]
         );
-        Route::post('{licenseId}/checkin/{backto?}', 'LicensesController@postCheckin');
-        Route::get('{licenseId}/view', [ 'as' => 'view/license', 'uses' => 'LicensesController@getView' ]);
+        Route::get('{licenseId}/checkin/{backto?}', [
+            'as' => 'checkin/license',
+            'middleware' => 'authorize:licenses.checkin',
+            'uses' => 'LicensesController@getCheckin'
+        ]);
+
+        Route::post('{licenseId}/checkin/{backto?}', [
+            'as' => 'checkin/license',
+            'middleware' => 'authorize:licenses.checkin',
+            'uses' => 'LicensesController@postCheckin'
+        ]);
+
+        Route::get('{licenseId}/view', [
+            'as' => 'view/license',
+            'middleware' => 'authorize:licenses.view',
+            'uses' => 'LicensesController@getView'
+        ]);
+
         Route::post(
             '{licenseId}/upload',
-            [ 'as' => 'upload/license', 'uses' => 'LicensesController@postUpload' ]
+            [ 'as' => 'upload/license', 'middleware' => 'authorize:licenses.edit','uses' => 'LicensesController@postUpload' ]
         );
         Route::get(
             '{licenseId}/deletefile/{fileId}',
-            [ 'as' => 'delete/licensefile', 'uses' => 'LicensesController@getDeleteFile' ]
+            [ 'as' => 'delete/licensefile', 'middleware' => 'authorize:licenses.edit', 'uses' => 'LicensesController@getDeleteFile' ]
         );
         Route::get(
             '{licenseId}/showfile/{fileId}',
-            [ 'as' => 'show/licensefile', 'uses' => 'LicensesController@displayFile' ]
+            [ 'as' => 'show/licensefile', 'middleware' => 'authorize:licenses.view','uses' => 'LicensesController@displayFile' ]
         );
-        Route::get('/', [ 'as' => 'licenses', 'uses' => 'LicensesController@getIndex' ]);
+        Route::get('/', [ 'as' => 'licenses', 'middleware' => 'authorize:licenses.view','uses' => 'LicensesController@getIndex' ]);
     });
 
     # Asset Maintenances
     Route::group([ 'prefix' => 'asset_maintenances', 'middleware'=>'authorize:assets.view'  ], function () {
 
-        Route::get(
-            'create/{assetId?}',
-            [ 'as' => 'create/asset_maintenances', 'uses' => 'AssetMaintenancesController@getCreate' ]
-        );
-        Route::post('create/{assetId?}', 'AssetMaintenancesController@postCreate');
-        Route::get('/', [ 'as' => 'asset_maintenances', 'uses' => 'AssetMaintenancesController@getIndex' ]);
-        Route::get(
-            '{assetMaintenanceId}/edit',
-            [ 'as' => 'update/asset_maintenance', 'uses' => 'AssetMaintenancesController@getEdit' ]
-        );
-        Route::post('{assetMaintenanceId}/edit', 'AssetMaintenancesController@postEdit');
+        Route::get('create/{assetId?}',
+            [ 'as' => 'create/asset_maintenances',
+                'middleware' => 'authorize:assets.edit',
+                'uses' => 'AssetMaintenancesController@getCreate'
+            ]);
+
+        Route::post('create/{assetId?}',
+            [ 'as' => 'create/asset_maintenances.save',
+                'middleware' => 'authorize:assets.edit',
+                'uses' => 'AssetMaintenancesController@postCreate'
+            ]);
+
+        Route::get('{assetMaintenanceId}/edit',
+            [ 'as' => 'update/asset_maintenance',
+                'middleware' => 'authorize:assets.edit',
+                'uses' => 'AssetMaintenancesController@getEdit'
+            ]);
+
+        Route::post('{assetMaintenanceId}/edit',
+            [ 'as' => 'update/asset_maintenance.save',
+                'middleware' => 'authorize:assets.edit',
+                'uses' => 'AssetMaintenancesController@postEdit'
+            ]);
+
         Route::get(
             '{assetMaintenanceId}/delete',
             [ 'as' => 'delete/asset_maintenance', 'uses' => 'AssetMaintenancesController@getDelete' ]
@@ -364,89 +513,110 @@ Route::group([ 'prefix' => 'admin','middleware' => ['web','auth']], function () 
             '{assetMaintenanceId}/view',
             [ 'as' => 'view/asset_maintenance', 'uses' => 'AssetMaintenancesController@getView' ]
         );
+
+        Route::get('/', [ 'as' => 'asset_maintenances', 'uses' => 'AssetMaintenancesController@getIndex' ]);
     });
 
     # Accessories
     Route::group([ 'prefix' => 'accessories', 'middleware'=>'authorize:accessories.view'  ], function () {
 
-        Route::get('create', [ 'as' => 'create/accessory', 'uses' => 'AccessoriesController@getCreate' ]);
+        Route::get('create', [ 'as' => 'create/accessory', 'middleware' => 'authorize:accessories.create','uses' => 'AccessoriesController@getCreate' ]);
         Route::post('create', 'AccessoriesController@postCreate');
         Route::get(
             '{accessoryID}/edit',
-            [ 'as' => 'update/accessory', 'uses' => 'AccessoriesController@getEdit' ]
+            [ 'as' => 'update/accessory', 'middleware' => 'authorize:accessories.edit','uses' => 'AccessoriesController@getEdit' ]
         );
         Route::post('{accessoryID}/edit', 'AccessoriesController@postEdit');
         Route::get(
             '{accessoryID}/delete',
-            [ 'as' => 'delete/accessory', 'uses' => 'AccessoriesController@getDelete' ]
+            [ 'as' => 'delete/accessory', 'middleware' => 'authorize:accessories.delete','uses' => 'AccessoriesController@getDelete' ]
         );
-        Route::get('{accessoryID}/view', [ 'as' => 'view/accessory', 'uses' => 'AccessoriesController@getView' ]);
+        Route::get('{accessoryID}/view', [ 'as' => 'view/accessory', 'middleware' => 'authorize:accessories.view','uses' => 'AccessoriesController@getView' ]);
         Route::get(
             '{accessoryID}/checkout',
-            [ 'as' => 'checkout/accessory', 'uses' => 'AccessoriesController@getCheckout' ]
+            [ 'as' => 'checkout/accessory', 'middleware' => 'authorize:accessories.checkout','uses' => 'AccessoriesController@getCheckout' ]
         );
-        Route::post('{accessoryID}/checkout', 'AccessoriesController@postCheckout');
+        Route::post(
+            '{accessoryID}/checkout',
+            [ 'as' => 'checkout/accessory', 'middleware' => 'authorize:accessories.checkout','uses' => 'AccessoriesController@postCheckout' ]
+        );
+
         Route::get(
             '{accessoryID}/checkin/{backto?}',
-            [ 'as' => 'checkin/accessory', 'uses' => 'AccessoriesController@getCheckin' ]
+            [ 'as' => 'checkin/accessory', 'middleware' => 'authorize:accessories.checkin','uses' => 'AccessoriesController@getCheckin' ]
         );
-        Route::post('{accessoryID}/checkin/{backto?}', 'AccessoriesController@postCheckin');
+        Route::post(
+            '{accessoryID}/checkin/{backto?}',
+            [ 'as' => 'checkin/accessory', 'middleware' => 'authorize:accessories.checkin','uses' => 'AccessoriesController@postCheckin' ]
+        );
 
-        Route::get('/', [ 'as' => 'accessories', 'uses' => 'AccessoriesController@getIndex' ]);
+        Route::get('/', [ 'as' => 'accessories', 'middleware'=>'authorize:accessories.view', 'uses' => 'AccessoriesController@getIndex' ]);
     });
 
     # Consumables
     Route::group([ 'prefix' => 'consumables', 'middleware'=>'authorize:consumables.view'  ], function () {
 
-        Route::get('create', [ 'as' => 'create/consumable', 'uses' => 'ConsumablesController@getCreate' ]);
-        Route::post('create', 'ConsumablesController@postCreate');
+        Route::get('create', [ 'as' => 'create/consumable','middleware'=>'authorize:consumables.create', 'uses' => 'ConsumablesController@getCreate' ]);
+        Route::post('create', [ 'as' => 'create/consumable','middleware'=>'authorize:consumables.create', 'uses' => 'ConsumablesController@postCreate' ]);
         Route::get(
             '{consumableID}/edit',
-            [ 'as' => 'update/consumable', 'uses' => 'ConsumablesController@getEdit' ]
+            [ 'as' => 'update/consumable', 'middleware'=>'authorize:consumables.edit', 'uses' => 'ConsumablesController@getEdit' ]
         );
-        Route::post('{consumableID}/edit', 'ConsumablesController@postEdit');
+        Route::post(
+            '{consumableID}/edit',
+            [ 'as' => 'update/consumable', 'middleware'=>'authorize:consumables.edit', 'uses' => 'ConsumablesController@postEdit' ]
+        );
         Route::get(
             '{consumableID}/delete',
-            [ 'as' => 'delete/consumable', 'uses' => 'ConsumablesController@getDelete' ]
+            [ 'as' => 'delete/consumable',  'middleware'=>'authorize:consumables.delete','uses' => 'ConsumablesController@getDelete' ]
         );
         Route::get(
             '{consumableID}/view',
-            [ 'as' => 'view/consumable', 'uses' => 'ConsumablesController@getView' ]
+            [ 'as' => 'view/consumable',  'middleware'=>'authorize:consumables.view','uses' => 'ConsumablesController@getView' ]
         );
         Route::get(
             '{consumableID}/checkout',
-            [ 'as' => 'checkout/consumable', 'uses' => 'ConsumablesController@getCheckout' ]
+            [ 'as' => 'checkout/consumable',  'middleware'=>'authorize:consumables.checkout','uses' => 'ConsumablesController@getCheckout' ]
         );
-        Route::post('{consumableID}/checkout', 'ConsumablesController@postCheckout');
-        Route::get('/', [ 'as' => 'consumables', 'uses' => 'ConsumablesController@getIndex' ]);
+        Route::post(
+            '{consumableID}/checkout',
+            [ 'as' => 'checkout/consumable',  'middleware'=>'authorize:consumables.checkout','uses' => 'ConsumablesController@postCheckout' ]
+        );
+        Route::get('/', [ 'as' => 'consumables', 'middleware'=>'authorize:consumables.view','uses' => 'ConsumablesController@getIndex' ]);
     });
 
     # Components
     Route::group([ 'prefix' => 'components', 'middleware'=>'authorize:components.view'  ], function () {
 
-        Route::get('create', [ 'as' => 'create/component', 'uses' => 'ComponentsController@getCreate' ]);
-        Route::post('create', 'ComponentsController@postCreate');
+        Route::get('create', [ 'as' => 'create/component', 'middleware'=>'authorize:components.create','uses' => 'ComponentsController@getCreate' ]);
+        Route::post('create', [ 'as' => 'create/component', 'middleware'=>'authorize:components.create','uses' => 'ComponentsController@postCreate' ]);
         Route::get(
             '{componentID}/edit',
-            [ 'as' => 'update/component', 'uses' => 'ComponentsController@getEdit' ]
+            [ 'as' => 'update/component', 'middleware'=>'authorize:components.edit','uses' => 'ComponentsController@getEdit' ]
         );
-        Route::post('{componentID}/edit', 'ComponentsController@postEdit');
+        Route::post(
+            '{componentID}/edit',
+            [ 'as' => 'update/component', 'middleware'=>'authorize:components.edit','uses' => 'ComponentsController@postEdit' ]
+        );
         Route::get(
             '{componentID}/delete',
-            [ 'as' => 'delete/component', 'uses' => 'ComponentsController@getDelete' ]
+            [ 'as' => 'delete/component', 'middleware'=>'authorize:components.delete','uses' => 'ComponentsController@getDelete' ]
         );
         Route::get(
             '{componentID}/view',
-            [ 'as' => 'view/component', 'uses' => 'ComponentsController@getView' ]
+            [ 'as' => 'view/component', 'middleware'=>'authorize:components.view','uses' => 'ComponentsController@getView' ]
         );
         Route::get(
             '{componentID}/checkout',
-            [ 'as' => 'checkout/component', 'uses' => 'ComponentsController@getCheckout' ]
+            [ 'as' => 'checkout/component', 'middleware'=>'authorize:components.checkout','uses' => 'ComponentsController@getCheckout' ]
         );
-        Route::post('{componentID}/checkout', 'ComponentsController@postCheckout');
-        Route::post('bulk', [ 'as' => 'component/bulk-form', 'uses' => 'ComponentsController@postBulk' ]);
-        Route::post('bulksave', [ 'as' => 'component/bulk-save', 'uses' => 'ComponentsController@postBulkSave' ]);
-        Route::get('/', [ 'as' => 'components', 'uses' => 'ComponentsController@getIndex' ]);
+        Route::post(
+            '{componentID}/checkout',
+            [ 'as' => 'checkout/component', 'middleware'=>'authorize:components.checkout','uses' => 'ComponentsController@postCheckout' ]
+        );
+        Route::post('bulk', [ 'as' => 'component/bulk-form', 'middleware'=>'authorize:components.checkout','uses' => 'ComponentsController@postBulk' ]);
+        Route::post('bulksave', [ 'as' => 'component/bulk-save', 'middleware'=>'authorize:components.edit','uses' => 'ComponentsController@postBulkSave' ]);
+        Route::get('/', [ 'as' => 'components', 'middleware'=>'authorize:components.view','uses' => 'ComponentsController@getIndex' ]);
     });
 
     # Admin Settings Routes (for categories, maufactureres, etc)
@@ -458,11 +628,18 @@ Route::group([ 'prefix' => 'admin','middleware' => ['web','auth']], function () 
         Route::group([ 'prefix' => 'app' ], function () {
 
             Route::post('purge', ['as' => 'purge', 'uses' => 'SettingsController@postPurge']);
-
-            Route::get('/', [ 'as' => 'app', 'uses' => 'SettingsController@getIndex' ]);
             Route::get('edit', [ 'as' => 'edit/settings', 'uses' => 'SettingsController@getEdit' ]);
             Route::post('edit', 'SettingsController@postEdit');
+
+            Route::get('ldaptest', [
+                'as' => 'settings/ldaptest',
+                'uses' => 'SettingsController@getLdapTest'
+            ]);
+
+            Route::get('/', [ 'as' => 'app', 'uses' => 'SettingsController@getIndex' ]);
         });
+
+
 
         # Settings
         Route::group([ 'prefix' => 'backups', 'middleware' => 'auth' ], function () {
@@ -480,6 +657,8 @@ Route::group([ 'prefix' => 'admin','middleware' => ['web','auth']], function () 
                 'as' => 'settings/backups',
                 'uses' => 'SettingsController@postBackups'
             ]);
+
+
             Route::get('/', [ 'as' => 'settings/backups', 'uses' => 'SettingsController@getBackups' ]);
         });
 
@@ -591,7 +770,7 @@ Route::group([ 'prefix' => 'admin','middleware' => ['web','auth']], function () 
                 [ 'as' => 'update/location', 'uses' => 'LocationsController@getEdit' ]
             );
             Route::post('{locationId}/edit', 'LocationsController@postEdit');
-            Route::get('{locationId}/view', 'LocationsController@getView');
+            Route::get('{locationId}/view', [ 'as' => 'view/location', 'uses' => 'LocationsController@getView' ]);
             Route::get(
                 '{locationId}/delete',
                 [ 'as' => 'delete/location', 'uses' => 'LocationsController@getDelete' ]
@@ -621,27 +800,29 @@ Route::group([ 'prefix' => 'admin','middleware' => ['web','auth']], function () 
     Route::get('custom_fields/create-field', ['uses' =>'CustomFieldsController@createField','as' => 'admin.custom_fields.create-field']);
     Route::post('custom_fields/create-field', ['uses' => 'CustomFieldsController@storeField','as' => 'admin.custom_fields.store-field']);
     Route::post('custom_fields/{id}/associate', ['uses' => 'CustomFieldsController@associate','as' => 'admin.custom_fields.associate']);
+    Route::get('custom_fields/{field_id}/{fieldset_id}/disassociate', ['uses' => 'CustomFieldsController@deleteFieldFromFieldset','as' => 'admin.custom_fields.disassociate']);
     Route::match(['DELETE'], 'custom_fields/delete-field/{id}', ['uses' => 'CustomFieldsController@deleteField','as' => 'admin.custom_fields.delete-field']);
     Route::resource('custom_fields', 'CustomFieldsController');
 
     # User Management
-    Route::group([ 'prefix' => 'users' ], function () {
+    Route::group([ 'prefix' => 'users', 'middleware' => ['web','auth','authorize:users.view']], function () {
 
-        Route::get('ldap', ['as' => 'ldap/user', 'uses' => 'UsersController@getLDAP' ]);
+        Route::get('ldap', ['as' => 'ldap/user', 'uses' => 'UsersController@getLDAP', 'middleware' => ['authorize:users.edit'] ]);
         Route::post('ldap', 'UsersController@postLDAP');
 
-        Route::get('create', [ 'as' => 'create/user', 'uses' => 'UsersController@getCreate' ]);
-        Route::post('create', 'UsersController@postCreate');
-        Route::get('import', [ 'as' => 'import/user', 'uses' => 'UsersController@getImport' ]);
-        Route::post('import', 'UsersController@postImport');
-        Route::get('{userId}/edit', [ 'as' => 'update/user', 'uses' => 'UsersController@getEdit' ]);
-        Route::post('{userId}/edit', 'UsersController@postEdit');
-        Route::get('{userId}/clone', [ 'as' => 'clone/user', 'uses' => 'UsersController@getClone' ]);
-        Route::post('{userId}/clone', 'UsersController@postCreate');
-        Route::get('{userId}/delete', [ 'as' => 'delete/user', 'uses' => 'UsersController@getDelete' ]);
-        Route::get('{userId}/restore', [ 'as' => 'restore/user', 'uses' => 'UsersController@getRestore' ]);
-        Route::get('{userId}/view', [ 'as' => 'view/user', 'uses' => 'UsersController@getView' ]);
-        Route::get('{userId}/unsuspend', [ 'as' => 'unsuspend/user', 'uses' => 'UsersController@getUnsuspend' ]);
+        Route::get('create', [ 'as' => 'create/user', 'uses' => 'UsersController@getCreate', 'middleware' => ['authorize:users.edit']  ]);
+        Route::post('create', [ 'uses' => 'UsersController@postCreate', 'middleware' => ['authorize:users.edit']  ]);
+        Route::get('import', [ 'as' => 'import/user', 'uses' => 'UsersController@getImport', 'middleware' => ['authorize:users.edit']  ]);
+        Route::post('import', [ 'uses' => 'UsersController@postImport', 'middleware' => ['authorize:users.edit']  ]);
+        Route::get('export', [ 'uses' => 'UsersController@getExportUserCsv', 'middleware' => ['authorize:users.view']  ]);
+        Route::get('{userId}/edit', [ 'as' => 'update/user', 'uses' => 'UsersController@getEdit', 'middleware' => ['authorize:users.edit']  ]);
+        Route::post('{userId}/edit', [ 'uses' => 'UsersController@postEdit', 'middleware' => ['authorize:users.edit']  ]);
+        Route::get('{userId}/clone', [ 'as' => 'clone/user', 'uses' => 'UsersController@getClone', 'middleware' => ['authorize:users.edit']  ]);
+        Route::post('{userId}/clone', [ 'uses' => 'UsersController@postCreate', 'middleware' => ['authorize:users.edit']  ]);
+        Route::get('{userId}/delete', [ 'as' => 'delete/user', 'uses' => 'UsersController@getDelete', 'middleware' => ['authorize:users.delete']  ]);
+        Route::get('{userId}/restore', [ 'as' => 'restore/user', 'uses' => 'UsersController@getRestore', 'middleware' => ['authorize:users.edit']  ]);
+        Route::get('{userId}/view', [ 'as' => 'view/user', 'uses' => 'UsersController@getView' , 'middleware' => ['authorize:users.view'] ]);
+        Route::get('{userId}/unsuspend', [ 'as' => 'unsuspend/user', 'uses' => 'UsersController@getUnsuspend', 'middleware' => ['authorize:users.edit'] ]);
         Route::get(
             '{userId}/deletefile/{fileId}',
             [ 'as' => 'delete/userfile', 'uses' => 'UsersController@getDeleteFile' ]
@@ -655,14 +836,16 @@ Route::group([ 'prefix' => 'admin','middleware' => ['web','auth']], function () 
             'bulkedit',
             [
                 'as'   => 'users/bulkedit',
-                'uses' => 'UsersController@postBulkEdit'
+                'uses' => 'UsersController@postBulkEdit',
+                'middleware' => ['authorize:users.edit'],
             ]
         );
         Route::post(
             'bulksave',
             [
                 'as'   => 'users/bulksave',
-                'uses' => 'UsersController@postBulkSave'
+                'uses' => 'UsersController@postBulkSave',
+                'middleware' => ['authorize:users.edit'],
             ]
         );
 
@@ -671,7 +854,7 @@ Route::group([ 'prefix' => 'admin','middleware' => ['web','auth']], function () 
     });
 
     # Group Management
-    Route::group([ 'prefix' => 'groups' ], function () {
+    Route::group([ 'prefix' => 'groups', 'middleware' => ['web','auth','authorize:superadmin'] ], function () {
 
         Route::get('/', [ 'as' => 'groups', 'uses' => 'GroupsController@getIndex' ]);
         Route::get('create', [ 'as' => 'create/group', 'uses' => 'GroupsController@getCreate' ]);
@@ -725,8 +908,13 @@ Route::group([ 'prefix' => 'account', 'middleware' => ['web', 'auth']], function
         [ 'as' => 'account/request-asset', 'uses' => 'ViewAssetsController@getRequestAsset' ]
     );
 
+    Route::post(
+        'request/{itemType}/{itemId}',
+        [ 'as' => 'account/request-item', 'uses' => 'ViewAssetsController@getRequestItem']
+    );
+
     # Account Dashboard
-    Route::get('/', [ 'as' => 'account', 'uses' => 'ProfileController@getDashboard' ]);
+    Route::get('/', [ 'as' => 'account', 'uses' => 'ViewAssetsController@getIndex' ]);
 
 });
 
@@ -777,6 +965,12 @@ Route::group(['middleware' => ['web','auth','authorize:reports.view']], function
         'reports/activity',
         [ 'as' => 'reports/activity', 'uses' => 'ReportsController@getActivityReport' ]
     );
+
+    Route::get(
+        'reports/activity/json',
+        [ 'as' => 'api.activity.list', 'uses' => 'ReportsController@getActivityReportDataTable' ]
+    );
+    
     Route::get(
         'reports/unaccepted_assets',
         [ 'as' => 'reports/unaccepted_assets', 'uses' => 'ReportsController@getAssetAcceptanceReport' ]
@@ -843,6 +1037,29 @@ Route::group([ 'prefix' => 'setup', 'middleware' => 'web'], function () {
 
 });
 
+Route::get(
+    'two-factor-enroll',
+    [
+        'as' => 'two-factor-enroll',
+        'middleware' => ['web'],
+        'uses' => 'Auth\AuthController@getTwoFactorEnroll' ]
+);
+
+Route::get(
+    'two-factor',
+    [
+        'as' => 'two-factor',
+        'middleware' => ['web'],
+        'uses' => 'Auth\AuthController@getTwoFactorAuth' ]
+);
+
+Route::post(
+    'two-factor',
+    [
+        'as' => 'two-factor',
+        'middleware' => ['web'],
+        'uses' => 'Auth\AuthController@postTwoFactorAuth' ]
+);
 
 Route::get(
     '/',
@@ -852,8 +1069,24 @@ Route::get(
     'uses' => 'DashboardController@getIndex' ]
 );
 
+
+
 Route::group(['middleware' => 'web'], function () {
     Route::auth();
+    Route::get(
+        'login',
+        [
+            'as' => 'login',
+            'middleware' => ['web'],
+            'uses' => 'Auth\AuthController@showLoginForm' ]
+    );
+    Route::get(
+        'logout',
+        [
+            'as' => 'logout',
+            'uses' => 'Auth\AuthController@logout' ]
+    );
+
 });
 
 Route::get('home', function () {

@@ -37,9 +37,11 @@ return array(
     ),
 
     'import' => array(
-        'error'         => 'Some Items did not import Correctly.',
-        'errorDetail'   => 'The Following Items were not imported because of errors.',
-        'success'       => "Your File has been imported",
+        'error'                 => 'Some items did not import correctly.',
+        'errorDetail'           => 'The following Items were not imported because of errors.',
+        'success'               => "Your file has been imported",
+        'file_delete_success'   => "Your file has been been successfully deleted",
+        'file_delete_error'      => "The file was unable to be deleted",
     ),
 
 
@@ -52,7 +54,8 @@ return array(
     'checkout' => array(
         'error'   		=> 'Актив не был привязан, пожалуйста попробуйте снова',
         'success' 		=> 'Актив успешно привязан.',
-        'user_does_not_exist' => 'Этот пользователь является недопустимым. Пожалуйста, попробуйте еще раз.'
+        'user_does_not_exist' => 'Этот пользователь является недопустимым. Пожалуйста, попробуйте еще раз.',
+        'not_available' => 'That asset is not available for checkout!'
     ),
 
     'checkin' => array(
@@ -66,6 +69,7 @@ return array(
     'requests' => array(
         'error'   		=> 'Актив не был запрошен, попробуйте ещё раз',
         'success' 		=> 'Актив запрошен успешно.',
+        'canceled'      => 'Checkout request successfully canceled'
     )
 
 );

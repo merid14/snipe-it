@@ -4,20 +4,15 @@ return array(
 
     'asset'             => 'دارایی',
     'checkin'           => 'چک در',
-    'cost'              => 'هزینه خرید
-',
     'create'            => 'ایجاد مجوز
 ',
-    'date'              => 'تاریخ خرید',
-    'depreciation'      => 'مستهلک کردن',
     'expiration'        => 'تاریخ انقضا',
+    'license_key'       => 'Product Key',
     'maintained'        => 'نگهداری',
     'name'              => 'نام نرم افزار
 ',
     'no_depreciation'   => 'هنوز مستهلک نشده
 ',
-    'notes'             => 'نت ها',
-    'order'             => 'شماره سفارش',
     'purchase_order'    => 'شماره سفارش خرید',
     'reassignable'      => 'واگذاری مجدد
 ',
@@ -25,8 +20,6 @@ return array(
 ',
     'seats'             => 'صندلی
 ',
-    'serial'            => 'سریال',
-    'supplier'          => 'تامین کننده',
     'termination_date'  => 'تاریخ پایان
 ',
     'to_email'          => ' مجوز به ایمیل',

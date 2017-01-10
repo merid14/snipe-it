@@ -9,7 +9,7 @@
 
   <?php
     $settings->labels_width = $settings->labels_width - $settings->labels_display_sgutter;
-    $settings->labels_height = $settings->labels_height - $settings->labels_display_sgutter;
+    $settings->labels_height = $settings->labels_height - $settings->labels_display_bgutter;
     $qr_size = ($settings->labels_height - .25);
     $qr_txt_size = $settings->labels_width - $qr_size - $settings->labels_display_sgutter - .1;
     ?>
@@ -48,6 +48,11 @@
   img.qr_img {
     width: 100%;
     height: 100%;
+  }
+  img.barcode {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
   }
 
  .qr_text {
@@ -88,12 +93,15 @@
     }
   }
 
+  @if ($snipeSettings->custom_css)
+    {{ $snipeSettings->show_custom_css() }}
+  @endif
 
   </style>
 
 @foreach ($assets as $asset)
 	<?php $count++; ?>
-  <div class="label" {!!  ($count % $settings->labels_per_page == 0) ? 'style="margin-bottom: 0px;"' : '' !!}>
+  <div class="label"{!!  ($count % $settings->labels_per_page == 0) ? ' style="margin-bottom: 0px;"' : '' !!}>
 
       @if ($settings->qr_code=='1')
     <div class="qr_img">
@@ -102,23 +110,28 @@
       @endif
 
     <div class="qr_text">
+        <div class="pull-left">
         @if ($settings->qr_text!='')
             <strong>{{ $settings->qr_text }}</strong>
-        <br>
+            <br>
         @endif
+        </div>
+        <div class="pull-left">
         @if (($settings->labels_display_name=='1') && ($asset->name!=''))
             N: {{ $asset->name }}
-          <br>
         @endif
-
+        </div>
+        <div class="pull-left">
         @if (($settings->labels_display_tag=='1') && ($asset->asset_tag!=''))
             T: {{ $asset->asset_tag }}
-        <br>
         @endif
+        </div>
+        <div class="pull-left">
         @if (($settings->labels_display_serial=='1') && ($asset->serial!=''))
             S: {{ $asset->serial }}
-
         @endif
+         </div>
+
     </div>
 
     @if ((($settings->alt_barcode_enabled=='1') && $settings->alt_barcode!=''))

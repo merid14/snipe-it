@@ -20,6 +20,8 @@ use View;
 use App\Models\Setting;
 use App\Models\Asset;
 use App\Helpers\Helper;
+use Auth;
+use Gate;
 
 /**
  * This controller handles all actions related to Asset Maintenance for
@@ -74,12 +76,14 @@ class AssetMaintenancesController extends Controller
     */
     public function getDatatable()
     {
-        $maintenances = AssetMaintenance::with('asset', 'supplier', 'asset.company')
-        ->whereNull('deleted_at');
+        $maintenances = AssetMaintenance::with('asset', 'supplier', 'asset.company','admin');
 
         if (Input::has('search')) {
             $maintenances = $maintenances->TextSearch(e(Input::get('search')));
         }
+
+
+
 
         if (Input::has('offset')) {
             $offset = e(Input::get('offset'));
@@ -93,11 +97,20 @@ class AssetMaintenancesController extends Controller
             $limit = 50;
         }
 
-        $allowed_columns = ['id','title','asset_maintenance_time','asset_maintenance_type','cost','start_date','completion_date','notes'];
+
+
+        $allowed_columns = ['id','title','asset_maintenance_time','asset_maintenance_type','cost','start_date','completion_date','notes','user_id'];
         $order = Input::get('order') === 'asc' ? 'asc' : 'desc';
         $sort = in_array(Input::get('sort'), $allowed_columns) ? e(Input::get('sort')) : 'created_at';
 
-        $maintenances->orderBy($sort, $order);
+        switch ($sort) {
+            case 'user_id':
+                $maintenances = $maintenances->OrderAdmin($order);
+                break;
+            default:
+                $maintenances = $maintenances->orderBy($sort, $order);
+                break;
+        }
 
         $maintenancesCount = $maintenances->count();
         $maintenances = $maintenances->skip($offset)->take($limit)->get();
@@ -106,30 +119,33 @@ class AssetMaintenancesController extends Controller
         $settings = Setting::getSettings();
 
         foreach ($maintenances as $maintenance) {
+            $actions = '';
+            if (Gate::allows('assets.edit')) {
+                $actions .= '<nobr><a href="' . route('update/asset_maintenance',
+                        $maintenance->id) . '" class="btn btn-warning btn-sm" style="margin-right:5px;"><i class="fa fa-pencil icon-white"></i></a><a data-html="false" class="btn delete-asset btn-danger btn-sm" data-toggle="modal" href="' . route('delete/asset_maintenance',
+                        $maintenance->id) . '" data-content="' . trans('admin/asset_maintenances/message.delete.confirm') . '" data-title="' . trans('general.delete') . ' ' . htmlspecialchars($maintenance->title) . '?" onClick="return false;"><i class="fa fa-trash icon-white"></i></a></nobr>';
+            }
 
-            $actions = '<nobr><a href="'.route('update/asset_maintenance', $maintenance->id).'" class="btn btn-warning btn-sm" style="margin-right:5px;"><i class="fa fa-pencil icon-white"></i></a><a data-html="false" class="btn delete-asset btn-danger btn-sm" data-toggle="modal" href="'.route('delete/asset_maintenance', $maintenance->id).'" data-content="'.trans('admin/asset_maintenances/message.delete.confirm').'" data-title="'.trans('general.delete').' '.htmlspecialchars($maintenance->title).'?" onClick="return false;"><i class="fa fa-trash icon-white"></i></a></nobr>';
-
-            if (($maintenance->cost) && ($maintenance->asset->assetloc) &&  ($maintenance->asset->assetloc->currency!='')) {
+            if (($maintenance->cost) && (isset($maintenance->asset)) && ($maintenance->asset->assetloc) &&  ($maintenance->asset->assetloc->currency!='')) {
                 $maintenance_cost = $maintenance->asset->assetloc->currency.$maintenance->cost;
             } else {
                 $maintenance_cost = $settings->default_currency.$maintenance->cost;
             }
-
-            $company = $maintenance->asset->company;
-
+            
             $rows[] = array(
                 'id'            => $maintenance->id,
-                'asset_name'    =>  (string)link_to('/hardware/'.$maintenance->asset->id.'/view', $maintenance->asset->showAssetName()) ,
+                'asset_name'    =>  ($maintenance->asset) ? (string)link_to('/hardware/'.$maintenance->asset->id.'/view', $maintenance->asset->showAssetName()) : 'Deleted Asset' ,
                 'title'         => $maintenance->title,
                 'notes'         => $maintenance->notes,
-                'supplier'      => $maintenance->supplier->name,
+                'supplier'      => ($maintenance->supplier) ? (string)link_to('/admin/settings/suppliers/'.$maintenance->supplier->id.'/view', $maintenance->supplier->name) : 'Deleted Supplier',
                 'cost'          => $maintenance_cost,
                 'asset_maintenance_type'          => e($maintenance->asset_maintenance_type),
                 'start_date'         => $maintenance->start_date,
                 'asset_maintenance_time'          => $maintenance->asset_maintenance_time,
                 'completion_date'     => $maintenance->completion_date,
+                'user_id'       => ($maintenance->admin) ? (string)link_to('/admin/users/'.$maintenance->admin->id.'/view', $maintenance->admin->fullName()) : '',
                 'actions'       => $actions,
-                'companyName'   => is_null($company) ? '' : $company->name
+                'companyName'   => ($maintenance->asset->company) ? $maintenance->asset->company->name : ''
             );
         }
 
@@ -156,7 +172,7 @@ class AssetMaintenancesController extends Controller
         // Mark the selected asset, if it came in
         $selectedAsset = $assetId;
 
-        $assets = Company::scopeCompanyables(Asset::all(), 'assets.company_id')->lists('detailed_name', 'id');
+        $assets = Helper::detailedAssetList();
 
         $supplier_list = Helper::suppliersList();
 
@@ -166,7 +182,7 @@ class AssetMaintenancesController extends Controller
                    ->with('selectedAsset', $selectedAsset)
                    ->with('supplier_list', $supplier_list)
                    ->with('assetMaintenanceType', $assetMaintenanceType)
-                   ->with('assetMaintenance', new AssetMaintenance);
+                   ->with('item', new AssetMaintenance);
     }
 
     /**
@@ -203,7 +219,7 @@ class AssetMaintenancesController extends Controller
         if (e(Input::get('cost')) == '') {
             $assetMaintenance->cost = '';
         } else {
-            $assetMaintenance->cost =  e(Input::get('cost'));
+            $assetMaintenance->cost =  Helper::ParseFloat(e(Input::get('cost')));
         }
 
         if (e(Input::get('notes')) == '') {
@@ -224,6 +240,7 @@ class AssetMaintenancesController extends Controller
         $assetMaintenance->title                  = e(Input::get('title'));
         $assetMaintenance->start_date             = e(Input::get('start_date'));
         $assetMaintenance->completion_date        = e(Input::get('completion_date'));
+        $assetMaintenance->user_id                = Auth::user()->id;
 
         if (( $assetMaintenance->completion_date == "" )
             || ( $assetMaintenance->completion_date == "0000-00-00" )
@@ -294,7 +311,7 @@ class AssetMaintenancesController extends Controller
                                     '' => 'Select an improvement type',
                                 ] + AssetMaintenance::getImprovementOptions();
 
-        $assets = Company::scopeCompanyables(Asset::all(), 'assets.company_id')->lists('detailed_name', 'id');
+        $assets = Company::scopeCompanyables(Asset::with('model','assignedUser')->get(), 'assets.company_id')->lists('detailed_name', 'id');
         // Get Supplier List
         $supplier_list = Helper::suppliersList();
 
@@ -304,7 +321,7 @@ class AssetMaintenancesController extends Controller
                    ->with('selectedAsset', null)
                    ->with('supplier_list', $supplier_list)
                    ->with('assetMaintenanceType', $assetMaintenanceType)
-                   ->with('assetMaintenance', $assetMaintenance);
+                   ->with('item', $assetMaintenance);
 
     }
 
@@ -350,7 +367,7 @@ class AssetMaintenancesController extends Controller
         if (e(Input::get('cost')) == '') {
             $assetMaintenance->cost = '';
         } else {
-            $assetMaintenance->cost =  e(Input::get('cost'));
+            $assetMaintenance->cost =  Helper::ParseFloat(e(Input::get('cost')));
         }
 
         if (e(Input::get('notes')) == '') {

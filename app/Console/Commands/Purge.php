@@ -53,7 +53,7 @@ class Purge extends Command
     public function handle()
     {
         $force = $this->option('force');
-        if (($this->confirm("\n****************************************************\nTHIS WILL PURGE ALL SOFT-DELETED ITEMS IN YOUR SYSTEM. \nThere is NO undo. This WILL permanently destroy \nALL of your deleted data. \n****************************************************\n\nDo you wish to continue? No backsies! [y|N]")) ||  $force == 'true')  {
+        if (($this->confirm("\n****************************************************\nTHIS WILL PURGE ALL SOFT-DELETED ITEMS IN YOUR SYSTEM. \nThere is NO undo. This WILL permanently destroy \nALL of your deleted data. \n****************************************************\n\nDo you wish to continue? No backsies! [y|N]")) ||  $force == 'true') {
 
             /**
              * Delete assets
@@ -62,15 +62,19 @@ class Purge extends Command
             $assetcount = $assets->count();
             $this->info($assets->count().' assets purged.');
             $asset_assoc = 0;
+            $asset_maintenances = 0;
 
             foreach ($assets as $asset) {
                 $this->info('- Asset "'.$asset->showAssetName().'" deleted.');
                 $asset_assoc += $asset->assetlog()->count();
                 $asset->assetlog()->forceDelete();
+                $asset_maintenances += $asset->assetmaintenances()->count();
+                $asset->assetmaintenances()->forceDelete();
                 $asset->forceDelete();
             }
 
             $this->info($asset_assoc.' corresponding log records purged.');
+            $this->info($asset_maintenances.' corresponding maintenance records purged.');
 
             $locations = Location::whereNotNull('deleted_at')->withTrashed()->get();
             $this->info($locations->count().' locations purged.');
@@ -140,7 +144,7 @@ class Purge extends Command
                 $supplier->forceDelete();
             }
 
-            $users = User::whereNotNull('deleted_at')->where('show_in_list','=','0')->withTrashed()->get();
+            $users = User::whereNotNull('deleted_at')->where('show_in_list', '!=', '0')->withTrashed()->get();
             $this->info($users->count().' users purged.');
             $user_assoc = 0;
             foreach ($users as $user) {

@@ -8,7 +8,6 @@ use App\Models\Component;
 use App\Models\Setting;
 use App\Models\User;
 use App\Models\Asset;
-use App\Http\Requests\ComponentCheckoutRequest;
 use Auth;
 use Config;
 use DB;
@@ -19,6 +18,9 @@ use Redirect;
 use Slack;
 use Str;
 use View;
+use Validator;
+use Illuminate\Http\Request;
+use Gate;
 
 /**
  * This class controls all actions related to Components for
@@ -54,12 +56,12 @@ class ComponentsController extends Controller
     public function getCreate()
     {
         // Show the page
-        $category_list = array('' => '') + DB::table('categories')->where('category_type', '=', 'component')->whereNull('deleted_at')->orderBy('name', 'ASC')->lists('name', 'id');
+        $category_list = Helper::categoryList('component');
         $company_list = Helper::companyList();
         $location_list = Helper::locationsList();
 
         return View::make('components/edit')
-            ->with('component', new Component)
+            ->with('item', new Component)
             ->with('category_list', $category_list)
             ->with('company_list', $company_list)
             ->with('location_list', $location_list);
@@ -87,6 +89,7 @@ class ComponentsController extends Controller
         $component->company_id             = Company::getIdForCurrentUser(Input::get('company_id'));
         $component->order_number           = e(Input::get('order_number'));
         $component->min_amt                = e(Input::get('min_amt'));
+        $component->serial                 = e(Input::get('serial'));
 
         if (e(Input::get('purchase_date')) == '') {
             $component->purchase_date       =  null;
@@ -97,14 +100,15 @@ class ComponentsController extends Controller
         if (e(Input::get('purchase_cost')) == '0.00') {
             $component->purchase_cost       =  null;
         } else {
-            $component->purchase_cost       = e(Input::get('purchase_cost'));
+            $component->purchase_cost       = Helper::ParseFloat(e(Input::get('purchase_cost')));
         }
 
-        $component->total_qty                    = e(Input::get('total_qty'));
+        $component->qty                    = e(Input::get('qty'));
         $component->user_id                = Auth::user()->id;
 
         // Was the component created?
         if ($component->save()) {
+            $component->logCreate();
             // Redirect to the new component  page
             return redirect()->to("admin/components")->with('success', trans('admin/components/message.create.success'));
         }
@@ -126,18 +130,18 @@ class ComponentsController extends Controller
     public function getEdit($componentId = null)
     {
         // Check if the component exists
-        if (is_null($component = Component::find($componentId))) {
+        if (is_null($item = Component::find($componentId))) {
             // Redirect to the blogs management page
             return redirect()->to('admin/components')->with('error', trans('admin/components/message.does_not_exist'));
-        } elseif (!Company::isCurrentUserHasAccess($component)) {
+        } elseif (!Company::isCurrentUserHasAccess($item)) {
             return redirect()->to('admin/components')->with('error', trans('general.insufficient_permissions'));
         }
 
-            $category_list =  Helper::categoryList();
+        $category_list =  Helper::categoryList('component');
         $company_list = Helper::companyList();
         $location_list = Helper::locationsList();
 
-        return View::make('components/edit', compact('component'))
+        return View::make('components/edit', compact('item'))
             ->with('category_list', $category_list)
             ->with('company_list', $company_list)
             ->with('location_list', $location_list);
@@ -170,7 +174,8 @@ class ComponentsController extends Controller
         $component->location_id            = e(Input::get('location_id'));
         $component->company_id             = Company::getIdForCurrentUser(Input::get('company_id'));
         $component->order_number           = e(Input::get('order_number'));
-        $component->min_amt             = e(Input::get('min_amt'));
+        $component->min_amt                = e(Input::get('min_amt'));
+        $component->serial                 = e(Input::get('serial'));
 
         if (e(Input::get('purchase_date')) == '') {
             $component->purchase_date       =  null;
@@ -181,10 +186,10 @@ class ComponentsController extends Controller
         if (e(Input::get('purchase_cost')) == '0.00') {
             $component->purchase_cost       =  null;
         } else {
-            $component->purchase_cost       = e(Input::get('purchase_cost'));
+            $component->purchase_cost       = Helper::ParseFloat(e(Input::get('purchase_cost')));
         }
 
-        $component->total_qty                    = e(Input::get('total_qty'));
+        $component->qty                    = e(Input::get('qty'));
 
         // Was the component created?
         if ($component->save()) {
@@ -287,7 +292,7 @@ class ComponentsController extends Controller
         }
 
         // Get the dropdown of assets and then pass it to the checkout view
-        $assets_list = Helper::assetsList();
+        $assets_list = Helper::detailedAssetList();
 
         return View::make('components/checkout', compact('component'))->with('assets_list', $assets_list);
 
@@ -302,14 +307,30 @@ class ComponentsController extends Controller
     * @param int $componentId
     * @return Redirect
     */
-    public function postCheckout(ComponentCheckoutRequest $request, $componentId)
+    public function postCheckout(Request $request, $componentId)
     {
-      // Check if the component exists
+
+
+
+        // Check if the component exists
         if (is_null($component = Component::find($componentId))) {
             // Redirect to the component management page with error
             return redirect()->to('components')->with('error', trans('admin/components/message.not_found'));
         } elseif (!Company::isCurrentUserHasAccess($component)) {
             return redirect()->to('admin/components')->with('error', trans('general.insufficient_permissions'));
+        }
+
+
+        $max_to_checkout = $component->numRemaining();
+        $validator = Validator::make($request->all(),[
+            "asset_id"          => "required",
+            "assigned_qty"      => "required|numeric|between:1,$max_to_checkout"
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
         }
 
         $admin_user = Auth::user();
@@ -320,24 +341,18 @@ class ComponentsController extends Controller
             // Redirect to the component management page with error
             return redirect()->to('admin/components')->with('error', trans('admin/components/message.asset_does_not_exist'));
         }
-
+        
       // Update the component data
         $component->asset_id =   $asset_id;
 
         $component->assets()->attach($component->id, array(
         'component_id' => $component->id,
         'user_id' => $admin_user->id,
-        'created_at' => date('Y-m-d h:i:s'),
+        'created_at' => date('Y-m-d H:i:s'),
         'assigned_qty' => e(Input::get('assigned_qty')),
         'asset_id' => $asset_id));
 
-        $logaction = new Actionlog();
-        $logaction->component_id = $component->id;
-        $logaction->asset_id = $asset_id;
-        $logaction->asset_type = 'component';
-        $logaction->location_id = $asset->location_id;
-        $logaction->user_id = Auth::user()->id;
-        $logaction->note = e(Input::get('note'));
+        $logaction = $component->logCheckout(e(Input::get('note')), $asset_id);
 
         $settings = Setting::getSettings();
 
@@ -357,7 +372,7 @@ class ComponentsController extends Controller
                         'fields' => [
                             [
                                 'title' => 'Checked Out:',
-                                'value' => strtoupper($logaction->asset_type).' <'.config('app.url').'/admin/components/'.$component->id.'/view'.'|'.$component->name.'> checked out to <'.config('app.url').'/hardware/'.$asset->id.'/view|'.$asset->name.'> by <'.config('app.url').'/admin/users/'.$admin_user->id.'/view'.'|'.$admin_user->fullName().'>.'
+                                'value' => class_basename(strtoupper($logaction->item_type)).' <'.config('app.url').'/admin/components/'.$component->id.'/view'.'|'.$component->name.'> checked out to <'.config('app.url').'/hardware/'.$asset->id.'/view|'.$asset->showAssetName().'> by <'.config('app.url').'/admin/users/'.$admin_user->id.'/view'.'|'.$admin_user->fullName().'>.'
                             ],
                             [
                                 'title' => 'Note:',
@@ -370,9 +385,6 @@ class ComponentsController extends Controller
 
             }
         }
-
-
-        $log = $logaction->logaction('checkout');
 
       // Redirect to the new component page
         return redirect()->to("admin/components")->with('success', trans('admin/components/message.checkout.success'));
@@ -393,8 +405,8 @@ class ComponentsController extends Controller
     **/
     public function getDatatable()
     {
-        $components = Component::select('components.*')->whereNull('components.deleted_at')
-            ->with('company', 'location', 'category');
+        $components = Company::scopeCompanyables(Component::select('components.*')->whereNull('components.deleted_at')
+            ->with('company', 'location', 'category'));
 
         if (Input::has('search')) {
             $components = $components->TextSearch(Input::get('search'));
@@ -412,7 +424,7 @@ class ComponentsController extends Controller
             $limit = 50;
         }
 
-        $allowed_columns = ['id','name','min_amt','order_number','purchase_date','purchase_cost','companyName','category','total_qty'];
+        $allowed_columns = ['id','name','min_amt','order_number','serial','purchase_date','purchase_cost','companyName','category','total_qty'];
         $order = Input::get('order') === 'asc' ? 'asc' : 'desc';
         $sort = in_array(Input::get('sort'), $allowed_columns) ? Input::get('sort') : 'created_at';
 
@@ -437,20 +449,37 @@ class ComponentsController extends Controller
         $rows = array();
 
         foreach ($components as $component) {
-            $actions = '<nobr><a href="'.route('checkout/component', $component->id).'" style="margin-right:5px;" class="btn btn-info btn-sm" '.(($component->numRemaining() > 0 ) ? '' : ' disabled').'>'.trans('general.checkout').'</a><a href="'.route('update/component', $component->id).'" class="btn btn-warning btn-sm" style="margin-right:5px;"><i class="fa fa-pencil icon-white"></i></a><a data-html="false" class="btn delete-asset btn-danger btn-sm" data-toggle="modal" href="'.route('delete/component', $component->id).'" data-content="'.trans('admin/components/message.delete.confirm').'" data-title="'.trans('general.delete').' '.htmlspecialchars($component->name).'?" onClick="return false;"><i class="fa fa-trash icon-white"></i></a></nobr>';
+            $actions = '<nobr>';
+            if (Gate::allows('components.checkout')) {
+                $actions .= '<a href="' . route('checkout/component',
+                        $component->id) . '" style="margin-right:5px;" class="btn btn-info btn-sm ' . (($component->numRemaining() > 0) ? '' : ' disabled') . '" ' . (($component->numRemaining() > 0) ? '' : ' disabled') . '>' . trans('general.checkout') . '</a>';
+            }
+
+            if (Gate::allows('components.edit')) {
+                $actions .= '<a href="' . route('update/component',
+                        $component->id) . '" class="btn btn-warning btn-sm" style="margin-right:5px;"><i class="fa fa-pencil icon-white"></i></a>';
+            }
+
+            if (Gate::allows('components.delete')) {
+                $actions .= '<a data-html="false" class="btn delete-asset btn-danger btn-sm" data-toggle="modal" href="' . route('delete/component',
+                        $component->id) . '" data-content="' . trans('admin/components/message.delete.confirm') . '" data-title="' . trans('general.delete') . ' ' . htmlspecialchars($component->name) . '?" onClick="return false;"><i class="fa fa-trash icon-white"></i></a>';
+            }
+
+            $actions .='</nobr>';
             $company = $component->company;
 
             $rows[] = array(
                 'checkbox'      =>'<div class="text-center"><input type="checkbox" name="component['.$component->id.']" class="one_required"></div>',
                 'id'            => $component->id,
                 'name'          => (string)link_to('admin/components/'.$component->id.'/view', e($component->name)),
+                'serial_number'          => $component->serial,
                 'location'   => ($component->location) ? e($component->location->name) : '',
-                'total_qty'           => e($component->total_qty),
+                'qty'           => e($component->qty),
                 'min_amt'           => e($component->min_amt),
                 'category'           => ($component->category) ? e($component->category->name) : 'Missing category',
                 'order_number'  => e($component->order_number),
                 'purchase_date'  => e($component->purchase_date),
-                'purchase_cost'  => ($component->purchase_cost!='') ? number_format($component->purchase_cost, 2): '' ,
+                'purchase_cost'  => Helper::formatCurrencyOutput($component->purchase_cost),
                 'numRemaining'  => $component->numRemaining(),
                 'actions'       => $actions,
                 'companyName'   => is_null($company) ? '' : e($company->name),
@@ -486,7 +515,7 @@ class ComponentsController extends Controller
 
         foreach ($component->assets as $component_assignment) {
             $rows[] = array(
-            'name' => (string)link_to('/hardware/'.$component_assignment->id.'/view', e($component_assignment->name)),
+            'name' => (string)link_to('/hardware/'.$component_assignment->id.'/view', e($component_assignment->showAssetName())),
             'qty' => e($component_assignment->pivot->assigned_qty),
             'created_at' => ($component_assignment->created_at->format('Y-m-d H:i:s')=='-0001-11-30 00:00:00') ? '' : $component_assignment->created_at->format('Y-m-d H:i:s'),
             );

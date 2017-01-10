@@ -49,28 +49,32 @@ class Setting extends Model
     {
         static $static_cache = null;
 
-        if (!$static_cache) {
-            $static_cache = Setting::first();
-        }
-        return $static_cache;
+            if (!$static_cache) {
+                if (Schema::hasTable('settings')) {
+                    $static_cache = Setting::first();
+                }
+            }
+
+            return $static_cache;
+
     }
 
-    public static function setupCompleted() {
+    public static function setupCompleted()
+    {
         
-            $users_table_exists = Schema::hasTable('users');
-            $settings_table_exists = Schema::hasTable('settings');
+        $users_table_exists = Schema::hasTable('users');
+        $settings_table_exists = Schema::hasTable('settings');
+        
+        if ($users_table_exists && $settings_table_exists) {
+            $usercount = User::withTrashed()->count();
 
-
-            if ($users_table_exists && $settings_table_exists) {
-                $usercount = User::withTrashed()->count();
-
-                if ($usercount > 0) {
-                    return true;
-                }
-                return false;
-            } else {
-                return false;
+            if ($usercount > 0) {
+                return true;
             }
+            return false;
+        } else {
+            return false;
+        }
         return false;
 
 

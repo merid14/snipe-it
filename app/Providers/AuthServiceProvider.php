@@ -91,6 +91,19 @@ class AuthServiceProvider extends ServiceProvider
             }
         });
 
+        $gate->define('assets.edit', function ($user) {
+            if (($user->hasAccess('assets.edit')) || ($user->hasAccess('admin'))) {
+                return true;
+            }
+        });
+
+        // Checks for some level of management
+        $gate->define('assets.manage', function ($user) {
+            if (($user->hasAccess('assets.checkin')) || ($user->hasAccess('assets.edit')) || ($user->hasAccess('assets.delete')) || ($user->hasAccess('assets.checkout')) || ($user->hasAccess('admin'))) {
+                return true;
+            }
+        });
+
 
         # -----------------------------------------
         # Accessories
@@ -127,6 +140,13 @@ class AuthServiceProvider extends ServiceProvider
 
         $gate->define('accessories.checkin', function ($user) {
             if (($user->hasAccess('accessories.checkin')) || ($user->hasAccess('admin'))) {
+                return true;
+            }
+        });
+
+        // Checks for some level of management
+        $gate->define('accessories.manage', function ($user) {
+            if (($user->hasAccess('accessories.checkin')) || ($user->hasAccess('accessories.edit')) || ($user->hasAccess('accessories.checkout')) || ($user->hasAccess('admin'))) {
                 return true;
             }
         });
@@ -170,6 +190,13 @@ class AuthServiceProvider extends ServiceProvider
             }
         });
 
+        // Checks for some level of management
+        $gate->define('consumables.manage', function ($user) {
+            if (($user->hasAccess('consumables.checkin')) || ($user->hasAccess('consumables.edit')) || ($user->hasAccess('consumables.delete')) || ($user->hasAccess('consumables.checkout')) || ($user->hasAccess('admin'))) {
+                return true;
+            }
+        });
+
 
 
         # -----------------------------------------
@@ -205,7 +232,7 @@ class AuthServiceProvider extends ServiceProvider
         # Components
         # -----------------------------------------
         $gate->define('components.view', function ($user) {
-            if (($user->hasAccess('components.create')) || ($user->hasAccess('admin'))) {
+            if (($user->hasAccess('components.view')) || ($user->hasAccess('admin'))) {
                 return true;
             }
         });
@@ -224,6 +251,25 @@ class AuthServiceProvider extends ServiceProvider
 
         $gate->define('components.delete', function ($user) {
             if (($user->hasAccess('components.delete')) || ($user->hasAccess('admin'))) {
+                return true;
+            }
+        });
+
+        $gate->define('components.checkout', function ($user) {
+            if (($user->hasAccess('components.checkout')) || ($user->hasAccess('admin'))) {
+                return true;
+            }
+        });
+
+        $gate->define('components.checkout', function ($user) {
+            if (($user->hasAccess('components.checkout')) || ($user->hasAccess('admin'))) {
+                return true;
+            }
+        });
+
+        // Checks for some level of management
+        $gate->define('components.manage', function ($user) {
+            if (($user->hasAccess('components.edit')) || ($user->hasAccess('components.delete')) || ($user->hasAccess('components.checkout')) || ($user->hasAccess('admin'))) {
                 return true;
             }
         });
@@ -264,6 +310,29 @@ class AuthServiceProvider extends ServiceProvider
 
         $gate->define('licenses.checkin', function ($user) {
             if (($user->hasAccess('licenses.checkin')) || ($user->hasAccess('admin'))) {
+                return true;
+            }
+        });
+
+        $gate->define('licenses.keys', function ($user) {
+            if (($user->hasAccess('licenses.keys')) || ($user->hasAccess('admin'))) {
+                return true;
+            }
+        });
+
+        // Checks for some level of management
+        $gate->define('licenses.manage', function ($user) {
+            if (($user->hasAccess('licenses.checkin')) || ($user->hasAccess('licenses.edit')) || ($user->hasAccess('licenses.delete')) || ($user->hasAccess('licenses.checkout')) || ($user->hasAccess('admin'))) {
+                return true;
+            }
+        });
+
+
+        # -----------------------------------------
+        # Self
+        # -----------------------------------------
+        $gate->define('self.two_factor', function ($user) {
+            if (($user->hasAccess('self.two_factor')) || ($user->hasAccess('admin'))) {
                 return true;
             }
         });

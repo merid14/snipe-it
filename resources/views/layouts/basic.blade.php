@@ -11,9 +11,7 @@
     <!-- CSS -->
     <link rel="stylesheet" href="{{ asset('assets/css/bootstrap.min.css') }}">
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
-    <!-- Ionicons -->
-    <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+    <link rel="stylesheet" href="{{ asset('assets/css/font-awesome.min.css') }}">
 
     <!-- Select2 -->
     <link rel="stylesheet" href="{{ asset('assets/js/plugins/select2/select2.min.css') }}">
@@ -33,12 +31,36 @@
     <link rel="stylesheet" href="{{ asset('assets/css/bootstrap-table.css') }}">
 
     <link rel="stylesheet" href="{{ elixir('assets/css/app.css') }}">
+    <link rel="shortcut icon" type="image/ico" href="{{ asset('favicon.ico') }}">
 
+
+    @if (($snipeSettings) && ($snipeSettings->header_color))
+        <style>
+        .main-header .navbar, .main-header .logo {
+        background-color: {{ $snipeSettings->header_color }};
+        background: -webkit-linear-gradient(top,  {{ $snipeSettings->header_color }} 0%,{{ $snipeSettings->header_color }} 100%);
+        background: linear-gradient(to bottom, {{ $snipeSettings->header_color }} 0%,{{ $snipeSettings->header_color }} 100%);
+        border-color: {{ $snipeSettings->header_color }};
+        }
+        .skin-blue .sidebar-menu > li:hover > a, .skin-blue .sidebar-menu > li.active > a {
+        border-left-color: {{ $snipeSettings->header_color }};
+        }
+
+        .btn-primary {
+        background-color: {{ $snipeSettings->header_color }};
+        border-color: {{ $snipeSettings->header_color }};
+        }
+        </style>
+
+    @endif
 
 </head>
 
 <body class="hold-transition login-page">
 
+    @if (($snipeSettings) && ($snipeSettings->logo!=''))
+    <center><img class="logo" style="padding-top: 20px; padding-bottom: 10px;" src="{{ config('app.url') }}/uploads/{{ $snipeSettings->logo }}"></center>
+    @endif
   <!-- Content -->
   @yield('content')
 

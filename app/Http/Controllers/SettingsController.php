@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use Input;
 use Lang;
 use App\Models\Setting;
+use App\Models\Ldap;
 use Redirect;
 use DB;
 use Str;
@@ -14,6 +15,7 @@ use Response;
 use Artisan;
 use Crypt;
 use Mail;
+use Auth;
 use App\Models\User;
 use App\Http\Requests\SetupUserRequest;
 
@@ -49,31 +51,20 @@ class SettingsController extends Controller
             $start_settings['db_error'] = $e->getMessage();
         }
 
-        $protocol = array_key_exists('HTTPS',$_SERVER) && ( $_SERVER['HTTPS'] == "on") ? 'https://' : 'http://';
+        $protocol = array_key_exists('HTTPS', $_SERVER) && ( $_SERVER['HTTPS'] == "on") ? 'https://' : 'http://';
 
-
-        $pageURL = $protocol;
-        if ($_SERVER["SERVER_PORT"] != "80") {
-            $main_page = $_SERVER["SERVER_NAME"].":".$_SERVER["SERVER_PORT"];
-            $pageURL .= $main_page.$_SERVER["REQUEST_URI"];
-        } else {
-            $main_page = $_SERVER["SERVER_NAME"].$_SERVER["REQUEST_URI"];
-            $pageURL .= $main_page;
+        $host = $_SERVER['SERVER_NAME'];
+        if (($protocol === 'http://' && $_SERVER['SERVER_PORT'] != '80') || ($protocol === 'https://' && $_SERVER['SERVER_PORT'] != '443')) {
+          $host .= ':' . $_SERVER['SERVER_PORT'];
         }
+        $pageURL = $protocol . $host . $_SERVER['REQUEST_URI'];
 
-        $start_settings['env_location'] = $pageURL.'../.env';
+        $start_settings['url_valid'] = (config('app.url').'/setup' === $pageURL);
 
+        $start_settings['url_config'] = config('app.url');
+        $start_settings['real_url'] = $pageURL;
 
-        if (config('app.url').'/setup'!=$pageURL) {
-            $start_settings['url_valid']= false;
-        } else {
-            $start_settings['url_valid']= true;
-        }
-
-        $start_settings['url_config']= config('app.url');
-        $start_settings['real_url']= $pageURL;
-
-        $exposed_env = @file_get_contents($main_page.'/.env');
+        $exposed_env = @file_get_contents($protocol . $host.'/.env');
 
         if ($exposed_env) {
             $start_settings['env_exposed'] = true;
@@ -97,10 +88,17 @@ class SettingsController extends Controller
 
         }
 
-        $owner = posix_getpwuid(fileowner($_SERVER["SCRIPT_FILENAME"]));
-        $start_settings['owner'] = $owner['name'];
+        if (function_exists('posix_getpwuid')) { // Probably Linux
+            $owner = posix_getpwuid(fileowner($_SERVER["SCRIPT_FILENAME"]));
+            $start_settings['owner'] = $owner['name'];
+        } else { // Windows
+            // TODO: Is there a way of knowing if a windows user has elevated permissions
+            // This just gets the user name, which likely isn't 'root'
+            // $start_settings['owner'] = getenv('USERNAME');
+            $start_settings['owner'] = '';
+        }
 
-        if (($start_settings['owner']=='root') || ($start_settings['owner']=='0') || ($start_settings['owner']=='root')) {
+        if (($start_settings['owner']==='root') || ($start_settings['owner']==='0')) {
             $start_settings['owner_is_admin'] = true;
         } else {
             $start_settings['owner_is_admin'] = false;
@@ -139,7 +137,8 @@ class SettingsController extends Controller
         try {
             Mail::send('emails.test', [], function ($m) {
                 $m->to(config('mail.from.address'), config('mail.from.name'));
-                $m->subject('Test Email from Snipe-IT');
+                $m->replyTo(config('mail.reply_to.address'), config('mail.reply_to.name'));
+                $m->subject(trans('mail.test_email'));
             });
             return 'success';
         } catch (Exception $e) {
@@ -186,14 +185,17 @@ class SettingsController extends Controller
             return redirect()->back()->withInput()->withErrors($user->getErrors())->withErrors($settings->getErrors());
         } else {
             $user->save();
+            Auth::login($user, true);
             $settings->save();
-            
+
             if (Input::get('email_creds')=='1') {
                 Mail::send(['text' => 'emails.firstadmin'], $data, function ($m) use ($data) {
                     $m->to($data['email'], $data['first_name']);
-                    $m->subject('Your Snipe-IT credentials');
+                    $m->replyTo(config('mail.reply_to.address'), config('mail.reply_to.name'));
+                    $m->subject(trans('mail.your_credentials'));
                 });
             }
+
 
 
             return redirect()->route('setup.done');
@@ -225,6 +227,7 @@ class SettingsController extends Controller
     */
     public function getSetupDone()
     {
+
         return View::make('setup/done')
         ->with('step', 4)
         ->with('section', 'Done!');
@@ -261,10 +264,7 @@ class SettingsController extends Controller
     */
     public function getIndex()
     {
-        // Grab all the settings
         $settings = Setting::all();
-
-        // Show the page
         return View::make('settings/index', compact('settings'));
     }
 
@@ -315,12 +315,19 @@ class SettingsController extends Controller
                 $setting->logo = $file_name;
             }
         }
-        
 
-        if (config('app.lock_passwords')==false) {
+
+        if (!config('app.lock_passwords')) {
             $setting->site_name = e(Input::get('site_name'));
             $setting->brand = e(Input::get('brand'));
             $setting->custom_css = e(Input::get('custom_css'));
+
+            if (Input::get('two_factor_enabled')=='') {
+                $setting->two_factor_enabled = null;
+            } else {
+                $setting->two_factor_enabled = e(Input::get('two_factor_enabled'));
+            }
+
         }
 
         if (Input::get('per_page')!='') {
@@ -331,6 +338,7 @@ class SettingsController extends Controller
 
         $setting->locale = e(Input::get('locale', 'en'));
         $setting->qr_code = e(Input::get('qr_code', '0'));
+        $setting->full_multiple_companies_support = e(Input::get('full_multiple_companies_support', '0'));
         $setting->alt_barcode = e(Input::get('alt_barcode'));
         $setting->alt_barcode_enabled = e(Input::get('alt_barcode_enabled', '0'));
         $setting->barcode_type = e(Input::get('barcode_type'));
@@ -339,11 +347,13 @@ class SettingsController extends Controller
         $setting->qr_text = e(Input::get('qr_text'));
         $setting->auto_increment_prefix = e(Input::get('auto_increment_prefix'));
         $setting->auto_increment_assets = e(Input::get('auto_increment_assets', '0'));
+        $setting->zerofill_count = e(Input::get('zerofill_count'));
         $setting->alert_interval = e(Input::get('alert_interval'));
         $setting->alert_threshold = e(Input::get('alert_threshold'));
         $setting->email_domain = e(Input::get('email_domain'));
         $setting->email_format = e(Input::get('email_format'));
         $setting->username_format = e(Input::get('username_format'));
+        $setting->require_accept_signature = e(Input::get('require_accept_signature'));
 
 
         $setting->labels_per_page = e(Input::get('labels_per_page'));
@@ -358,6 +368,7 @@ class SettingsController extends Controller
         $setting->labels_fontsize = e(Input::get('labels_fontsize'));
         $setting->labels_pagewidth = e(Input::get('labels_pagewidth'));
         $setting->labels_pageheight = e(Input::get('labels_pageheight'));
+
 
         if (Input::has('labels_display_name')) {
             $setting->labels_display_name = 1;
@@ -378,7 +389,7 @@ class SettingsController extends Controller
         }
 
         $alert_email = rtrim(Input::get('alert_email'), ',');
-        $alert_email = trim(Input::get('alert_email'));
+        $alert_email = trim($alert_email);
 
         $setting->alert_email = e($alert_email);
         $setting->alerts_enabled = e(Input::get('alerts_enabled', '0'));
@@ -404,11 +415,13 @@ class SettingsController extends Controller
         $setting->ldap_active_flag = e(Input::get('ldap_active_flag'));
         $setting->ldap_emp_num = e(Input::get('ldap_emp_num'));
         $setting->ldap_email = e(Input::get('ldap_email'));
+        $setting->ad_domain = e(Input::get('ad_domain'));
+        $setting->is_ad = e(Input::get('is_ad', '0'));
+        $setting->ldap_tls = e(Input::get('ldap_tls', '0'));
+        $setting->ldap_pw_sync = e(Input::get('ldap_pw_sync', '0'));
 
-        // If validation fails, we'll exit the operation now.
         if ($setting->save()) {
             return redirect()->to("admin/settings/app")->with('success', trans('admin/settings/message.update.success'));
-
         } else {
             return redirect()->back()->withInput()->withErrors($setting->getErrors());
         }
@@ -416,6 +429,25 @@ class SettingsController extends Controller
 
         // Redirect to the setting management page
         return redirect()->to("admin/settings/app/edit")->with('error', trans('admin/settings/message.update.error'));
+
+    }
+
+
+    public function getLdapTest() {
+
+        try {
+            $connection = Ldap::connectToLdap();
+            try {
+                Ldap::bindAdminToLdap($connection);
+                return response()->json(['message' => 'It worked!'], 200);
+            } catch (\Exception $e) {
+                return response()->json(['message' => $e->getMessage()], 500);
+            }
+            return response()->json(['message' => 'It worked!'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 500);
+        }
+
 
     }
 
@@ -449,7 +481,7 @@ class SettingsController extends Controller
 
             }
             closedir($handle);
-            $files = array_reverse($files);
+            rsort($files);
         }
 
 
@@ -544,7 +576,7 @@ class SettingsController extends Controller
     {
         if (!config('app.lock_passwords')) {
             if (Input::get('confirm_purge')=='DELETE') {
-                Artisan::call('snipeit:purge',['--force'=>'true','--no-interaction'=>true]);
+                Artisan::call('snipeit:purge', ['--force'=>'true','--no-interaction'=>true]);
                 $output = Artisan::output();
                 return View::make('settings/purge')
                 ->with('output', $output)->with('success', trans('admin/settings/message.purge.success'));

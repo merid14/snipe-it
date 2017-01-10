@@ -27,6 +27,7 @@ return [
     */
 
     'debug' => env('APP_DEBUG', false),
+    'warn_debug' => env('WARN_DEBUG', true),
 
     /*
     |--------------------------------------------------------------------------
@@ -109,6 +110,7 @@ return [
     */
 
     'log' => env('APP_LOG', 'single'),
+    'log-level' => env('APP_LOG_LEVEL', 'error'),
 
 
     /*
@@ -117,7 +119,7 @@ return [
     |--------------------------------------------------------------------------
     | This is the path for any uploaded files that have to be run through the
     | auth system to ensure they are not visible to the public. These should be
-    | stored somewhere outside of the web root so that an unautenticated user
+    | stored somewhere outside of the web root so that an unauthenticated user
     | cannot access them.
     |
     | For example: license keys, contracts, etc.
@@ -125,6 +127,20 @@ return [
     */
 
     'private_uploads' => storage_path().'/private_uploads',
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | ALLOW I-FRAMING
+    |--------------------------------------------------------------------------
+    |
+    | Normal users will never need to edit this. This option lets you run
+    | Snipe-IT within an I-Frame, which is normally disabled by default for
+    | security reasons, to prevent clickjacking. It should normally be set to false.
+    |
+    */
+
+    'allow_iframing' => env('ALLOW_IFRAMING', false),
 
 
     /*
@@ -138,7 +154,6 @@ return [
     */
 
     'lock_passwords' => env('APP_LOCKED', false),
-
 
 
     /*
@@ -196,7 +211,10 @@ return [
         Intervention\Image\ImageServiceProvider::class,
         Collective\Html\HtmlServiceProvider::class,
         Spatie\Backup\BackupServiceProvider::class,
-
+        Fideloper\Proxy\TrustedProxyServiceProvider::class,
+        MisterPhilip\MaintenanceMode\MaintenanceModeServiceProvider::class,
+        MisterPhilip\MaintenanceMode\MaintenanceCommandServiceProvider::class,
+        PragmaRX\Google2FA\Vendor\Laravel\ServiceProvider::class,
         /*
          * Custom service provider
          */
@@ -253,6 +271,7 @@ return [
         'View'      => Illuminate\Support\Facades\View::class,
         'Form'      => 'Collective\Html\FormFacade',
         'Html'      => 'Collective\Html\HtmlFacade',
+        'Google2FA' => PragmaRX\Google2FA\Vendor\Laravel\Facade::class,
     ],
 
 ];

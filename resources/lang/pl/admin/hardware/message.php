@@ -5,7 +5,7 @@ return array(
     'undeployable' 		=> '<strong>Uwaga: </strong> To aktywo zostało oznaczone jako tymczasowo niemożliwe do wdrożenia.
                         Jeśli jego stan się zmienił, zaktualizuj status aktywa.',
     'does_not_exist' 	=> 'Nabytek/zasób nie istnieje.',
-    'does_not_exist_or_not_requestable' => 'Nice try. That asset does not exist or is not requestable.',
+    'does_not_exist_or_not_requestable' => 'Niezła próba. Ten nabytek/zasób nie istnieje lub nie można go zażądać.',
     'assoc_users'	 	=> 'Ten nabytek/zasób jest przypisany do użytkownika i nie może być usunięty. Proszę sprawdzić przypisanie nabytków/zasobów a następnie spróbować ponownie.',
 
     'create' => array(
@@ -32,14 +32,16 @@ return array(
     'upload' => array(
         'error'   => 'Plik(i) nie zostały wysłane. Spróbuj ponownie.',
         'success' => 'Plik(i) zostały wysłane.',
-        'nofiles' => 'You did not select any files for upload, or the file you are trying to upload is too large',
+        'nofiles' => 'Nie wybrałeś żadnych plików do przesłania, albo plik, który próbujesz przekazać jest zbyt duży',
         'invalidfiles' => 'Jeden lub więcej z wybranych przez ciebie plików jest jest za duży lub jego typ jest niewłaściwy. Dopuszczalne typy plików: png, gif, jpg, doc, docx, pdf, and txt.',
     ),
 
     'import' => array(
-        'error'         => 'Some Items did not import Correctly.',
-        'errorDetail'   => 'The Following Items were not imported because of errors.',
-        'success'       => "Your File has been imported",
+        'error'                 => 'Niektóre elementy nie zostały poprawnie zaimportowane.',
+        'errorDetail'           => 'Następujące elementy nie zostały zaimportowane z powodu błędów.',
+        'success'               => "Twój plik został zaimportowany",
+        'file_delete_success'   => "Twój plik został poprawnie usunięty",
+        'file_delete_error'      => "Plik nie może zostać usunięty",
     ),
 
 
@@ -52,20 +54,22 @@ return array(
     'checkout' => array(
         'error'   		=> 'Nie mogę wypisać nabytku/zasobu, proszę spróbować ponownie.',
         'success' 		=> 'Przypisano nabytek/zasób.',
-        'user_does_not_exist' => 'Nieprawidłowy użytkownik. Proszę spróbować ponownie.'
+        'user_does_not_exist' => 'Nieprawidłowy użytkownik. Proszę spróbować ponownie.',
+        'not_available' => 'Ten składnik aktywów nie jest dostępny do zamówienia!'
     ),
 
     'checkin' => array(
         'error'   		=> 'Nie można przypisać nabytku/zasobu, proszę spróbować ponownie',
         'success' 		=> 'Nabytek/zasób przypisany.',
         'user_does_not_exist' => 'Nieprawidłowy użytkownik. Proszę spróbować ponownie.',
-        'already_checked_in'  => 'That asset is already checked in.',
+        'already_checked_in'  => 'Aktywo jest już zaewidencjonowane.',
 
     ),
 
     'requests' => array(
-        'error'   		=> 'Asset was not requested, please try again',
-        'success' 		=> 'Asset requested successfully.',
+        'error'   		=> 'Aktywo nie zostało zawnioskowane, spróbuj ponownie',
+        'success' 		=> 'Aktywo zawnioskowe pomyślnie.',
+        'canceled'      => 'Żądanie przypisania zostało anulowane'
     )
 
 );

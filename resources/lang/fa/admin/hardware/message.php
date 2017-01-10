@@ -36,9 +36,11 @@ return array(
     ),
 
     'import' => array(
-        'error'         => 'Some Items did not import Correctly.',
-        'errorDetail'   => 'The Following Items were not imported because of errors.',
-        'success'       => "Your File has been imported",
+        'error'                 => 'Some items did not import correctly.',
+        'errorDetail'           => 'The following Items were not imported because of errors.',
+        'success'               => "Your file has been imported",
+        'file_delete_success'   => "Your file has been been successfully deleted",
+        'file_delete_error'      => "The file was unable to be deleted",
     ),
 
 
@@ -51,7 +53,8 @@ return array(
     'checkout' => array(
         'error'   		=> 'دارایی در بررسی نیست، لطفا دوباره امتحان کنید',
         'success' 		=> 'دارایی را بررسی کنید موفقیت.',
-        'user_does_not_exist' => 'کاربر نامعتبر است لطفا دوباره امتحان کنید.'
+        'user_does_not_exist' => 'کاربر نامعتبر است لطفا دوباره امتحان کنید.',
+        'not_available' => 'That asset is not available for checkout!'
     ),
 
     'checkin' => array(
@@ -65,6 +68,7 @@ return array(
     'requests' => array(
         'error'   		=> 'دارایی شد درخواست نمی کند، لطفا دوباره امتحان کنید',
         'success' 		=> 'دارایی موفقیت درخواست شده است.',
+        'canceled'      => 'Checkout request successfully canceled'
     )
 
 );

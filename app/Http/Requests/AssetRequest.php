@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Http\Requests\Request;
 use App\Models\AssetModel;
 use Session;
+
 class AssetRequest extends Request
 {
     /**
@@ -30,21 +31,21 @@ class AssetRequest extends Request
           'status_id'       => 'required|integer',
           'company_id'      => 'integer',
           'warranty_months' => 'integer|min:0|max:240',
-          'physical'         => 'integer',
-          'checkout_date'   => 'date|max:10|min:10',
-          'checkin_date'    => 'date|max:10|min:10',
+          'physical'        => 'integer',
+          'checkout_date'   => 'date',
+          'checkin_date'    => 'date',
           'supplier_id'     => 'integer',
-          'asset_tag'       => 'required|min:2|max:255|unique:assets,asset_tag,NULL,deleted_at',
           'status'          => 'integer',
+          'asset_tag'       => 'required',
+          'purchase_cost'   => 'numeric',
+    
         ];
 
         $model = AssetModel::find($this->request->get('model_id'));
 
-        if (($model) && ($model->fieldset))
-        {
+        if (($model) && ($model->fieldset)) {
             $rules += $model->fieldset->validation_rules();
         }
-
 
 
         return $rules;
@@ -55,8 +56,7 @@ class AssetRequest extends Request
     {
         $this->session()->flash('errors', Session::get('errors', new \Illuminate\Support\ViewErrorBag)
             ->put('default', new \Illuminate\Support\MessageBag($errors)));
-
+        \Input::flash();
         return parent::response($errors);
-    //     return $this->redirector->back()->withInput()->withErrors($errors, $this->errorBag);
     }
 }

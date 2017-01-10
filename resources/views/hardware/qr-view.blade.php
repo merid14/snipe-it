@@ -80,7 +80,7 @@
             <a href="{{ route('view/model', $asset->model->id) }}">
             {{ $asset->model->name }}
             </a>
-             / {{ $asset->model->modelno }}</div>
+             / {{ $asset->model->model_number }}</div>
         @endif
 
         @if ($asset->purchase_date)
@@ -90,7 +90,7 @@
 
         @if ($asset->purchase_cost)
             <div class="col-md-12" style="padding-bottom: 5px;"><strong>{{ trans('admin/hardware/form.cost') }}:</strong>
-            {{ \App\Models\Setting::first()->default_currency }}
+            {{ $snipeSettings->default_currency }}
             {{ number_format($asset->purchase_cost,2) }} </div>
         @endif
 
@@ -168,7 +168,7 @@
 			<thead>
 				<tr>
 					<th class="col-md-4"><span class="line"></span>{{ trans('general.name') }}</th>
-					<th class="col-md-4"><span class="line"></span>{{ trans('admin/licenses/form.serial') }}</th>
+					<th class="col-md-4"><span class="line"></span>{{ trans('admin/licenses/form.license_key') }}</th>
 					<th class="col-md-1"><span class="line"></span>{{ trans('table.actions') }}</th>
 				</tr>
 			</thead>
@@ -273,19 +273,19 @@
                     <td>{{ $log->created_at }}</td>
                     <td>
                         @if (isset($log->user_id))
-                        {{ $log->adminlog->fullName() }}
+                        {{ $log->user->fullName() }}
                         @endif
                     </td>
                     <td>{{ $log->action_type }}</td>
                     <td>
-                        @if ((isset($log->checkedout_to)) && ($log->checkedout_to!=0) && ($log->checkedout_to!=''))
+                        @if ((isset($log->target_id)) && ($log->target_id!=0) && ($log->target_id!=''))
 
-	                        @if ($log->userlog->deleted_at=='')
-		                        <a href="{{ route('view/user', $log->checkedout_to) }}">
-		                        {{ $log->userlog->fullName() }}
+	                        @if ($log->target->deleted_at=='')
+		                        <a href="{{ route('view/user', $log->target_id) }}">
+		                        {{ $log->user->fullName() }}
 		                         </a>
 		                    @else
-		 						<del>{{ $log->userlog->fullName() }}</del>
+		 						<del>{{ $log->user->fullName() }}</del>
 	                        @endif
 
                         @endif

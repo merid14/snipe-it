@@ -12,6 +12,7 @@ use Str;
 use View;
 use App\Helpers\Helper;
 use Auth;
+use Illuminate\Http\Request;
 
 use Symfony\Component\HttpFoundation\JsonResponse;
 
@@ -46,23 +47,32 @@ class StatuslabelsController extends Controller
     {
         $colors = [];
 
-        $statuslabels = Statuslabel::get();
+        $statuslabels = Statuslabel::with('assets')->get();
         $labels=[];
         $points=[];
-
+        $colors=[];
         foreach ($statuslabels as $statuslabel) {
-            $labels[]=$statuslabel->name;
-            $points[]=$statuslabel->assets()->whereNull('assigned_to')->count();
+            if ($statuslabel->assets->count() > 0) {
+                $labels[]=$statuslabel->name;
+                $points[]=$statuslabel->assets()->whereNull('assigned_to')->count();
+                if ($statuslabel->color!='') {
+                    $colors[]=$statuslabel->color;
+                }
+            }
+
+
         }
         $labels[]='Deployed';
         $points[]=Asset::whereNotNull('assigned_to')->count();
+
+        $colors_array = array_merge($colors, Helper::chartColors());
 
         $result= [
             "labels" => $labels,
             "datasets" => [ [
                 "data" => $points,
-                "backgroundColor" => Helper::chartColors(),
-                "hoverBackgroundColor" =>  Helper::chartColors()
+                "backgroundColor" => $colors_array,
+                "hoverBackgroundColor" =>  $colors_array
             ]]
         ];
         return $result;
@@ -77,11 +87,11 @@ class StatuslabelsController extends Controller
     public function getCreate()
     {
         // Show the page
-        $statuslabel = new Statuslabel;
-        $use_statuslabel_type = $statuslabel->getStatuslabelType();
+        $item = new Statuslabel;
+        $use_statuslabel_type = $item->getStatuslabelType();
         $statuslabel_types = Helper::statusTypeList();
 
-        return View::make('statuslabels/edit', compact('statuslabel_types', 'statuslabel'))->with('use_statuslabel_type', $use_statuslabel_type);
+        return View::make('statuslabels/edit', compact('statuslabel_types', 'item'))->with('use_statuslabel_type', $use_statuslabel_type);
     }
 
 
@@ -90,12 +100,17 @@ class StatuslabelsController extends Controller
      *
      * @return Redirect
      */
-    public function postCreate()
+    public function postCreate(Request $request)
     {
 
         // create a new model instance
         $statuslabel = new Statuslabel();
-        $statustype = Statuslabel::getStatuslabelTypesForDB(Input::get('statuslabel_types'));
+
+        if (!$request->has('statuslabel_types')) {
+            return redirect()->back()->withInput()->withErrors(['statuslabel_types' => trans('validation.statuslabel_type')]);
+        }
+
+        $statustype = Statuslabel::getStatuslabelTypesForDB($request->input('statuslabel_types'));
 
         // Save the Statuslabel data
         $statuslabel->name              = e(Input::get('name'));
@@ -104,6 +119,8 @@ class StatuslabelsController extends Controller
         $statuslabel->deployable          =  $statustype['deployable'];
         $statuslabel->pending          =  $statustype['pending'];
         $statuslabel->archived          =  $statustype['archived'];
+        $statuslabel->color          =  e(Input::get('color'));
+        $statuslabel->show_in_nav          =  e(Input::get('show_in_nav'),0);
 
 
         // Was the asset created?
@@ -116,36 +133,30 @@ class StatuslabelsController extends Controller
 
     }
 
-    public function store()
+    public function store(Request $request)
     {
 
-      // create a new model instance
         $statuslabel = new Statuslabel();
-        $statustype = Statuslabel::getStatuslabelTypesForDB(Input::get('modal-statuslabel_types'));
-
-      // attempt validation
-        if ($statuslabel->validate($new)) {
-
-            // Save the Statuslabel data
-            $statuslabel->name            = e(Input::get('name'));
-            $statuslabel->user_id         = Auth::user()->id;
-            $statuslabel->notes           =  '';
-            $statuslabel->deployable      =  $statustype['deployable'];
-            $statuslabel->pending         =  $statustype['pending'];
-            $statuslabel->archived        =  $statustype['archived'];
-
-            // Was the asset created?
-            if ($statuslabel->save()) {
-                // Redirect to the new Statuslabel  page
-                return JsonResponse::create($statuslabel);
-            } else {
-                return JsonResponse::create(["error" => "Couldn't save Statuslabel"], 500);
-            }
-        } else {
-            // failure
-            $errors = $statuslabel->getErrors();
-            return  JsonResponse::create(["error" => "Failed validation: ".print_r($errors->all('<li>:message</li>'), true)], 500);
+        if (!$request->has('statuslabel_types')) {
+            return JsonResponse::create(["error" => trans('validation.statuslabel_type')], 500);
         }
+
+        $statustype = Statuslabel::getStatuslabelTypesForDB(Input::get('statuslabel_types'));
+        $statuslabel->name            = e(Input::get('name'));
+        $statuslabel->user_id         = Auth::user()->id;
+        $statuslabel->notes           =  '';
+        $statuslabel->deployable      =  $statustype['deployable'];
+        $statuslabel->pending         =  $statustype['pending'];
+        $statuslabel->archived        =  $statustype['archived'];
+
+
+        if ($statuslabel->isValid()) {
+            $statuslabel->save();
+            // Redirect to the new Statuslabel  page
+            return JsonResponse::create($statuslabel);
+        }
+        return JsonResponse::create(["error" => $statuslabel->getErrors()->first()], 500);
+
     }
 
 
@@ -158,16 +169,16 @@ class StatuslabelsController extends Controller
     public function getEdit($statuslabelId = null)
     {
         // Check if the Statuslabel exists
-        if (is_null($statuslabel = Statuslabel::find($statuslabelId))) {
+        if (is_null($item = Statuslabel::find($statuslabelId))) {
             // Redirect to the blogs management page
             return redirect()->to('admin/settings/statuslabels')->with('error', trans('admin/statuslabels/message.does_not_exist'));
         }
 
-        $use_statuslabel_type = $statuslabel->getStatuslabelType();
+        $use_statuslabel_type = $item->getStatuslabelType();
 
         $statuslabel_types = array('' => trans('admin/hardware/form.select_statustype')) + array('undeployable' => trans('admin/hardware/general.undeployable')) + array('pending' => trans('admin/hardware/general.pending')) + array('archived' => trans('admin/hardware/general.archived')) + array('deployable' => trans('admin/hardware/general.deployable'));
 
-        return View::make('statuslabels/edit', compact('statuslabel', 'statuslabel_types'))->with('use_statuslabel_type', $use_statuslabel_type);
+        return View::make('statuslabels/edit', compact('item', 'statuslabel_types'))->with('use_statuslabel_type', $use_statuslabel_type);
     }
 
 
@@ -177,12 +188,16 @@ class StatuslabelsController extends Controller
      * @param  int  $statuslabelId
      * @return Redirect
      */
-    public function postEdit($statuslabelId = null)
+    public function postEdit(Request $request, $statuslabelId = null)
     {
         // Check if the Statuslabel exists
         if (is_null($statuslabel = Statuslabel::find($statuslabelId))) {
             // Redirect to the blogs management page
             return redirect()->to('admin/settings/statuslabels')->with('error', trans('admin/statuslabels/message.does_not_exist'));
+        }
+
+        if (!$request->has('statuslabel_types')) {
+            return redirect()->back()->withInput()->withErrors(['statuslabel_types' => trans('validation.statuslabel_type')]);
         }
 
 
@@ -193,6 +208,8 @@ class StatuslabelsController extends Controller
         $statuslabel->deployable          =  $statustype['deployable'];
         $statuslabel->pending          =  $statustype['pending'];
         $statuslabel->archived          =  $statustype['archived'];
+        $statuslabel->color          =  e(Input::get('color'));
+        $statuslabel->show_in_nav          =  e(Input::get('show_in_nav'),0);
 
 
         // Was the asset created?
@@ -243,7 +260,7 @@ class StatuslabelsController extends Controller
 
     public function getDatatable()
     {
-        $statuslabels = Statuslabel::select(array('id','name','deployable','pending','archived'))
+        $statuslabels = Statuslabel::select(array('id','name','deployable','pending','archived','color','show_in_nav'))
         ->whereNull('deleted_at');
 
         if (Input::has('search')) {
@@ -287,10 +304,19 @@ class StatuslabelsController extends Controller
 
             $actions = '<a href="'.route('update/statuslabel', $statuslabel->id).'" class="btn btn-warning btn-sm" style="margin-right:5px;"><i class="fa fa-pencil icon-white"></i></a><a data-html="false" class="btn delete-asset btn-danger btn-sm" data-toggle="modal" href="'.route('delete/statuslabel', $statuslabel->id).'" data-content="'.trans('admin/statuslabels/message.delete.confirm').'" data-title="'.trans('general.delete').' '.htmlspecialchars($statuslabel->name).'?" onClick="return false;"><i class="fa fa-trash icon-white"></i></a>';
 
+            if ($statuslabel->color!='') {
+                $color = '<div class="pull-left" style="margin-right: 5px; height: 20px; width: 20px; background-color: '.e($statuslabel->color).'"></div>'.e($statuslabel->color);
+            } else {
+                $color = '';
+            }
+
+
             $rows[] = array(
                 'id'            => e($statuslabel->id),
                 'type'          => e($label_type),
                 'name'          => e($statuslabel->name),
+                'color'          => $color,
+                'show_in_nav' => ($statuslabel->show_in_nav=='1') ? trans('general.yes') : trans('general.no'),
                 'actions'       => $actions
             );
         }

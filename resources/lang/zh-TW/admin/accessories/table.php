@@ -1,11 +1,11 @@
 <?php
 
 return array(
-	'dl_csv'      				=> 'Download CSV',
+	'dl_csv'      				=> '下載CSV檔',
 	'eula_text'      			=> 'EULA',
     'id'      					=> 'ID',
-    'require_acceptance'      	=> 'Acceptance',
-    'title'      				=> 'Accessory Name',
+    'require_acceptance'      	=> '接收',
+    'title'      				=> '配件名稱',
 
 
 );

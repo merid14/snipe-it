@@ -2,27 +2,21 @@
 
 return array(
 
-    'asset'             => 'Asset',
-    'checkin'           => 'Checkin',
-    'cost'              => 'Purchase Cost',
+    'asset'             => 'Aktywa',
+    'checkin'           => 'Przyjęcie',
     'create'            => 'Dodaj Licencję',
-    'date'              => 'Data Zakupu',
-    'depreciation'      => 'Depreciation',
     'expiration'        => 'Data wygaśnięcia',
+    'license_key'       => 'Klucz produktu',
     'maintained'        => 'Wsparcie Producenta',
     'name'              => 'Nazwa Oprogramowania',
-    'no_depreciation'   => 'Do Not Depreciate',
-    'notes'             => 'Uwagi',
-    'order'             => 'Zamówienie nr',
+    'no_depreciation'   => 'Nie amortyzować',
     'purchase_order'    => 'Numer zamówienia',
-    'reassignable'      => 'Reassignable',
+    'reassignable'      => 'Do ponownego przypisania',
     'remaining_seats'   => 'Wolne stanowiska',
     'seats'             => 'Ilość stanowisk',
-    'serial'            => 'Klucz produktu',
-    'supplier'          => 'Supplier',
-    'termination_date'  => 'Termination Date',
+    'termination_date'  => 'Data zakończenia',
     'to_email'          => 'Przypisany do adresu email',
     'to_name'           => 'Przypisany do Nazwiska',
     'update'            => 'Edytuj Lincencję',
-    'checkout_help'     => 'You must check a license out to a hardware asset or a person. You can select both, but the owner of the asset must match the person you\'re checking the asset out to.'
+    'checkout_help'     => 'Licencję należy przypisać, do środka trwałego lub osoby. Możesz wybrać oba, ale właściciel środka trwałego musi odpowiadać osobie, której przypisujesz składnik aktywów.'
 );

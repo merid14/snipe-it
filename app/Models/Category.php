@@ -1,6 +1,8 @@
 <?php
 namespace App\Models;
 
+use App\Http\Traits\UniqueUndeletedTrait;
+use App\Models\SnipeModel;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Watson\Validating\ValidatingTrait;
@@ -13,7 +15,7 @@ use Watson\Validating\ValidatingTrait;
  *
  * @version    v1.0
  */
-class Category extends Model
+class Category extends SnipeModel
 {
 
     use SoftDeletes;
@@ -25,7 +27,7 @@ class Category extends Model
     */
     public $rules = array(
         'user_id' => 'numeric',
-        'name'   => 'required|min:3|max:255|unique:categories,name,NULL,deleted_at',
+        'name'   => 'required|min:1|max:255|unique_undeleted',
         'category_type'   => 'required',
     );
 
@@ -38,6 +40,7 @@ class Category extends Model
     */
     protected $injectUniqueIdentifier = true;
     use ValidatingTrait;
+    use UniqueUndeletedTrait;
 
 
     /**

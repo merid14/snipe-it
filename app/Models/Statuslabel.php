@@ -1,14 +1,17 @@
 <?php
 namespace App\Models;
 
+use App\Http\Traits\UniqueUndeletedTrait;
+use App\Models\SnipeModel;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Watson\Validating\ValidatingTrait;
 
-class Statuslabel extends Model
+class Statuslabel extends SnipeModel
 {
     use SoftDeletes;
     use ValidatingTrait;
+    use UniqueUndeletedTrait;
 
     protected $injectUniqueIdentifier = true;
     protected $dates = ['deleted_at'];
@@ -16,18 +19,20 @@ class Statuslabel extends Model
 
 
     protected $rules = array(
-      'name'  => 'required|string|unique:status_labels,name,NULL,deleted_at',
-      //'statuslabel_types' => 'required|in:deployable,pending,archived,undeployable',
-      'notes'   => 'string',
+        'name'  => 'required|string|unique_undeleted',
+        'notes'   => 'string',
+        'deployable' => 'required',
+        'pending' => 'required',
+        'archived' => 'required',
     );
 
-    protected $fillable = ['name'];
+    protected $fillable = ['name', 'deployable', 'pending', 'archived'];
 
     /**
      * Show count of assets with status label
      *
      * @todo Remove this. It's dumb.
-     * @return Collection
+     * @return \Illuminate\Support\Collection
      */
     public function has_assets()
     {
@@ -37,7 +42,7 @@ class Statuslabel extends Model
     /**
      * Get assets with associated status label
      *
-     * @return Collection
+     * @return \Illuminate\Support\Collection
      */
     public function assets()
     {
@@ -47,11 +52,11 @@ class Statuslabel extends Model
     public function getStatuslabelType()
     {
 
-        if ($this->pending == 1) {
+        if (($this->pending == '1') && ($this->archived == '0')  && ($this->deployable == '0')) {
             return 'pending';
-        } elseif ($this->archived == 1) {
+        } elseif (($this->pending == '0') && ($this->archived == '1')  && ($this->deployable == '0')) {
             return 'archived';
-        } elseif (($this->archived == 0) && ($this->deployable == 0) && ($this->deployable == 0)) {
+        } elseif (($this->pending == '0') && ($this->archived == '0')  && ($this->deployable == '0')) {
             return 'undeployable';
         } else {
             return 'deployable';
@@ -74,11 +79,12 @@ class Statuslabel extends Model
             $statustype['pending'] = 0;
             $statustype['deployable'] = 0;
             $statustype['archived'] = 1;
-
-        } elseif ($type == 'undeployable') {
+            
+        } else {
             $statustype['pending'] = 0;
             $statustype['deployable'] = 0;
             $statustype['archived'] = 0;
+
         }
 
         return $statustype;

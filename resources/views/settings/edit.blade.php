@@ -15,9 +15,11 @@
 .checkbox label {
   padding-right: 40px;
 }
-.input-group {
-    padding-left: 15px;
+
+.input-group-addon {
+  width: 30px;
 }
+
 </style>
 
 <!-- Bootstrap Color Picker -->
@@ -69,6 +71,24 @@
                   </div>
                 </div>
 
+                <!-- Two Factor -->
+                <div class="form-group {{ $errors->has('brand') ? 'error' : '' }}">
+                  <div class="col-md-3">
+                    {{ Form::label('two_factor_enabled', trans('admin/settings/general.two_factor_enabled_text')) }}
+                  </div>
+                  <div class="col-md-9">
+
+                    {!! Form::two_factor_options('two_factor_enabled', Input::old('two_factor_enabled', $setting->two_factor_enabled), 'select2') !!}
+                    <p class="help-block">{{ trans('admin/settings/general.two_factor_enabled_warning') }}</p>
+
+                    @if (config('app.lock_passwords'))
+                    <p class="help-block">{{ trans('general.feature_disabled') }}</p>
+                    @endif
+
+                    {!! $errors->first('two_factor_enabled', '<span class="alert-msg">:message</span>') !!}
+                  </div>
+                </div>
+
                 <!-- Languages -->
                 <div class="form-group {{ $errors->has('site_name') ? 'error' : '' }}">
                   <div class="col-md-3">
@@ -92,6 +112,21 @@
                     {{ trans('admin/settings/general.full_multiple_companies_support_text') }}
                     {!! $errors->first('full_multiple_companies_support', '<span class="alert-msg">:message</span>') !!}
                     <p class="help-block">{{ trans('admin/settings/general.full_multiple_companies_support_help_text') }}</p>
+                  </div>
+                </div>
+                <!-- /.form-group -->
+
+                <!-- Require signature for acceptance -->
+                <div class="form-group {{ $errors->has('require_accept_signature') ? 'error' : '' }}">
+                  <div class="col-md-3">
+                    {{ Form::label('full_multiple_companies_support',
+                                   trans('admin/settings/general.require_accept_signature')) }}
+                  </div>
+                  <div class="col-md-9">
+                    {{ Form::checkbox('require_accept_signature', '1', Input::old('require_accept_signature', $setting->require_accept_signature),array('class' => 'minimal')) }}
+                    {{ trans('general.yes') }}
+                    {!! $errors->first('require_accept_signature', '<span class="alert-msg">:message</span>') !!}
+                    <p class="help-block">{{ trans('admin/settings/general.require_accept_signature_help_text') }}</p>
                   </div>
                 </div>
                 <!-- /.form-group -->
@@ -263,6 +298,17 @@
                   </div>
                 </div>
 
+                <!-- Per Page -->
+                <div class="form-group {{ $errors->has('per_page') ? 'error' : '' }}">
+                  <div class="col-md-3">
+                    {{ Form::label('per_page', trans('admin/settings/general.per_page')) }}
+                  </div>
+                  <div class="col-md-9">
+                    {{ Form::text('per_page', Input::old('per_page', $setting->per_page), array('class' => 'form-control','placeholder' => '5', 'maxlength'=>'3', 'style'=>'width: 60px;')) }}
+                    {!! $errors->first('per_page', '<span class="alert-msg">:message</span>') !!}
+                  </div>
+                </div>
+
 
               </div>
             </div>
@@ -301,6 +347,18 @@
                     @else
                     {{ Form::text('auto_increment_prefix', Input::old('auto_increment_prefix', $setting->auto_increment_prefix), array('class' => 'form-control', 'disabled'=>'disabled', 'style'=>'width: 100px;')) }}
                     @endif
+                  </div>
+                </div>
+
+                <!-- auto zerofill -->
+                <div class="form-group {{ $errors->has('zerofill_count') ? 'error' : '' }}">
+                  <div class="col-md-3">
+                    {{ Form::label('auto_increment_prefix', trans('admin/settings/general.zerofill_count')) }}
+                  </div>
+                  <div class="col-md-9">
+                      {{ Form::text('zerofill_count', Input::old('zerofill_count', $setting->zerofill_count), array('class' => 'form-control', 'style'=>'width: 100px;')) }}
+                      {!! $errors->first('zerofill_count', '<span class="alert-msg">:message</span>') !!}
+
                   </div>
                 </div>
 
@@ -470,19 +528,19 @@
                     </div>
                     <div class="col-md-3 form-group">
                       <div class="input-group">
-                        {{ Form::text('labels_display_bgutter', Input::old('labels_display_bgutter', $setting->labels_display_bgutter), array('class' => 'form-control')) }}
+                        {{ Form::text('labels_display_sgutter', Input::old('labels_display_sgutter', $setting->labels_display_sgutter), array('class' => 'form-control')) }}
                         <div class="input-group-addon">{{ trans('admin/settings/general.horizontal') }}</div>
                       </div>
                     </div>
                     <div class="col-md-3 form-group" style="margin-left: 10px">
                       <div class="input-group">
-                        {{ Form::text('labels_display_sgutter', Input::old('labels_display_sgutter', $setting->labels_display_sgutter), array('class' => 'form-control')) }}
+                        {{ Form::text('labels_display_bgutter', Input::old('labels_display_bgutter', $setting->labels_display_bgutter), array('class' => 'form-control')) }}
                         <div class="input-group-addon">{{ trans('admin/settings/general.vertical') }}</div>
                       </div>
                     </div>
                     <div class="col-md-9 col-md-offset-3">
-                      {!! $errors->first('labels_display_bgutter', '<span class="alert-msg">:message</span>') !!}
                       {!! $errors->first('labels_display_sgutter', '<span class="alert-msg">:message</span>') !!}
+                      {!! $errors->first('labels_display_bgutter', '<span class="alert-msg">:message</span>') !!}
                     </div>
                   </div>
 
@@ -676,6 +734,56 @@
                 </div>
               </div>
 
+
+              <!-- AD Flag -->
+              <div class="form-group">
+                <div class="col-md-3">
+                  {{ Form::label('is_ad', trans('admin/settings/general.ad')) }}
+                </div>
+                <div class="col-md-9">
+                  {{ Form::checkbox('is_ad', '1', Input::old('is_ad', $setting->is_ad),array('class' => 'minimal')) }}
+                  {{ trans('admin/settings/general.is_ad') }}
+                  {!! $errors->first('is_ad', '<span class="alert-msg">:message</span>') !!}
+
+                </div>
+              </div>
+              <!-- /.form-group -->
+
+              <!-- LDAP Password Sync -->
+              <div class="form-group">
+                <div class="col-md-3">
+                  {{ Form::label('is_ad', trans('admin/settings/general.ldap_pw_sync')) }}
+                </div>
+                <div class="col-md-9">
+                  {{ Form::checkbox('ldap_pw_sync', '1', Input::old('ldap_pw_sync', $setting->ldap_pw_sync),array('class' => 'minimal')) }}
+                  {{ trans('general.yes') }}
+                  <p class="help-block">{{ trans('admin/settings/general.ldap_pw_sync_help') }}</p>
+                  {!! $errors->first('ldap_pw_sync', '<span class="alert-msg">:message</span>') !!}
+
+                </div>
+              </div>
+              <!-- /.form-group -->
+
+              <!-- AD Domain -->
+              <div class="form-group {{ $errors->has('ad_domain') ? 'error' : '' }}">
+                <div class="col-md-3">
+                  {{ Form::label('ad_domain', trans('admin/settings/general.ad_domain')) }}
+                </div>
+                <div class="col-md-9">
+                  @if (config('app.lock_passwords')===true)
+                    {{ Form::text('ad_domain', Input::old('ad_domain', $setting->ad_domain), array('class' => 'form-control', 'disabled'=>'disabled','placeholder' => 'example.com')) }}
+                  @else
+                    {{ Form::text('ad_domain', Input::old('ad_domain', $setting->ad_domain), array('class' => 'form-control','placeholder' => 'example.com')) }}
+                  @endif
+
+                    <p class="help-block">{{ trans('admin/settings/general.ad_domain_help') }}</p>
+
+
+                    {!! $errors->first('ad_domain', '<span class="alert-msg">:message</span>') !!}
+                </div>
+              </div><!-- LDAP Server -->
+
+
               <!-- LDAP Server -->
               <div class="form-group {{ $errors->has('ldap_server') ? 'error' : '' }}">
                   <div class="col-md-3">
@@ -687,10 +795,27 @@
                     @else
                       {{ Form::text('ldap_server', Input::old('ldap_server', $setting->ldap_server), array('class' => 'form-control','placeholder' => 'ldap://ldap.example.com')) }}
                     @endif
-
+                      <p class="help-block">{{ trans('admin/settings/general.ldap_server_help') }}</p>
                     {!! $errors->first('ldap_server', '<span class="alert-msg">:message</span>') !!}
                   </div>
               </div><!-- LDAP Server -->
+
+
+                <!-- Start TLS -->
+                <div class="form-group">
+                    <div class="col-md-3">
+                        {{ Form::label('ldap_tls', trans('admin/settings/general.ldap_tls')) }}
+                    </div>
+                    <div class="col-md-9">
+                        {{ Form::checkbox('ldap_tls', '1', Input::old('ldap_tls', $setting->ldap_tls),array('class' => 'minimal')) }}
+                        {{ trans('admin/settings/general.ldap_tls_help') }}
+                        {!! $errors->first('ldap_tls', '<span class="alert-msg">:message</span>') !!}
+
+                    </div>
+                </div>
+                <!-- /.form-group -->
+
+
               <div class="form-group {{ $errors->has('ldap_server_cert_ignore') ? 'error' : '' }}">
                   <div class="col-md-3">
                      {{ Form::label('ldap_server_cert_ignore', trans('admin/settings/general.ldap_server_cert')) }}
@@ -760,9 +885,9 @@
                   </div>
                   <div class="col-md-9">
                     @if (config('app.lock_passwords')===true)
-                      {{ Form::text('ldap_filter', Input::old('ldap_filter', $setting->ldap_filter), array('class' => 'form-control', 'disabled'=>'disabled','placeholder' => 'cn=users/authorized,dc=example,dc=com')) }}
+                      {{ Form::text('ldap_filter', Input::old('ldap_filter', $setting->ldap_filter), array('class' => 'form-control', 'disabled'=>'disabled','placeholder' => '&(cn=*)')) }}
                     @else
-                      {{ Form::text('ldap_filter', Input::old('ldap_filter', $setting->ldap_filter), array('class' => 'form-control','placeholder' => 'cn=users/authorized,dc=example,dc=com')) }}
+                      {{ Form::text('ldap_filter', Input::old('ldap_filter', $setting->ldap_filter), array('class' => 'form-control','placeholder' => '&(cn=*)')) }}
                     @endif
 
                     {!! $errors->first('ldap_filter', '<span class="alert-msg">:message</span>') !!}

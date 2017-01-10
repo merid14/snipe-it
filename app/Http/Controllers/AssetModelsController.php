@@ -6,11 +6,8 @@ use Input;
 use Lang;
 use App\Models\AssetModel;
 use Redirect;
-use App\Models\Setting;
 use Auth;
 use DB;
-use App\Models\Depreciation;
-use App\Models\Manufacturer;
 use Str;
 use Validator;
 use View;
@@ -55,14 +52,14 @@ class AssetModelsController extends Controller
     public function getCreate()
     {
         // Show the page
-        $depreciation_list = \App\Helpers\Helper::depreciationList();
-        $manufacturer_list = \App\Helpers\Helper::manufacturerList();
-        $category_list = \App\Helpers\Helper::categoryList();
+        $depreciation_list = Helper::depreciationList();
+        $manufacturer_list = Helper::manufacturerList();
+        $category_list = Helper::categoryList('asset');
         return View::make('models/edit')
         ->with('category_list', $category_list)
         ->with('depreciation_list', $depreciation_list)
         ->with('manufacturer_list', $manufacturer_list)
-        ->with('model', new AssetModel);
+        ->with('item', new AssetModel);
     }
 
 
@@ -92,28 +89,28 @@ class AssetModelsController extends Controller
             $model->eol = e(Input::get('eol'));
         }
 
-            // Save the model data
-            $model->name                = e(Input::get('name'));
-            $model->modelno             = e(Input::get('modelno'));
-            $model->manufacturer_id     = e(Input::get('manufacturer_id'));
-            $model->category_id         = e(Input::get('category_id'));
-            $model->note            = e(Input::get('note'));
-            $model->user_id             = Auth::user()->id;
+        // Save the model data
+        $model->name                = e(Input::get('name'));
+        $model->model_number             = e(Input::get('model_number'));
+        $model->manufacturer_id     = e(Input::get('manufacturer_id'));
+        $model->category_id         = e(Input::get('category_id'));
+        $model->notes               = e(Input::get('notes'));
+        $model->user_id             = Auth::user()->id;
+        $model->requestable         = Input::has('requestable');
+
         if (Input::get('custom_fieldset')!='') {
             $model->fieldset_id = e(Input::get('custom_fieldset'));
         }
-
-            //$model->show_mac_address 	= e(Input::get('show_mac_address', '0'));
 
 
         if (Input::file('image')) {
             $image = Input::file('image');
             $file_name = str_random(25).".".$image->getClientOriginalExtension();
             $path = public_path('uploads/models/'.$file_name);
-           Image::make($image->getRealPath())->resize(500, null, function ($constraint) {
-               $constraint->aspectRatio();
-               $constraint->upsize();
-           })->save($path);
+            Image::make($image->getRealPath())->resize(500, null, function ($constraint) {
+                $constraint->aspectRatio();
+                $constraint->upsize();
+            })->save($path);
             $model->image = $file_name;
         }
 
@@ -141,15 +138,15 @@ class AssetModelsController extends Controller
         $model = new AssetModel;
 
         $settings=Input::all();
-        $settings['eol']=0;
+        $settings['eol']= null;
 
         $model->name=e(Input::get('name'));
         $model->manufacturer_id = e(Input::get('manufacturer_id'));
         $model->category_id = e(Input::get('category_id'));
-        $model->modelno = e(Input::get('modelno'));
+        $model->model_number = e(Input::get('model_number'));
         $model->user_id = Auth::user()->id;
-        $model->note            = e(Input::get('note'));
-        $model->eol=0;
+        $model->notes            = e(Input::get('notes'));
+        $model->eol= null;
 
         if (Input::get('fieldset_id')=='') {
             $model->fieldset_id = null;
@@ -176,15 +173,16 @@ class AssetModelsController extends Controller
     public function getEdit($modelId = null)
     {
         // Check if the model exists
-        if (is_null($model = AssetModel::find($modelId))) {
+        if (is_null($item = AssetModel::find($modelId))) {
             // Redirect to the model management page
             return redirect()->to('assets/models')->with('error', trans('admin/models/message.does_not_exist'));
         }
 
-        $depreciation_list = \App\Helpers\Helper::depreciationList();
-        $manufacturer_list = \App\Helpers\Helper::manufacturerList();
-        $category_list = \App\Helpers\Helper::categoryList();
-        $view = View::make('models/edit', compact('model'));
+        $depreciation_list = Helper::depreciationList();
+        $manufacturer_list = Helper::manufacturerList();
+        $category_list = Helper::categoryList('asset');
+
+        $view = View::make('models/edit', compact('item'));
         $view->with('category_list', $category_list);
         $view->with('depreciation_list', $depreciation_list);
         $view->with('manufacturer_list', $manufacturer_list);
@@ -217,17 +215,19 @@ class AssetModelsController extends Controller
         }
 
         if (e(Input::get('eol')) == '') {
-            $model->eol =  0;
+            $model->eol =  null;
         } else {
             $model->eol = e(Input::get('eol'));
         }
-
         // Update the model data
         $model->name                = e(Input::get('name'));
-        $model->modelno             = e(Input::get('modelno'));
+        $model->model_number        = e(Input::get('model_number'));
         $model->manufacturer_id     = e(Input::get('manufacturer_id'));
         $model->category_id         = e(Input::get('category_id'));
-        $model->note            = e(Input::get('note'));
+        $model->notes               = e(Input::get('notes'));
+
+        $model->requestable = Input::has('requestable');
+
         if (Input::get('custom_fieldset')=='') {
             $model->fieldset_id = null;
         } else {
@@ -371,14 +371,14 @@ class AssetModelsController extends Controller
         $model->id = null;
 
         // Show the page
-        $depreciation_list = array('' => 'Do Not Depreciate') + Depreciation::lists('name', 'id');
-        $manufacturer_list = array('' => 'Select One') + Manufacturer::lists('name', 'id');
-        $category_list = array('' => '') + DB::table('categories')->whereNull('deleted_at')->lists('name', 'id');
+        $depreciation_list = Helper::depreciationList();
+        $manufacturer_list = Helper::manufacturerList();
+        $category_list = Helper::categoryList('asset');
         $view = View::make('models/edit');
         $view->with('category_list', $category_list);
         $view->with('depreciation_list', $depreciation_list);
         $view->with('manufacturer_list', $manufacturer_list);
-        $view->with('model', $model);
+        $view->with('item', $model);
         $view->with('clone_model', $model_to_clone);
         return $view;
 
@@ -395,7 +395,7 @@ class AssetModelsController extends Controller
     */
     public function getCustomFields($modelId)
     {
-        $model=AssetModel::find($modelId);
+        $model = AssetModel::find($modelId);
         return View::make("models.custom_fields_form")->with("model", $model);
     }
 
@@ -413,7 +413,7 @@ class AssetModelsController extends Controller
 
     public function getDatatable($status = null)
     {
-        $models = AssetModel::with('category', 'assets', 'depreciation');
+        $models = AssetModel::with('category', 'assets', 'depreciation', 'manufacturer');
 
         switch ($status) {
             case 'Deleted':
@@ -439,7 +439,7 @@ class AssetModelsController extends Controller
         }
 
 
-        $allowed_columns = ['id','name','modelno'];
+        $allowed_columns = ['id','name','model_number'];
         $order = Input::get('order') === 'asc' ? 'asc' : 'desc';
         $sort = in_array(Input::get('sort'), $allowed_columns) ? e(Input::get('sort')) : 'created_at';
 
@@ -452,7 +452,7 @@ class AssetModelsController extends Controller
 
         foreach ($models as $model) {
             if ($model->deleted_at == '') {
-                $actions = '<div style=" white-space: nowrap;"><a href="'.route('update/model', $model->id).'" class="btn btn-warning btn-sm" style="margin-right:5px;"><i class="fa fa-pencil icon-white"></i></a><a data-html="false" class="btn delete-asset btn-danger btn-sm" data-toggle="modal" href="'.route('delete/model', $model->id).'" data-content="'.trans('admin/models/message.delete.confirm').'" data-title="'.trans('general.delete').' '.htmlspecialchars($model->name).'?" onClick="return false;"><i class="fa fa-trash icon-white"></i></a></div>';
+                $actions = '<div style=" white-space: nowrap;"><a href="'.route('clone/model', $model->id).'" class="btn btn-info btn-sm" title="Clone Model" data-toggle="tooltip"><i class="fa fa-clone"></i></a> <a href="'.route('update/model', $model->id).'" class="btn btn-warning btn-sm" style="margin-right:5px;"><i class="fa fa-pencil icon-white"></i></a><a data-html="false" class="btn delete-asset btn-danger btn-sm" data-toggle="modal" href="'.route('delete/model', $model->id).'" data-content="'.trans('admin/models/message.delete.confirm').'" data-title="'.trans('general.delete').' '.htmlspecialchars($model->name).'?" onClick="return false;"><i class="fa fa-trash icon-white"></i></a></div>';
             } else {
                 $actions = '<a href="'.route('restore/model', $model->id).'" class="btn btn-warning btn-sm"><i class="fa fa-recycle icon-white"></i></a>';
             }
@@ -462,12 +462,13 @@ class AssetModelsController extends Controller
                 'manufacturer'      => (string)link_to('/admin/settings/manufacturers/'.$model->manufacturer->id.'/view', $model->manufacturer->name),
                 'name'              => (string)link_to('/hardware/models/'.$model->id.'/view', $model->name),
                 'image' => ($model->image!='') ? '<img src="'.config('app.url').'/uploads/models/'.$model->image.'" height=50 width=50>' : '',
-                'modelnumber'       => $model->modelno,
+                'modelnumber'       => $model->model_number,
                 'numassets'         => $model->assets->count(),
-                'depreciation'      => (($model->depreciation)&&($model->depreciation->id > 0)) ? $model->depreciation->name.' ('.$model->depreciation->months.')' : trans('general.no_depreciation'),
-                'category'          => ($model->category) ? $model->category->name : '',
+                'depreciation'      => (($model->depreciation) && ($model->depreciation->id > 0)) ? $model->depreciation->name.' ('.$model->depreciation->months.')' : trans('general.no_depreciation'),
+                'category'          => ($model->category) ? (string)link_to('admin/settings/categories/'.$model->category->id.'/view', $model->category->name) : '',
                 'eol'               => ($model->eol) ? $model->eol.' '.trans('general.months') : '',
-                'note'       => $model->getNote(),
+                'note'              => $model->getNote(),
+                'fieldset'          => ($model->fieldset) ? (string)link_to('admin/custom_fields/'.$model->fieldset->id, $model->fieldset->name) : '',
                 'actions'           => $actions
                 );
         }
@@ -488,7 +489,7 @@ class AssetModelsController extends Controller
     */
     public function getDataView($modelID)
     {
-        $assets = Asset::where('model_id', '=', $modelID)->with('company');
+        $assets = Asset::where('model_id', '=', $modelID)->with('company', 'assetstatus');
 
         if (Input::has('search')) {
             $assets = $assets->TextSearch(e(Input::get('search')));

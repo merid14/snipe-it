@@ -23,7 +23,7 @@ return array(
         'error'   => 'Archivo(s) no cargado. Por favor, vuelva a intentarlo.',
         'success' => 'Archivo(s) cargado correctamente.',
         'nofiles' => 'No ha seleccionado ningun archivo para ser cargado, o el archivo que seleccionó es demasiado grande',
-        'invalidfiles' => 'Uno o más suss archivos es demasiado grande o es un tipo de archivo que no está permitido. Los tipos de archivo permitidos son png, gif, jpg, doc, docx, pdf y txt.',
+        'invalidfiles' => 'One or more of your files is too large or is a filetype that is not allowed. Allowed filetypes are png, gif, jpg, jpeg, doc, docx, pdf, txt, zip, rar, rtf, xml, and lic.',
     ),
 
     'update' => array(

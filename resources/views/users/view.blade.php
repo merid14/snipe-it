@@ -23,7 +23,9 @@
           <li><a href="#files_tab" data-toggle="tab"><span class="hidden-lg hidden-md"><i class="fa fa-paperclip"></i></span> <span class="hidden-xs hidden-sm">{{ trans('general.file_uploads') }}</span></a></li>
           <li><a href="#history_tab" data-toggle="tab"><span class="hidden-lg hidden-md"><i class="fa fa-clock-o"></i></span> <span class="hidden-xs hidden-sm">{{ trans('general.history') }}</span></a></li>
 
+            @can('users.edit')
           <li class="dropdown pull-right">
+
             <a class="dropdown-toggle" data-toggle="dropdown" href="#">
               <i class="fa fa-gear"></i> {{ trans('button.actions') }}
               <span class="caret"></span>
@@ -31,11 +33,12 @@
             <ul class="dropdown-menu">
               <li><a href="{{ route('update/user', $user->id) }}">{{ trans('admin/users/general.edit') }}</a></li>
                <li><a href="{{ route('clone/user', $user->id) }}">{{ trans('admin/users/general.clone') }}</a></li>
-               @if ((Auth::user()->id !== $user->id) && (!config('app.lock_passwords')))
+               @if ((Auth::user()->id !== $user->id) && (!config('app.lock_passwords')) && ($user->deleted_at==''))
                    <li><a href="{{ route('delete/user', $user->id) }}">{{ trans('button.delete') }}</a></li>
                @endif
             </ul>
           </li>
+            @endcan
         </ul>
         <div class="tab-content">
           <div class="tab-pane active" id="info_tab">
@@ -44,7 +47,10 @@
                     <div class="col-md-12">
                     <div class="callout callout-warning">
                         <i class="icon fa fa-warning"></i>
-                        This user has been marked as deleted. <a href="{{ route('restore/user', $user->id) }}">Click here</a> to restore them.
+                        This user has been marked as deleted.
+                        @can('users.edit')
+                            <a href="{{ route('restore/user', $user->id) }}">Click here</a> to restore them.
+                        @endcan
                       </div>
                   </div>
                 @endif
@@ -111,6 +117,14 @@
                         <td>{{ $user->userloc->name }}</td>
                     </tr>
                     @endif
+                    @if ($user->created_at)
+                        <tr>
+                            <td>{{ trans('general.created_at') }}</td>
+                            <td>
+                                {{ $user->created_at->format('F j, Y h:iA') }}
+                            </td>
+                        </tr>
+                    @endif
 
                   </table>
                 </div>
@@ -118,12 +132,15 @@
 
               <!-- Start button column -->
               <div class="col-md-2">
+                  @can('users.edit')
                   <div class="col-md-12">
+
                       <a href="{{ route('update/user', $user->id) }}" style="width: 100%;" class="btn btn-sm btn-default">{{ trans('admin/users/general.edit') }}</a>
                   </div>
                   <div class="col-md-12" style="padding-top: 5px;">
                       <a href="{{ route('clone/user', $user->id) }}" style="width: 100%;" class="btn btn-sm btn-default">{{ trans('admin/users/general.clone') }}</a>
                   </div>
+
 
                   @if ((Auth::user()->id !== $user->id) && (!config('app.lock_passwords')))
 
@@ -146,7 +163,7 @@
                     @endif
 
                   @endif
-
+                @endcan
               </div>
               <!-- End button column -->
 
@@ -174,10 +191,18 @@
                       @if ($asset->physical=='1') {{ $asset->model->name }}
                       @endif
                       </td>
-                      <td><a href="{{ route('view/hardware', $asset->id) }}">{{ $asset->asset_tag }}</a></td>
+                      <td>
+                          @can('assets.view')
+                              <a href="{{ route('view/hardware', $asset->id) }}">{{ $asset->asset_tag }}</a>
+                          @endcan
+                      </td>
                       <td><a href="{{ route('view/hardware', $asset->id) }}">{{ $asset->name }}</a></td>
 
-                      <td class="hidden-print"> <a href="{{ route('checkin/hardware', array('assetId'=> $asset->id, 'backto'=>'user')) }}" class="btn btn-primary btn-sm">Checkin</a></td>
+                      <td class="hidden-print">
+                          @can('assets.edit')
+                              <a href="{{ route('checkin/hardware', array('assetId'=> $asset->id, 'backto'=>'user')) }}" class="btn btn-primary btn-sm">Checkin</a>
+                          @endcan
+                      </td>
                     </tr>
                     @endforeach
                   </tbody>
@@ -197,9 +222,15 @@
                 <tbody>
                   @foreach ($user->licenses as $license)
                   <tr>
-                    <td><a href="{{ route('view/license', $license->id) }}">{{ $license->name }}</a></td>
+                    <td>
+                            <a href="{{ route('view/license', $license->id) }}">{{ $license->name }}</a>
+
+                    </td>
                     <td><a href="{{ route('view/license', $license->id) }}">{{ mb_strimwidth($license->serial, 0, 50, "...") }}</a></td>
-                    <td class="hidden-print"> <a href="{{ route('checkin/license', array('licenseseat_id'=> $license->pivot->id, 'backto'=>'user')) }}" class="btn btn-primary btn-sm">Checkin</a>
+                    <td class="hidden-print">
+                        @can('licenses.edit')
+                            <a href="{{ route('checkin/license', array('licenseseat_id'=> $license->pivot->id, 'backto'=>'user')) }}" class="btn btn-primary btn-sm">Checkin</a>
+                         @endcan
                     </td>
                   </tr>
                   @endforeach
@@ -220,7 +251,10 @@
                     @foreach ($user->accessories as $accessory)
                     <tr>
                         <td><a href="{{ route('view/accessory', $accessory->id) }}">{{ $accessory->name }}</a></td>
-                        <td class="hidden-print"> <a href="{{ route('checkin/accessory', array('accessory_id'=> $accessory->pivot->id, 'backto'=>'user')) }}" class="btn btn-primary btn-sm">Checkin</a>
+                        <td class="hidden-print">
+                            @can('accessories.edit')
+                                <a href="{{ route('checkin/accessory', array('accessory_id'=> $accessory->pivot->id, 'backto'=>'user')) }}" class="btn btn-primary btn-sm">Checkin</a>
+                            @endcan
                         </td>
                     </tr>
                     @endforeach
@@ -256,13 +290,15 @@
             </div>
             <div class="col-md-2">
             <!-- The fileinput-button span is used to style the file input field as button -->
-                <span class="btn btn-info fileinput-button">
+                @can('users.edit')
+                    <span class="btn btn-info fileinput-button">
                     <i class="fa fa-plus icon-white"></i>
                     <span>Select File...</span>
                     <!-- The file input field used as target for the file upload widget -->
                     <input id="fileupload" type="file" name="file[]" data-url="{{ config('app.url') }}/api/users/{{ $user->id }}/upload">
 
                 </span>
+                    @endcan
 
             </div>
             <div class="col-md-4">
@@ -317,7 +353,9 @@
                             @endif
                           </td>
                           <td>
+                              @can('users.edit')
                             <a class="btn delete-asset btn-danger btn-sm" href="{{ route('delete/userfile', [$user->id, $file->id]) }}" data-content="Are you sure you wish to delete this file?" data-title="Delete {{ $file->filename }}?"><i class="fa fa-trash icon-white"></i></a>
+                              @endcan
                           </td>
                       </tr>
                       @endforeach
@@ -347,13 +385,13 @@
                     @foreach ($userlog as $log)
                     <tr>
                       <td class="text-center">
-                        @if (($log->assetlog) && ($log->asset_type=="hardware"))
+                        @if ($log->itemType()=="asset")
                           <i class="fa fa-barcode"></i>
-                        @elseif (($log->accessorylog) && ($log->asset_type=="accessory"))
+                        @elseif ($log->itemType()=="accessory")
                           <i class="fa fa-keyboard-o"></i>
-                        @elseif (($log->consumablelog) && ($log->asset_type=="consumable"))
+                        @elseif ($log->itemType()=="consumable")
                           <i class="fa fa-tint"></i>
-                        @elseif (($log->licenselog) && ($log->asset_type=="software"))
+                        @elseif ($log->itemType()=="license")
                           <i class="fa fa-floppy-o"></i>
                         @else
                           <i class="fa fa-times"></i>
@@ -364,47 +402,23 @@
                       <td>{{ $log->action_type }}</td>
                       <td>
 
-                          @if (($log->assetlog) && ($log->asset_type=="hardware"))
-
-                            @if ($log->assetlog->deleted_at=='')
-                                <a href="{{ route('view/hardware', $log->asset_id) }}">
-                                    {{ $log->assetlog->showAssetName() }}
-                                </a>
-                            @else
-                                <del>{{ $log->assetlog->showAssetName() }}</del> (deleted)
-                            @endif
-
-                          @elseif (($log->licenselog) && ($log->asset_type=="software"))
-
-                            @if ($log->licenselog->deleted_at=='')
-                                <a href="{{ route('view/license', $log->license_id) }}">
-                                    {{ $log->licenselog->name }}
-                                </a>
-                            @else
-                                <del>{{ $log->licenselog->name }}</del> (deleted)
-                            @endif
-
-                           @elseif (($log->consumablelog) && ($log->asset_type=="consumable"))
-
-                             @if ($log->consumablelog->deleted_at=='')
-                                 <a href="{{ route('view/consumable', $log->consumable_id) }}">{{ $log->consumablelog->name }}</a>
-                             @else
-                                 <del>{{ $log->consumablelog->name }}</del> (deleted)
-                             @endif
-
-                          @elseif (($log->accessorylog) && ($log->asset_type=="accessory"))
-                            @if ($log->accessorylog->deleted_at=='')
-                                <a href="{{ route('view/accessory', $log->accessory_id) }}">{{ $log->accessorylog->name }}</a>
-                            @else
-                                <del>{{ $log->accessorylog->name }}</del> (deleted)
-                            @endif
-
-                           @else
-                               {{ trans('general.bad_data') }}
-                          @endif
+                        @if (($log->item) && ($log->itemType()=="asset"))
+                            <a href="{{ route('view/hardware', $log->item_id) }}">{{ $log->item->asset_tag }} - {{ $log->item->showAssetName() }}</a>
+                        @elseif ($log->item)
+                            <a href="{{ route('view/'. $log->itemType(), $log->item_id) }}">{{ $log->item->name }}</a>
+                        @else
+                            {{ trans('general.bad_data') }}
+                        @endif
 
                         </td>
-                        <td>{{ $log->adminlog->fullName() }}</td>
+                        <td>
+                           @if ($log->action_type != 'requested')
+                                @if (isset($log->user))
+                                    <a href="{{route('view/user', $log->user_id)}}">{{ $log->user->fullName() }}</a>
+                                @else
+                                    Deleted Admin
+                                @endif
+                            @endif
                     </tr>
                     @endforeach
                 </tbody>

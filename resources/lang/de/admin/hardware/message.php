@@ -37,9 +37,11 @@ return array(
     ),
 
     'import' => array(
-        'error'         => 'Some Items did not import Correctly.',
-        'errorDetail'   => 'The Following Items were not imported because of errors.',
-        'success'       => "Your File has been imported",
+        'error'                 => 'Einige Elemente wurden nicht korrekt importiert.',
+        'errorDetail'           => 'Die folgenden Elemente wurden aufgrund von Fehlern nicht importiert.',
+        'success'               => "Ihre Datei wurde importiert",
+        'file_delete_success'   => "Die Datei wurde erfolgreich gelöscht",
+        'file_delete_error'      => "Die Datei konnte nicht gelöscht werden",
     ),
 
 
@@ -52,7 +54,8 @@ return array(
     'checkout' => array(
         'error'   		=> 'Asset konnte nicht herausgegeben werden. Bitte versuchen Sie es erneut',
         'success' 		=> 'Asset wurde erfolgreich herausgegeben.',
-        'user_does_not_exist' => 'Dieser Benutzer existiert nicht. Bitte versuchen Sie es erneut.'
+        'user_does_not_exist' => 'Dieser Benutzer existiert nicht. Bitte versuchen Sie es erneut.',
+        'not_available' => 'Dieses Asset kann nicht herausgegeben werden!'
     ),
 
     'checkin' => array(
@@ -66,6 +69,7 @@ return array(
     'requests' => array(
         'error'   		=> 'Das Asset wurde nicht angefordert, bitte versuchen Sie es erneut',
         'success' 		=> 'Asset erfolgreich angefordert.',
+        'canceled'      => 'Herausgeben erfolgreich abgebrochen'
     )
 
 );

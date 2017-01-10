@@ -1,25 +1,28 @@
 <?php
 namespace App\Models;
 
+use App\Http\Traits\UniqueUndeletedTrait;
+use App\Models\SnipeModel;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Watson\Validating\ValidatingTrait;
 
-class Supplier extends Model
+class Supplier extends SnipeModel
 {
     use SoftDeletes;
     protected $dates = ['deleted_at'];
+    protected $table = 'suppliers';
 
     protected $rules = array(
-        'name'              => 'required|min:3|max:255|unique:suppliers,name,NULL,deleted_at',
-        'address'           => 'min:3|max:255',
-        'address2'          => 'min:2|max:255',
+        'name'              => 'required|min:3|max:255|unique_undeleted',
+        'address'           => 'min:3|max:50',
+        'address2'          => 'min:2|max:50',
         'city'              => 'min:3|max:255',
         'state'             => 'min:0|max:32',
         'country'           => 'min:0|max:2',
         'fax'               => 'min:7|max:20',
         'phone'             => 'min:7|max:20',
-        'contact'           => 'min:0|max:255',
+        'contact'           => 'min:0|max:100',
         'notes'             => 'min:0|max:255',
         'email'             => 'email|min:5|max:150',
         'zip'               => 'min:0|max:10',
@@ -35,6 +38,7 @@ class Supplier extends Model
     */
     protected $injectUniqueIdentifier = true;
     use ValidatingTrait;
+    use UniqueUndeletedTrait;
 
     /**
      * The attributes that are mass assignable.
@@ -44,6 +48,21 @@ class Supplier extends Model
     protected $fillable = ['name'];
 
 
+    // Eager load counts.
+    // We do this to eager load the "count" of seats from the controller.  Otherwise calling "count()" on each model results in n+1
+    public function assetsRelation()
+    {
+        return $this->hasMany(Asset::class)->whereNull('deleted_at')->selectRaw('supplier_id, count(*) as count')->groupBy('supplier_id');
+    }
+
+    public function getLicenseSeatsCountAttribute()
+    {
+        if ($this->licenseSeatsRelation->first()) {
+            return $this->licenseSeatsRelation->first()->count;
+        }
+
+        return 0;
+    }
     public function assets()
     {
         return $this->hasMany('\App\Models\Asset', 'supplier_id');
@@ -56,7 +75,11 @@ class Supplier extends Model
 
     public function num_assets()
     {
-        return $this->hasMany('\App\Models\Asset', 'supplier_id')->count();
+        if ($this->assetsRelation->first()) {
+            return $this->assetsRelation->first()->count;
+        }
+
+        return 0;
     }
 
     public function licenses()
@@ -66,7 +89,7 @@ class Supplier extends Model
 
     public function num_licenses()
     {
-        return $this->hasMany('\App\Models\License', 'supplier_id')->count();
+        return $this->licenses()->count();
     }
 
     public function addhttp($url)

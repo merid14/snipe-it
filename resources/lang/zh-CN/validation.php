@@ -64,6 +64,8 @@ return array(
     ),
     "unique"           => ":attribute 已经被采用",
     "url"              => ":attribute 格式无效",
+    "statuslabel_type" => "你必须选择一个有效的状态标签类型",
+    "unique_undeleted" => " :attribute 必须唯一",
 
 
     /*

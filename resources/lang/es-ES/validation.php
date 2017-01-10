@@ -64,6 +64,8 @@ return array(
     ),
     "unique"           => ":attribute ya ha sido introducido.",
     "url"              => ":attribute formato incorrecto.",
+    "statuslabel_type" => "Debe seleccionar un tipo de etiqueta de estado válido",
+    "unique_undeleted" => ":attribute debe ser único.",
 
 
     /*

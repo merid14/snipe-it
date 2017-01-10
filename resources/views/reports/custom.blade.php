@@ -34,10 +34,23 @@
       <div class="box-body">
         <div class="col-md-3">
 
+          <div class="checkbox col-md-12">
+            <label>
+              {{ Form::checkbox('company', '1') }}
+              {{ trans('general.company') }}
+            </label>
+          </div>
+
         <div class="checkbox col-md-12">
         	<label>
         	{{ Form::checkbox('asset_tag', '1') }}
             {{ trans('general.asset_tag') }}
+          </label>
+        </div>
+        <div class="checkbox col-md-12">
+          <label>
+          {{ Form::checkbox('asset_name', '1') }}
+            {{ trans('admin/hardware/form.name') }}
           </label>
         </div>
         <div class="checkbox col-md-12">
@@ -77,6 +90,12 @@
              {{ trans('admin/hardware/form.cost') }}
             </label>
         </div>
+          <div class="checkbox col-md-12">
+            <label>
+              {{ Form::checkbox('eol', '1') }}
+              {{ trans('admin/hardware/table.eol') }}
+            </label>
+          </div>
         <div class="checkbox col-md-12">
         	<label>
             {{ Form::checkbox('order', '1') }}
@@ -101,6 +120,21 @@
             {{ trans('admin/licenses/table.assigned_to') }}
             </label>
         </div>
+
+          <div class="checkbox col-md-12">
+            <label>
+              {{ Form::checkbox('username', '1') }}
+              {{ trans('admin/users/table.username') }}
+            </label>
+          </div>
+
+            <div class="checkbox col-md-12">
+                <label>
+                    {{ Form::checkbox('employee_num', '1') }}
+                    {{ trans('admin/users/table.employee_num') }}
+                </label>
+            </div>
+
         <div class="checkbox col-md-12">
         	<label>
             {{ Form::checkbox('status', '1') }}
@@ -119,11 +153,29 @@
             {{ trans('general.depreciation') }}
             </label>
         </div>
+        <div class="checkbox col-md-12">
+          <label>
+            {{ Form::checkbox('expected_checkin', '1') }}
+            {{ trans('admin/hardware/form.expected_checkin') }}
+          </label>
+        </div>
+
+
+
+
+          @foreach ($customfields as $customfield)
+            <div class="checkbox col-md-12">
+              <label>
+                {{ Form::checkbox($customfield->db_column_name(), '1') }}
+                {{ $customfield->name }}
+              </label>
+            </div>
+          @endforeach
       </div>
 
 
       <div class="col-md-7">
-        <p>Select the fields you'd like to include in your custom report, and click Generate. The file (report.csv) will download automatically, and you can open it in Excel.</p>
+        <p>Select the fields you'd like to include in your custom report, and click Generate. The file (YYYY-mm-dd-his-custom-asset-report.csv) will download automatically, and you can open it in Excel.</p>
       </div>
 
         </div>

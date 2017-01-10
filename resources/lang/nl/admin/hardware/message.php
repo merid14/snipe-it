@@ -36,9 +36,11 @@ return array(
     ),
 
     'import' => array(
-        'error'         => 'Some Items did not import Correctly.',
-        'errorDetail'   => 'The Following Items were not imported because of errors.',
-        'success'       => "Your File has been imported",
+        'error'                 => 'Sommige items zijn niet goed geïmporteerd.',
+        'errorDetail'           => 'De volgende items zijn niet geïmporteerd vanwege fouten.',
+        'success'               => "Je bestand is geïmporteerd",
+        'file_delete_success'   => "Je bestand is succesvol verwijderd",
+        'file_delete_error'      => "Het bestand kon niet worden verwijderd",
     ),
 
 
@@ -51,7 +53,8 @@ return array(
     'checkout' => array(
         'error'   		=> 'Product is niet uitgecheckt, probeer het opnieuw',
         'success' 		=> 'Product is met succes uitgecheckt.',
-        'user_does_not_exist' => 'De gebruiker is ongeldig. Probeer het opnieuw.'
+        'user_does_not_exist' => 'De gebruiker is ongeldig. Probeer het opnieuw.',
+        'not_available' => 'Dat item is niet beschikbaar om uit te leveren!'
     ),
 
     'checkin' => array(
@@ -65,6 +68,7 @@ return array(
     'requests' => array(
         'error'   		=> 'Product is niet aangevraagd, probeer het opnieuw',
         'success' 		=> 'Product is met succes aangevraagd.',
+        'canceled'      => 'Aanvraag succesvol geannuleerd'
     )
 
 );

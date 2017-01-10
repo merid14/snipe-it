@@ -1,12 +1,14 @@
 <?php
 namespace App\Models;
 
-use App\Models\User;
-use App\Models\ConsumableAssignment;
-use App\Models\Company;
-use App\Models\Location;
-use App\Models\Category;
 use App\Models\ActionLog;
+use App\Models\Category;
+use App\Models\Company;
+use App\Models\ConsumableAssignment;
+use App\Models\Location;
+use App\Models\Loggable;
+use App\Models\SnipeModel;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Watson\Validating\ValidatingTrait;
@@ -16,10 +18,11 @@ use Watson\Validating\ValidatingTrait;
  *
  * @version    v1.0
  */
-class Component extends Model
+class Component extends SnipeModel
 {
-    use SoftDeletes;
     use CompanyableTrait;
+    use Loggable;
+    use SoftDeletes;
 
     protected $dates = ['deleted_at'];
     protected $table = 'components';
@@ -30,7 +33,11 @@ class Component extends Model
     */
     public $rules = array(
         'name'        => 'required|min:3|max:255',
-        'min_amt'     => 'integer|min:1',
+        'qty'     => 'required|integer|min:1',
+        'category_id' => 'required|integer',
+        'company_id'  => 'integer',
+        'purchase_date'  => 'date',
+        'purchase_cost'   => 'numeric',
     );
 
     /**
@@ -81,7 +88,7 @@ class Component extends Model
     */
     public function assetlog()
     {
-        return $this->hasMany('\App\Models\Actionlog', 'component_id')->where('asset_type', '=', 'component')->orderBy('created_at', 'desc')->withTrashed();
+        return $this->hasMany('\App\Models\Actionlog', 'item_id')->where('item_type', Component::class)->orderBy('created_at', 'desc')->withTrashed();
     }
 
 
@@ -94,7 +101,7 @@ class Component extends Model
         }
 
 
-        $total = $this->total_qty;
+        $total = $this->qty;
         $remaining = $total - $checkedout;
         return $remaining;
     }
@@ -135,6 +142,7 @@ class Component extends Model
                         });
                     })->orWhere('components.name', 'LIKE', '%'.$search.'%')
                             ->orWhere('components.order_number', 'LIKE', '%'.$search.'%')
+                            ->orWhere('components.serial', 'LIKE', '%'.$search.'%')
                             ->orWhere('components.purchase_cost', 'LIKE', '%'.$search.'%')
                             ->orWhere('components.purchase_date', 'LIKE', '%'.$search.'%');
             }

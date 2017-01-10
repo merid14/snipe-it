@@ -10,6 +10,7 @@
 {{-- Right header --}}
 @section('header_right')
 <div class="btn-group pull-right">
+    @can('licenses.edit')
       <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">{{ trans('button.actions') }}
           <span class="caret"></span>
       </button>
@@ -17,6 +18,7 @@
           <li><a href="{{ route('update/license', $license->id) }}">{{ trans('admin/licenses/general.edit') }}</a></li>
           <li><a href="{{ route('clone/license', $license->id) }}">{{ trans('admin/licenses/general.clone') }}</a></li>
       </ul>
+     @endcan
   </div>
 @stop
 
@@ -59,40 +61,59 @@
                         <tr>
                             <td>Seat {{ $count }} </td>
                             <td>
-                                @if (($licensedto->assigned_to) && ($licensedto->deleted_at == NULL))
-                                    <a href="{{ route('view/user', $licensedto->assigned_to) }}">
-                                {{ $licensedto->user->fullName() }}
-                                </a>
-                                @elseif (($licensedto->assigned_to) && ($licensedto->deleted_at != NULL))
-                                    <del>{{ $licensedto->user->fullName() }}</del>
-                                @elseif ($licensedto->asset_id)
-                                    @if ($licensedto->asset->assigned_to != 0)
-                                        <a href="{{ route('view/user', $licensedto->asset->assigned_to) }}">
-                                            {{ $licensedto->asset->assigneduser->fullName() }}
+
+                                @if (($licensedto->user) && ($licensedto->deleted_at == NULL))
+                                    @can('users.view')
+                                        <a href="{{ route('view/user', $licensedto->assigned_to) }}">
+                                            {{ $licensedto->user->fullName() }}
                                         </a>
+                                     @else
+                                        {{ $licensedto->user->fullName() }}
+                                     @endcan
+
+                                @elseif (($licensedto->user) && ($licensedto->deleted_at != NULL))
+                                    <del>{{ $licensedto->user->fullName() }}</del>
+                                @elseif ($licensedto->asset)
+                                    @if ($licensedto->asset->assigned_to != 0)
+                                        @can('users.view')
+                                            <a href="{{ route('view/user', $licensedto->asset->assigned_to) }}">
+                                                {{ $licensedto->asset->assigneduser->fullName() }}
+                                            </a>
+                                        @else
+                                            {{ $licensedto->asset->assigneduser->fullName() }}
+                                        @endcan
+
                                     @endif
                                 @endif
                             </td>
                             <td>
                                 @if ($licensedto->asset_id)
-                                    <a href="{{ route('view/hardware', $licensedto->asset_id) }}">
-                                    {{ $licensedto->asset->name }} {{ $licensedto->asset->asset_tag }}
-                                </a>
+                                        @can('assets.view')
+                                            <a href="{{ route('view/hardware', $licensedto->asset_id) }}">
+                                                {{ $licensedto->asset->name }} {{ $licensedto->asset->asset_tag }}
+                                            </a>
+                                        @else
+                                            {{ $licensedto->asset->name }} {{ $licensedto->asset->asset_tag }}
+                                        @endcan
+
                                 @endif
                             </td>
                             <td>
-                                @if (($licensedto->assigned_to) || ($licensedto->asset_id))
-                                    @if ($license->reassignable)
-                                        <a href="{{ route('checkin/license', $licensedto->id) }}" class="btn btn-primary btn-sm">
-                                        {{ trans('general.checkin') }}
-                                        </a>
-                                    @else
-                                        <span>Assigned</span>
-                                    @endif
-                                @else
-                                    <a href="{{ route('checkout/license', $licensedto->id) }}" class="btn btn-info btn-sm">
-                                    {{ trans('general.checkout') }}</a>
-                                @endif
+                                @can('licenses.checkout')
+                                        @if (($licensedto->assigned_to) || ($licensedto->asset_id))
+
+                                            @if ($license->reassignable)
+                                                <a href="{{ route('checkin/license', $licensedto->id) }}" class="btn btn-primary btn-sm">
+                                                {{ trans('general.checkin') }}
+                                                </a>
+                                            @else
+                                                <span>Assigned</span>
+                                            @endif
+                                        @else
+                                            <a href="{{ route('checkout/license', $licensedto->id) }}" class="btn btn-info btn-sm">
+                                            {{ trans('general.checkout') }}</a>
+                                        @endif
+                                @endcan
                             </td>
 
                         </tr>
@@ -116,31 +137,40 @@
                     </tr>
                     @endif
 
-                    @if (!is_null($license->serial))
+                    @if (!is_null($license->manufacturer))
                     <tr>
-                      <td>{{ trans('admin/licenses/form.serial') }}</td>
-                      <td style="word-wrap: break-word;overflow-wrap: break-word;word-break: break-word;">{{ nl2br(e($license->serial)) }}</td>
+                      <td>{{ trans('general.manufacturer') }}</td>
+                      <td>{{ $license->manufacturer->name }}</td>
                     </tr>
                     @endif
+
+                    @can('licenses.keys')
+                        @if (!is_null($license->serial))
+                        <tr>
+                          <td>{{ trans('admin/licenses/form.license_key') }}</td>
+                          <td style="word-wrap: break-word;overflow-wrap: break-word;word-break: break-word;">{!! nl2br(e($license->serial)) !!}</td>
+                        </tr>
+                        @endif
+                    @endcan
 
                     @if (!is_null($license->license_name))
                     <tr>
                       <td>{{ trans('admin/licenses/form.to_name') }}</td>
-                      <td>{{ nl2br(e($license->license_name)) }}</td>
+                      <td>{{ $license->license_name }}</td>
                     </tr>
                     @endif
 
                     @if (!is_null($license->license_email))
                     <tr>
                       <td>{{ trans('admin/licenses/form.to_email') }}</td>
-                      <td>{{ nl2br(e($license->license_email)) }}</td>
+                      <td>{{ $license->license_email }}</td>
                     </tr>
                     @endif
 
 
                     @if ($license->supplier_id)
                       <tr>
-                        <td>{{ trans('admin/licenses/form.supplier') }}:
+                        <td>{{ trans('general.supplier') }}:
                         </td>
                         <td>
                         <a href="{{ route('view/supplier', $license->supplier_id) }}">
@@ -210,7 +240,7 @@
                     @if ($license->purchase_date > 0)
                     <tr>
                       <td>
-                        {{ trans('admin/licenses/form.date') }}:
+                        {{ trans('general.purchase_date') }}:
                       </td>
                       <td>
                         {{ $license->purchase_date }}
@@ -220,18 +250,18 @@
 
                     @if ($license->purchase_cost > 0)
                     <tr>
-                      <td>{{ trans('admin/licenses/form.cost') }}:
+                      <td>{{ trans('general.purchase_cost') }}:
                       </td>
                       <td>
-                        {{ \App\Models\Setting::first()->default_currency }}
-                        {{ number_format($license->purchase_cost,2) }}
+                        {{ $snipeSettings->default_currency }}
+                        {{ \App\Helpers\Helper::formatCurrencyOutput($license->purchase_cost) }}
                       </td>
                     </tr>
                     @endif
 
                     @if ($license->order_number)
                     <tr>
-                      <td>{{ trans('admin/licenses/form.order') }}:
+                      <td>{{ trans('general.order_number') }}:
                       </td>
                       <td>
                         {{ $license->order_number }}
@@ -259,9 +289,9 @@
 
                     @if ($license->notes)
                        <tr><td>
-                         {{ trans('admin/licenses/form.notes') }}:
+                         {{ trans('general.notes') }}:
                          </td><td>
-                        {{ nl2br(e($license->notes)) }}</td></tr>
+                        {!! nl2br(e($license->notes)) !!}</td></tr>
                     @endif
 
 
@@ -279,7 +309,7 @@
           <table class="table table-striped">
           <thead>
             <tr>
-                <th class="col-md-5">{{ trans('admin/licenses/form.notes') }}</th>
+                <th class="col-md-5">{{ trans('general.notes') }}</th>
                 <th class="col-md-5"><span class="line"></span>{{ trans('general.file_name') }}</th>
                 <th class="col-md-2"></th>
                 <th class="col-md-2"></th>
@@ -331,7 +361,7 @@
                           <th class="col-md-2"><span class="line"></span>{{ trans('general.admin') }}</th>
                           <th class="col-md-2"><span class="line"></span>{{ trans('button.actions') }}</th>
                           <th class="col-md-2"><span class="line"></span>{{ trans('admin/licenses/general.user') }}</th>
-                          <th class="col-md-4"><span class="line"></span>{{ trans('admin/licenses/form.notes') }}</th>
+                          <th class="col-md-4"><span class="line"></span>{{ trans('general.notes') }}</th>
                       </tr>
                   </thead>
                   <tbody>
@@ -341,16 +371,24 @@
                           <td>{{ $log->created_at }}</td>
                           <td>
                               @if (isset($log->user_id))
-                              {{ $log->adminlog->fullName() }}
+                              <a href="{{ route('view/user', $log->user_id)}}">{{ $log->user->fullName() }}</a>
                               @endif
                           </td>
                           <td>{{ $log->action_type }}</td>
 
                           <td>
-                              @if (($log->userlog) && ($log->userlog->id!='0'))
-                              <a href="{{ route('view/user', $log->checkedout_to) }}">
-                              {{ $log->userlog->fullName() }}
-                              </a>
+                              @if (($log->target) && ($log->target->id!='0'))
+
+                                  @if ($log->target_type == 'App\Models\User')
+                                      <a href="{{ route('view/user', $log->target_id) }}">
+                                          {{ $log->userlog->fullName() }}
+                                      </a>
+                                  @elseif ($log->target_type == 'App\Models\Asset')
+                                      <a href="{{ route('view/hardware', $log->target_id) }}">
+                                          {{ $log->userlog->showAssetName() }}
+                                      </a>
+                                  @endif
+
 
                               @elseif ($log->action_type=='uploaded')
 

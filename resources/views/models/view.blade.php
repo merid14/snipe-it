@@ -8,6 +8,7 @@
 @stop
 
 @section('header_right')
+    @can('superuser')
   <div class="btn-group pull-right">
      <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">{{ trans('button.actions') }}
           <span class="caret"></span>
@@ -22,6 +23,7 @@
           @endif
       </ul>
   </div>
+    @endcan
 @stop
 
 {{-- Page content --}}
@@ -44,6 +46,7 @@
           <table
           name="modelassets"
           id="table"
+          class="snipe-table"
           data-url="{{route('api.models.view', $model->id)}}"
           data-cookie="true"
           data-click-to-select="true"
@@ -68,16 +71,16 @@
   <!-- side address column -->
   <div class="col-md-3">
   <h4>More Info:</h4>
-    <ul>
+    <ul class="list-unstyled">
 
       @if ($model->manufacturer)
       <li>{{ trans('general.manufacturer') }}:
       {{ $model->manufacturer->name }}</li>
       @endif
 
-      @if ($model->modelno)
+      @if ($model->model_number)
       <li>{{ trans('general.model_no') }}:
-      {{ $model->modelno }}</li>
+      {{ $model->model_number }}</li>
       @endif
 
       @if ($model->depreciation)
@@ -93,8 +96,15 @@
       {{ trans('general.months') }}</li>
       @endif
 
+      @if ($model->fieldset)
+      <li>{{ trans('admin/models/general.fieldset') }}:
+          <a href="{{ config('app.url') }}/admin/custom_fields/{{ $model->fieldset->id }}">{{ $model->fieldset->name }}</a>
+      </li>
+
+      @endif
+
       @if ($model->image)
-      <li><br /><img src="{{ config('app.url') }}/uploads/models/{{ $model->image }}" /></li>
+      <li><br /><img src="{{ config('app.url') }}/uploads/models/{{ $model->image }}" class="img-responsive"></li>
       @endif
 
       @if  ($model->deleted_at!='')
@@ -112,45 +122,8 @@
 
   </div>
 </div>
-  @section('moar_scripts')
-  <script src="{{ asset('assets/js/bootstrap-table.js') }}"></script>
-  <script src="{{ asset('assets/js/extensions/cookie/bootstrap-table-cookie.js') }}"></script>
-  <script src="{{ asset('assets/js/extensions/mobile/bootstrap-table-mobile.js') }}"></script>
-  <script src="{{ asset('assets/js/extensions/export/bootstrap-table-export.js') }}"></script>
-  <script src="{{ asset('assets/js/extensions/export/tableExport.js') }}"></script>
-  <script src="{{ asset('assets/js/extensions/export/jquery.base64.js') }}"></script>
-  <script type="text/javascript">
-      $('#table').bootstrapTable({
-          classes: 'table table-responsive table-no-bordered',
-          undefinedText: '',
-          iconsPrefix: 'fa',
-          showRefresh: true,
-          search: true,
-          pageSize: {{ \App\Models\Setting::getSettings()->per_page }},
-          pagination: true,
-          sidePagination: 'server',
-          sortable: true,
-          cookie: true,
-          mobileResponsive: true,
-          showExport: true,
-          showColumns: true,
-          exportDataType: 'all',
-          exportTypes: ['csv', 'txt','json', 'xml'],
-          maintainSelected: true,
-          paginationFirstText: "{{ trans('general.first') }}",
-          paginationLastText: "{{ trans('general.last') }}",
-          paginationPreText: "{{ trans('general.previous') }}",
-          paginationNextText: "{{ trans('general.next') }}",
-          pageList: ['10','25','50','100','150','200'],
-          icons: {
-              paginationSwitchDown: 'fa-caret-square-o-down',
-              paginationSwitchUp: 'fa-caret-square-o-up',
-              columns: 'fa-columns',
-              refresh: 'fa-refresh'
-          },
+@stop
 
-      });
-  </script>
-  @stop
-
+@section('moar_scripts')
+@include ('partials.bootstrap-table', ['exportFile' => 'model' . $model->name . '-export', 'search' => true])
 @stop

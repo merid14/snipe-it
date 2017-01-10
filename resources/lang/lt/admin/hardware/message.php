@@ -36,9 +36,11 @@ return array(
     ),
 
     'import' => array(
-        'error'         => 'Some Items did not import Correctly.',
-        'errorDetail'   => 'The Following Items were not imported because of errors.',
-        'success'       => "Your File has been imported",
+        'error'                 => 'Nepavyko teisingai importuoti kai kurių įrašų.',
+        'errorDetail'           => 'The following Items were not imported because of errors.',
+        'success'               => "Jūsų failas importuotas",
+        'file_delete_success'   => "Your file has been been successfully deleted",
+        'file_delete_error'      => "Nepavyko ištrinti failo",
     ),
 
 
@@ -51,7 +53,8 @@ return array(
     'checkout' => array(
         'error'   		=> 'Įranga neišduota, prašome bandyti dar kartą',
         'success' 		=> 'Įranga išduota sėkmingai.',
-        'user_does_not_exist' => 'Netinkamas naudotojas. Prašome bandykite dar kartą.'
+        'user_does_not_exist' => 'Netinkamas naudotojas. Prašome bandykite dar kartą.',
+        'not_available' => 'That asset is not available for checkout!'
     ),
 
     'checkin' => array(
@@ -65,6 +68,7 @@ return array(
     'requests' => array(
         'error'   		=> 'Įranga nebuvo užklausta, prašome bandyti dar kartą',
         'success' 		=> 'Įrangos užklausa sėkmingai išsiusta.',
+        'canceled'      => 'Checkout request successfully canceled'
     )
 
 );

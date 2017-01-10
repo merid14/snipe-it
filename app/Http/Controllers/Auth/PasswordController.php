@@ -37,4 +37,24 @@ class PasswordController extends Controller
     {
         $this->middleware('guest');
     }
+
+    /**
+     * Get the e-mail subject line to be used for the reset link email.
+     * Overriding method "getEmailSubject()" from trait "use ResetsPasswords"
+     * @return string
+     */
+    public function getEmailSubject(){
+        return property_exists($this, 'subject') ? $this->subject : \Lang::get('mail.reset_link');
+    }
+
+    /**
+     * Get the response for after the reset link has been successfully sent.
+     *
+     * @param  string  $response
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    protected function getSendResetLinkEmailSuccessResponse($response)
+    {
+        return redirect()->route('login')->with('status', trans($response));
+    }
 }

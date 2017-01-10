@@ -7,6 +7,8 @@ use App\Models\Company;
 use App\Models\Setting;
 use Auth;
 use DB;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Input;
 use Lang;
 use Redirect;
@@ -51,7 +53,7 @@ class CategoriesController extends Controller
     {
         // Show the page
          $category_types= Helper::categoryTypeList();
-        return View::make('categories/edit')->with('category', new Category)
+        return View::make('categories/edit')->with('item', new Category)
         ->with('category_types', $category_types);
     }
 
@@ -107,7 +109,7 @@ class CategoriesController extends Controller
     public function getEdit($categoryId = null)
     {
         // Check if the category exists
-        if (is_null($category = Category::find($categoryId))) {
+        if (is_null($item = Category::find($categoryId))) {
             // Redirect to the blogs management page
             return redirect()->to('admin/settings/categories')->with('error', trans('admin/categories/message.does_not_exist'));
         }
@@ -118,7 +120,7 @@ class CategoriesController extends Controller
         $category_options = array('' => 'Top Level') + DB::table('categories')->where('id', '!=', $categoryId)->lists('name', 'id');
         $category_types= Helper::categoryTypeList();
 
-        return View::make('categories/edit', compact('category'))
+        return View::make('categories/edit', compact('item'))
         ->with('category_options', $category_options)
         ->with('category_types', $category_types);
     }
@@ -133,7 +135,7 @@ class CategoriesController extends Controller
     * @since [v1.0]
     * @return Redirect
     */
-    public function postEdit($categoryId = null)
+    public function postEdit(Request $request, $categoryId = null)
     {
         // Check if the blog post exists
         if (is_null($category = Category::find($categoryId))) {
@@ -142,12 +144,14 @@ class CategoriesController extends Controller
         }
 
         // Update the category data
-        $category->name            = e(Input::get('name'));
-        $category->category_type        = e(Input::get('category_type'));
-        $category->eula_text            = e(Input::get('eula_text'));
-        $category->use_default_eula     = e(Input::get('use_default_eula', '0'));
-        $category->require_acceptance   = e(Input::get('require_acceptance', '0'));
-        $category->checkin_email        = e(Input::get('checkin_email', '0'));
+        $category->name            = e($request->input('name'));
+        // If the item count is > 0, we disable the category type in the edit. Disabled items
+        // don't POST, so if the category_type is blank we just set it to the default.
+        $category->category_type        = e($request->input('category_type', $category->category_type));
+        $category->eula_text            = e($request->input('eula_text'));
+        $category->use_default_eula     = e($request->input('use_default_eula', '0'));
+        $category->require_acceptance   = e($request->input('require_acceptance', '0'));
+        $category->checkin_email        = e($request->input('checkin_email', '0'));
 
         if ($category->save()) {
         // Redirect to the new category page
@@ -244,7 +248,7 @@ class CategoriesController extends Controller
     public function getDatatable()
     {
         // Grab all the categories
-        $categories = Category::with('assets', 'accessories', 'consumables','components');
+        $categories = Category::with('assets', 'accessories', 'consumables', 'components');
 
         if (Input::has('search')) {
             $categories = $categories->TextSearch(e(Input::get('search')));
@@ -289,7 +293,6 @@ class CategoriesController extends Controller
                 'category_type' => ucwords($category->category_type),
                 'count'         => $category->itemCount(),
                 'acceptance'    => ($category->require_acceptance=='1') ? '<i class="fa fa-check"></i>' : '',
-                //EULA is still not working correctly
                 'eula'          => ($category->getEula()) ? '<i class="fa fa-check"></i>' : '',
                 'actions'       => $actions
             );
@@ -300,11 +303,12 @@ class CategoriesController extends Controller
         return $data;
     }
 
-    public function getDataViewAssets($categoryID) {
+    public function getDataViewAssets($categoryID)
+    {
 
-        $category = Category::with('assets.company')->find($categoryID);
+        $category = Category::find($categoryID);
+        $category = $category->load('assets.company', 'assets.model', 'assets.assetstatus', 'assets.assigneduser');
         $category_assets = $category->assets();
-
         if (Input::has('search')) {
             $category_assets = $category_assets->TextSearch(e(Input::get('search')));
         }
@@ -328,38 +332,37 @@ class CategoriesController extends Controller
         $count = $category_assets->count();
         $category_assets = $category_assets->skip($offset)->take($limit)->get();
         $rows = array();
-
         foreach ($category_assets as $asset) {
 
             $actions = '';
             $inout='';
 
             if ($asset->deleted_at=='') {
-                $actions = '<div style=" white-space: nowrap;"><a href="'.route('clone/hardware', $asset->id).'" class="btn btn-info btn-sm" title="Clone asset"><i class="fa fa-files-o"></i></a> <a href="'.route('update/hardware', $asset->id).'" class="btn btn-warning btn-sm"><i class="fa fa-pencil icon-white"></i></a> <a data-html="false" class="btn delete-asset btn-danger btn-sm" data-toggle="modal" href="'.route('delete/hardware', $asset->id).'" data-content="'.Lang::get('admin/hardware/message.delete.confirm').'" data-title="'.Lang::get('general.delete').' '.htmlspecialchars($asset->asset_tag).'?" onClick="return false;"><i class="fa fa-trash icon-white"></i></a></div>';
+                $actions = '<div style=" white-space: nowrap;"><a href="'.route('clone/hardware', $asset->id).'" class="btn btn-info btn-sm" title="Clone asset"><i class="fa fa-files-o"></i></a> <a href="'.route('update/hardware', $asset->id).'" class="btn btn-warning btn-sm"><i class="fa fa-pencil icon-white"></i></a> <a data-html="false" class="btn delete-asset btn-danger btn-sm" data-toggle="modal" href="'.route('delete/hardware', $asset->id).'" data-content="'.trans('admin/hardware/message.delete.confirm').'" data-title="'.trans('general.delete').' '.htmlspecialchars($asset->asset_tag).'?" onClick="return false;"><i class="fa fa-trash icon-white"></i></a></div>';
             } elseif ($asset->deleted_at!='') {
                 $actions = '<a href="'.route('restore/hardware', $asset->id).'" class="btn btn-warning btn-sm"><i class="fa fa-recycle icon-white"></i></a>';
             }
 
-            if ($asset->assetstatus) {
-                if ($asset->assetstatus->deployable != 0) {
-                    if (($asset->assigned_to !='') && ($asset->assigned_to > 0)) {
-                        $inout = '<a href="'.route('checkin/hardware', $asset->id).'" class="btn btn-primary btn-sm">'.Lang::get('general.checkin').'</a>';
-                    } else {
-                        $inout = '<a href="'.route('checkout/hardware', $asset->id).'" class="btn btn-info btn-sm">'.Lang::get('general.checkout').'</a>';
-                    }
+            if ($asset->availableForCheckout()) {
+                if (Gate::allows('assets.checkout')) {
+                    $inout = '<a href="'.route('checkout/hardware', $asset->id).'" class="btn btn-info btn-sm">'.trans('general.checkout').'</a>';
+                }
+            } else {
+                if (Gate::allows('assets.checkin')) {
+                    $inout = '<a href="'.route('checkin/hardware', $asset->id).'" class="btn btn-primary btn-sm">'.trans('general.checkin').'</a>';
                 }
             }
 
             $rows[] = array(
                 'id' => $asset->id,
                 'name' => (string)link_to('/hardware/'.$asset->id.'/view', $asset->showAssetName()),
-                'model' => $asset->model->name,
+                'model' => ($asset->model) ? (string)link_to('hardware/models/'.$asset->model->id.'/view', $asset->model->name) : '',
                 'asset_tag' => $asset->asset_tag,
                 'serial' => $asset->serial,
-                'assigned_to' => ($asset->assigneduser) ? link_to('/admin/users/'.$asset->assigneduser->id.'/view', $asset->assigneduser->fullName()): '',
+                'assigned_to' => ($asset->assigneduser) ? (string)link_to('/admin/users/'.$asset->assigneduser->id.'/view', $asset->assigneduser->fullName()): '',
                 'change' => $inout,
                 'actions' => $actions,
-                'companyName' => Company::getName($asset),
+                'companyName'   => is_null($asset->company) ? '' : e($asset->company->name)
             );
         }
 
@@ -369,7 +372,8 @@ class CategoriesController extends Controller
 
 
 
-    public function getDataViewAccessories($categoryID) {
+    public function getDataViewAccessories($categoryID)
+    {
 
         $category = Category::with('accessories.company')->find($categoryID);
         $category_assets = $category->accessories;
@@ -404,7 +408,7 @@ class CategoriesController extends Controller
             $inout='';
 
             if ($asset->deleted_at=='') {
-                $actions = '<div style=" white-space: nowrap;"><a href="'.route('update/accessory', $asset->id).'" class="btn btn-warning btn-sm"><i class="fa fa-pencil icon-white"></i></a> <a data-html="false" class="btn delete-asset btn-danger btn-sm" data-toggle="modal" href="'.route('delete/accessory', $asset->id).'" data-content="'.Lang::get('admin/hardware/message.delete.confirm').'" data-title="'.Lang::get('general.delete').' '.htmlspecialchars($asset->name).'?" onClick="return false;"><i class="fa fa-trash icon-white"></i></a></div>';
+                $actions = '<div style=" white-space: nowrap;"><a href="'.route('update/accessory', $asset->id).'" class="btn btn-warning btn-sm"><i class="fa fa-pencil icon-white"></i></a> <a data-html="false" class="btn delete-asset btn-danger btn-sm" data-toggle="modal" href="'.route('delete/accessory', $asset->id).'" data-content="'.trans('admin/hardware/message.delete.confirm').'" data-title="'.trans('general.delete').' '.htmlspecialchars($asset->name).'?" onClick="return false;"><i class="fa fa-trash icon-white"></i></a></div>';
             }
 
 
@@ -422,7 +426,8 @@ class CategoriesController extends Controller
     }
 
 
-    public function getDataViewConsumables($categoryID) {
+    public function getDataViewConsumables($categoryID)
+    {
 
         $category = Category::with('accessories.company')->find($categoryID);
         $category_assets = $category->consumables;
@@ -457,7 +462,7 @@ class CategoriesController extends Controller
             $inout='';
 
             if ($asset->deleted_at=='') {
-                $actions = '<div style=" white-space: nowrap;"><a href="'.route('update/consumable', $asset->id).'" class="btn btn-warning btn-sm"><i class="fa fa-pencil icon-white"></i></a> <a data-html="false" class="btn delete-asset btn-danger btn-sm" data-toggle="modal" href="'.route('delete/consumable', $asset->id).'" data-content="'.Lang::get('admin/hardware/message.delete.confirm').'" data-title="'.Lang::get('general.delete').' '.htmlspecialchars($asset->name).'?" onClick="return false;"><i class="fa fa-trash icon-white"></i></a></div>';
+                $actions = '<div style=" white-space: nowrap;"><a href="'.route('update/consumable', $asset->id).'" class="btn btn-warning btn-sm"><i class="fa fa-pencil icon-white"></i></a> <a data-html="false" class="btn delete-asset btn-danger btn-sm" data-toggle="modal" href="'.route('delete/consumable', $asset->id).'" data-content="'.trans('admin/hardware/message.delete.confirm').'" data-title="'.trans('general.delete').' '.htmlspecialchars($asset->name).'?" onClick="return false;"><i class="fa fa-trash icon-white"></i></a></div>';
             }
 
 
@@ -474,7 +479,8 @@ class CategoriesController extends Controller
         return $data;
     }
 
-    public function getDataViewComponent($categoryID) {
+    public function getDataViewComponent($categoryID)
+    {
 
         $category = Category::with('accessories.company')->find($categoryID);
         $category_assets = $category->components;
@@ -509,7 +515,7 @@ class CategoriesController extends Controller
             $inout='';
 
             if ($asset->deleted_at=='') {
-                $actions = '<div style=" white-space: nowrap;"><a href="'.route('update/component', $asset->id).'" class="btn btn-warning btn-sm"><i class="fa fa-pencil icon-white"></i></a> <a data-html="false" class="btn delete-asset btn-danger btn-sm" data-toggle="modal" href="'.route('delete/component', $asset->id).'" data-content="'.Lang::get('admin/hardware/message.delete.confirm').'" data-title="'.Lang::get('general.delete').' '.htmlspecialchars($asset->name).'?" onClick="return false;"><i class="fa fa-trash icon-white"></i></a></div>';
+                $actions = '<div style=" white-space: nowrap;"><a href="'.route('update/component', $asset->id).'" class="btn btn-warning btn-sm"><i class="fa fa-pencil icon-white"></i></a> <a data-html="false" class="btn delete-asset btn-danger btn-sm" data-toggle="modal" href="'.route('delete/component', $asset->id).'" data-content="'.trans('admin/hardware/message.delete.confirm').'" data-title="'.trans('general.delete').' '.htmlspecialchars($asset->name).'?" onClick="return false;"><i class="fa fa-trash icon-white"></i></a></div>';
             }
 
 
@@ -525,7 +531,4 @@ class CategoriesController extends Controller
         $data = array('total' => $count, 'rows' => $rows);
         return $data;
     }
-
-
-
 }

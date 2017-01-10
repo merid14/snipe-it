@@ -2,11 +2,11 @@
 
 return array(
 
-    'does_not_exist' => 'Component does not exist.',
+    'does_not_exist' => 'Komponentas \'%s\' neegzistuoja.',
 
     'create' => array(
-        'error'   => 'Component was not created, please try again.',
-        'success' => 'Component created successfully.'
+        'error'   => 'Komponentas nebuvo sukurtas, prašome bandyti vėl.',
+        'success' => 'Komponentas sėkmingai sukurtas.'
     ),
 
     'update' => array(
@@ -15,15 +15,15 @@ return array(
     ),
 
     'delete' => array(
-        'confirm'   => 'Are you sure you wish to delete this component?',
+        'confirm'   => 'Ar tikrai norite ištrinti šį komponentą?',
         'error'   => 'There was an issue deleting the component. Please try again.',
-        'success' => 'The component was deleted successfully.'
+        'success' => 'Komponentas ištrintas sėkmingai.'
     ),
 
      'checkout' => array(
         'error'   		=> 'Component was not checked out, please try again',
         'success' 		=> 'Component checked out successfully.',
-        'user_does_not_exist' => 'That user is invalid. Please try again.'
+        'user_does_not_exist' => 'Šis naudotojas neteisingas. Prašome bandykite dar kartą.'
     ),
 
     'checkin' => array(

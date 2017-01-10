@@ -21,25 +21,44 @@
         </div>
       </div>
       <div class="box-body">
+
+
+
+
+
         <div class="table-responsive">
           <table class="table table-striped">
+
+
+
               <tbody>
                   @foreach ($settings as $setting)
                   <tr>
                       <td class="col-md-4">{{ trans('admin/settings/general.site_name') }}</td>
                       <td class="col-md-8">{{ $setting->site_name }} </td>
                   </tr>
-                      <tr>
-                          <td>
-                              {{ trans('admin/settings/general.full_multiple_companies_support_text') }}
-                          </td>
+                  <tr>
+                      <td>
+                          {{ trans('admin/settings/general.full_multiple_companies_support_text') }}
+                      </td>
 
-                          @if ($setting->full_multiple_companies_support == 1)
-                              <td>{{ trans('general.yes') }}</td>
-                          @else
-                              <td>{{ trans('general.no') }}</td>
-                          @endif
-                      </tr>
+                      @if ($setting->full_multiple_companies_support == 1)
+                          <td>{{ trans('general.yes') }}</td>
+                      @else
+                          <td>{{ trans('general.no') }}</td>
+                      @endif
+                  </tr>
+                  <tr>
+                      <td>{{ trans('admin/settings/general.two_factor_enabled_text') }}</td>
+
+                      @if ($setting->two_factor_enabled == '')
+                          <td>{{ trans('admin/settings/general.two_factor_disabled') }}</td>
+                      @elseif ($setting->two_factor_enabled == '1')
+                          <td>{{ trans('admin/settings/general.two_factor_optional') }}</td>
+                      @elseif ($setting->two_factor_enabled == '2')
+                          <td>{{ trans('admin/settings/general.two_factor_required') }}</td>
+                      @endif
+                  </tr>
                   <tr>
                       <td>{{ trans('admin/settings/general.default_currency') }}</td>
                       <td>{{ $setting->default_currency }} </td>
@@ -76,6 +95,16 @@
                       <td>{{ trans('admin/settings/general.auto_increment_assets') }}</td>
 
                       @if ($setting->auto_increment_assets == 1)
+                          <td>{{ trans('general.yes') }}</td>
+                      @else
+                          <td>{{ trans('general.no') }}</td>
+                      @endif
+                  </tr>
+
+                  <tr>
+                      <td>{{ trans('admin/settings/general.require_accept_signature') }}</td>
+
+                      @if ($setting->require_accept_signature == 1)
                           <td>{{ trans('general.yes') }}</td>
                       @else
                           <td>{{ trans('general.no') }}</td>
@@ -142,11 +171,34 @@
                       <td>{{ trans('admin/settings/general.ldap_integration') }}</td>
 
                       @if ($setting->ldap_enabled == 1)
-                          <td>{{ trans('general.yes') }}</td>
+                          <td>
+                              {{ $setting->ldap_server }}
+                          @if ($setting->is_ad == '1')
+                                (Active Directory)
+                          @endif
+                          </td>
                       @else
                           <td>{{ trans('general.no') }}</td>
                       @endif
                   </tr>
+                  @if ($setting->ldap_enabled == 1)
+                  <tr id="ldaptestrow">
+                      <td class="col-md-4">Test LDAP Connection</td>
+                      <td class="col-md-8">
+
+                         <a class="btn btn-default btn-sm pull-left" id="ldaptest" style="margin-right: 10px;"> Test LDAP</a>
+
+                          <span id="ldaptesticon">
+                          </span>
+                          <span id="ldaptestresult">
+                          </span>
+                          <span id="ldapteststatus">
+                          </span>
+                      </td>
+                  </tr>
+                  @endif
+
+
                   @endforeach
               </tbody>
           </table>
@@ -158,7 +210,7 @@
                     <tr>
                           <td class="col-md-4">{{ trans('admin/settings/general.snipe_version') }}</td>
                           <td class="col-md-8">
-                              {{  config('version.hash_version') }}
+                              {{ config('version.app_version') }}  build {{ config('version.build_version') }} ({{ config('version.hash_version') }})
                           </td>
                       </tr>
                       <tr>
@@ -215,5 +267,45 @@
             </div>
         </div>
     </div>
+@section('moar_scripts')
 
+
+        <script>
+            $("#ldaptest").click(function(){
+                $("#ldaptestrow").removeClass('success');
+                $("#ldaptestrow").removeClass('danger');
+                $("#ldapteststatus").html('');
+                $("#ldaptesticon").html('<i class="fa fa-spinner spin"></i>');
+                $.ajax({
+                    url: '{{ route('settings/ldaptest') }}',
+                    type: 'GET',
+                    data: {},
+                    dataType: 'json',
+
+                    success: function (data) {
+                        // console.dir(data);
+                        //console.log(data.responseJSON.message);
+                        $("#ldaptesticon").html('');
+                        $("#ldaptestrow").addClass('success');
+                        $("#ldapteststatus").html('<i class="fa fa-check text-success"></i> It worked!');
+                        //$('#ldapteststatus').html('<i class="fa fa-check text-success"></i>');
+                    },
+
+                    error: function (data) {
+                        //console.dir(data);
+                        //console.log(data.responseJSON.message);
+                        $("#ldaptesticon").html('');
+                        $("#ldaptestrow").addClass('danger');
+                        $("#ldaptesticon").html('<i class="fa fa-exclamation-triangle text-danger"></i>');
+                        $('#ldapteststatus').text(data.responseJSON.message);
+                    }
+
+
+                });
+            });
+
+
+
+        </script>
+@stop
 @stop

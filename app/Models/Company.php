@@ -1,6 +1,9 @@
 <?php
 namespace App\Models;
 
+use App\Models\SnipeModel;
+use Auth;
+use DB;
 use Illuminate\Database\Eloquent\Model;
 use Watson\Validating\ValidatingTrait;
 
@@ -9,12 +12,16 @@ use Watson\Validating\ValidatingTrait;
  *
  * @version    v1.8
  */
-final class Company extends Model
+final class Company extends SnipeModel
 {
     protected $table = 'companies';
 
     // Declare the rules for the model validation
-    protected $rules = ['name' => 'required|min:1|max:255|unique:companies,name'];
+    protected $rules = [
+        'name' => 'required|min:1|max:255|unique:companies,name'
+    ];
+
+
     /**
     * Whether the model should inject it's identifier to the unique
     * validation rules before attempting validation. If this property
@@ -53,16 +60,12 @@ final class Company extends Model
             $company_id = null;
         }
 
-        if ($company_id == null) {
-            return $query;
-        } else {
-            return $query->where($column, '=', $company_id);
-        }
+        return $query->where($column, '=', $company_id);
     }
 
     public static function getSelectList()
     {
-        $select_company = Lang::get('general.select_company');
+        $select_company = trans('general.select_company');
         return ['0' => $select_company] + DB::table('companies')->orderBy('name', 'ASC')->lists('name', 'id');
     }
 
@@ -84,11 +87,17 @@ final class Company extends Model
         } else {
             $current_user = Auth::user();
 
-            if ($current_user->company_id != null) {
-                return $current_user->company_id;
-            } else {
+            // Super users should be able to set a company to whatever they need
+            if ($current_user->isSuperUser()) {
                 return static::getIdFromInput($unescaped_input);
+            } else {
+                if ($current_user->company_id != null) {
+                    return $current_user->company_id;
+                } else {
+                    return static::getIdFromInput($unescaped_input);
+                }
             }
+
         }
     }
 
@@ -101,14 +110,14 @@ final class Company extends Model
         } else {
             $current_user_company_id = Auth::user()->company_id;
             $companyable_company_id = $companyable->company_id;
-
-            return ($current_user_company_id == null || $current_user_company_id == $companyable_company_id);
+            return ($current_user_company_id == null || $current_user_company_id == $companyable_company_id || Auth::user()->isSuperUser());
         }
     }
 
     public static function isCurrentUserAuthorized()
     {
-        return (!static::isFullMultipleCompanySupportEnabled() || Auth::user()->company_id == null);
+
+        return ((!static::isFullMultipleCompanySupportEnabled()) || (Auth::user()->isSuperUser()));
     }
 
     public static function canManageUsersCompanies()
@@ -128,7 +137,8 @@ final class Company extends Model
 
     public static function scopeCompanyables($query, $column = 'company_id')
     {
-        if (!static::isFullMultipleCompanySupportEnabled()) {
+        // If not logged in and hitting this, assume we are on the command line and don't scope?'
+        if (!static::isFullMultipleCompanySupportEnabled() || (Auth::check() && Auth::user()->isSuperUser()) || (!Auth::check())) {
             return $query;
         } else {
             return static::scopeCompanyablesDirectly($query, $column);
@@ -139,7 +149,7 @@ final class Company extends Model
     {
         if (count($companyable_names) == 0) {
             throw new Exception('No Companyable Children to scope');
-        } elseif (!static::isFullMultipleCompanySupportEnabled()) {
+        } elseif (!static::isFullMultipleCompanySupportEnabled() || (Auth::check() && Auth::user()->isSuperUser())) {
             return $query;
         } else {
             $f = function ($q) {
@@ -167,5 +177,28 @@ final class Company extends Model
         } else {
             return e($company->name);
         }
+    }
+
+    public function users() {
+        return $this->hasMany(User::class);
+    }
+
+    public function assets() {
+        return $this->hasMany(Asset::class);
+    }
+
+    public function licenses() {
+        return $this->hasMany(License::class);
+    }
+    public function accessories() {
+        return $this->hasMany(Accessory::class);
+    }
+
+    public function consumables() {
+        return $this->hasMany(Consumable::class);
+    }
+
+    public function components() {
+        return $this->hasMany(Component::class);
     }
 }

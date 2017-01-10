@@ -1,18 +1,22 @@
 <?php
 namespace App\Models;
 
+use App\Helpers\Helper;
+use App\Http\Traits\UniqueUndeletedTrait;
 use App\Models\Actionlog;
 use App\Models\Company;
 use App\Models\Location;
+use App\Models\Loggable;
+use App\Models\Requestable;
+use App\Models\Setting;
+use Auth;
 use Config;
+use DateTime;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Log;
 use Parsedown;
 use Watson\Validating\ValidatingTrait;
-use DateTime;
-use App\Models\Setting;
-use App\Helpers\Helper;
 
 /**
  * Model for Assets.
@@ -21,7 +25,9 @@ use App\Helpers\Helper;
  */
 class Asset extends Depreciable
 {
+    use Loggable;
     use SoftDeletes;
+    use Requestable;
 
   /**
   * The database table used by the model.
@@ -39,6 +45,7 @@ class Asset extends Depreciable
   */
     protected $injectUniqueIdentifier = true;
     use ValidatingTrait;
+    use UniqueUndeletedTrait;
 
     protected $rules = [
     'name'            => 'min:2|max:255',
@@ -50,8 +57,9 @@ class Asset extends Depreciable
     'checkout_date'   => 'date|max:10|min:10',
     'checkin_date'    => 'date|max:10|min:10',
     'supplier_id'     => 'integer',
-    'asset_tag'       => 'required|min:2|max:255|unique:assets,asset_tag,NULL,deleted_at',
+    'asset_tag'       => 'required|min:1|max:255|unique_undeleted',
     'status'          => 'integer',
+    'purchase_cost'   => 'numeric',
     ];
 
 
@@ -69,20 +77,36 @@ class Asset extends Depreciable
     }
 
 
+    public function availableForCheckout()
+    {
+      return (
+          empty($this->assigned_to) &&
+          $this->assetstatus->deployable == 1 &&
+          empty($this->deleted_at)
+        );
+    }
+
   /**
   * Checkout asset
   */
     public function checkOutToUser($user, $admin, $checkout_at = null, $expected_checkin = null, $note = null, $name = null)
     {
+        if (!$user) {
+            return false;
+        }
 
         if ($expected_checkin) {
-            $this->expected_checkin = $expected_checkin ;
+            $this->expected_checkin = $expected_checkin;
         }
 
         $this->last_checkout = $checkout_at;
 
         $this->assigneduser()->associate($user);
-        $this->name = $name;
+
+        if($name != null)
+        {
+            $this->name = $name;
+        }
 
         $settings = Setting::getSettings();
 
@@ -90,17 +114,15 @@ class Asset extends Depreciable
             $this->accepted="pending";
         }
 
-        if (!$user) {
-            return false;
-        }
+
 
         if ($this->save()) {
 
             // $action, $admin, $user, $expected_checkin = null, $note = null, $checkout_at = null
-            $log_id = $this->createLogRecord('checkout', $this, $admin, $user, $expected_checkin, $note, $checkout_at);
+            $log = $this->createLogRecord('checkout', $this, $admin, $user, $expected_checkin, $note, $checkout_at);
 
             if ((($this->requireAcceptance()=='1')  || ($this->getEula())) && ($user->email!='')) {
-                $this->checkOutNotifyMail($log_id, $user, $checkout_at, $expected_checkin, $note);
+                $this->checkOutNotifyMail($log->id, $user, $checkout_at, $expected_checkin, $note);
             }
 
             if ($settings->slack_endpoint) {
@@ -130,7 +152,8 @@ class Asset extends Depreciable
 
             \Mail::send('emails.accept-asset', $data, function ($m) use ($user) {
                 $m->to($user->email, $user->first_name . ' ' . $user->last_name);
-                $m->subject('Confirm asset delivery');
+                $m->replyTo(config('mail.reply_to.address'), config('mail.reply_to.name'));
+                $m->subject(trans('mail.Confirm_asset_delivery'));
             });
         }
 
@@ -155,7 +178,7 @@ class Asset extends Depreciable
                 'fields' => [
                 [
                   'title' => 'Checked Out:',
-                  'value' => 'HARDWARE asset <'.config('app.url').'/hardware/'.$this->id.'/view'.'|'.$this->showAssetName().'> checked out to <'.config('app.url').'/admin/users/'.$this->assigned_to.'/view|'.$this->assigneduser->fullName().'> by <'.config('app.url').'/hardware/'.$this->id.'/view'.'|'.$admin->fullName().'>.'
+                  'value' => 'HARDWARE asset <'.config('app.url').'/hardware/'.$this->id.'/view'.'|'.$this->showAssetName().'> checked out to <'.config('app.url').'/admin/users/'.$this->assigned_to.'/view|'.$this->assigneduser->fullName().'> by <'.config('app.url').'/admin/users/'.Auth::user()->id.'/view'.'|'.$admin->fullName().'>.'
                 ],
                 [
                     'title' => 'Note:',
@@ -165,20 +188,21 @@ class Asset extends Depreciable
                 ])->send('Asset Checked Out');
 
             } catch (Exception $e) {
-                print_r($e);
+                LOG::error($e);
             }
         }
 
     }
 
 
-    public function getDetailedNameAttribute() {
-      if($this->assigned_user) {
-        $user_name = $user->fullName();
-      } else {
-        $user_name = "Unassigned";
-      }
-      return $this->asset_tag . ' - ' . $this->name . ' (' . $user_name . ') ' . $this->model->name;
+    public function getDetailedNameAttribute()
+    {
+        if ($this->assignedUser) {
+            $user_name = $this->assignedUser->fullName();
+        } else {
+            $user_name = "Unassigned";
+        }
+        return $this->asset_tag . ' - ' . $this->name . ' (' . $user_name . ') ' . $this->model->name;
     }
     public function validationRules($id = '0')
     {
@@ -190,10 +214,13 @@ class Asset extends Depreciable
     {
 
         $logaction = new Actionlog();
-        $logaction->asset_id = $this->id;
-        $logaction->checkedout_to = $this->assigned_to;
-        $logaction->asset_type = 'hardware';
+        $logaction->item_type = Asset::class;
+        $logaction->item_id = $this->id;
+        $logaction->target_type = User::class;
+        // On Checkin, this is the user that previously had the asset.
+        $logaction->target_id = $user->id;
         $logaction->note = $note;
+        $logaction->user_id = $admin->id;
         if ($checkout_at!='') {
             $logaction->created_at = \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', date('Y-m-d H:i:s', strtotime($checkout_at)));
         } else {
@@ -206,15 +233,9 @@ class Asset extends Depreciable
             }
         } else {
             // Update the asset data to null, since it's being checked in
-            $logaction->checkedout_to = $asset->assigned_to;
-            $logaction->checkedout_to = '';
-            $logaction->asset_id = $asset->id;
             $logaction->location_id = null;
-            $logaction->asset_type = 'hardware';
-            $logaction->note = $note;
-            $logaction->user_id = $admin->id;
         }
-        $logaction->adminlog()->associate($admin);
+        $logaction->user()->associate($admin);
         $log = $logaction->logaction($action);
 
         return $logaction;
@@ -251,8 +272,8 @@ class Asset extends Depreciable
     public function uploads()
     {
 
-        return $this->hasMany('\App\Models\Actionlog', 'asset_id')
-                  ->where('asset_type', '=', 'hardware')
+        return $this->hasMany('\App\Models\Actionlog', 'item_id')
+                  ->where('item_type', '=', Asset::class)
                   ->where('action_type', '=', 'uploaded')
                   ->whereNotNull('filename')
                   ->orderBy('created_at', 'desc');
@@ -289,8 +310,8 @@ class Asset extends Depreciable
    */
     public function assetlog()
     {
-        return $this->hasMany('\App\Models\Actionlog', 'asset_id')
-                  ->where('asset_type', '=', 'hardware')
+        return $this->hasMany('\App\Models\Actionlog', 'item_id')
+                  ->where('item_type', '=', Asset::class)
                   ->orderBy('created_at', 'desc')
                   ->withTrashed();
     }
@@ -308,8 +329,7 @@ class Asset extends Depreciable
     {
 
         return $this->hasMany('\App\Models\AssetMaintenance', 'asset_id')
-                  ->orderBy('created_at', 'desc')
-                  ->withTrashed();
+                  ->orderBy('created_at', 'desc');
     }
 
   /**
@@ -326,7 +346,7 @@ class Asset extends Depreciable
     public static function assetcount()
     {
 
-        return Asset::where('physical', '=', '1')
+        return Company::scopeCompanyables(Asset::where('physical', '=', '1'))
                ->whereNull('deleted_at', 'and')
                ->count();
     }
@@ -370,10 +390,18 @@ class Asset extends Depreciable
     {
 
         if ($this->name == '') {
-            return $this->model->name;
+            if ($this->model) {
+                return $this->model->name.' ('.$this->asset_tag.')';
+            }
+            return $this->asset_tag;
         } else {
             return $this->name;
         }
+    }
+
+    public function getDisplayNameAttribute()
+    {
+        return $this->showAssetName();
     }
 
     public function warrantee_expires()
@@ -457,16 +485,30 @@ class Asset extends Depreciable
         $settings = \App\Models\Setting::getSettings();
 
         if ($settings->auto_increment_assets == '1') {
-            $asset_tag = \DB::table('assets')
+            $temp_asset_tag = \DB::table('assets')
                 ->where('physical', '=', '1')
-                ->max('id');
+                ->max('asset_tag');
+
+            $asset_tag_digits = preg_replace('/\D/', '', $temp_asset_tag);
+            $asset_tag = preg_replace('/^0*/', '', $asset_tag_digits);
+
+            if ($settings->zerofill_count > 0) {
+                return $settings->auto_increment_prefix.Asset::zerofill(($asset_tag + 1),$settings->zerofill_count);
+            }
             return $settings->auto_increment_prefix.($asset_tag + 1);
         } else {
             return false;
         }
     }
 
-    public function checkin_email()
+
+    public static function zerofill ($num, $zerofill = 3)
+    {
+        return str_pad($num, $zerofill, '0', STR_PAD_LEFT);
+    }
+
+
+public function checkin_email()
     {
         return $this->model->category->checkin_email;
     }
@@ -542,13 +584,13 @@ class Asset extends Depreciable
 
     public function scopeAssetsByLocation($query, $location)
     {
-        return $query->where(function ($query) use ($location)
-        {
-            $query->whereHas('assigneduser', function ($query) use ($location)
-            {
+        return $query->where(function ($query) use ($location) {
+
+            $query->whereHas('assigneduser', function ($query) use ($location) {
+
                 $query->where('users.location_id', '=', $location->id);
-            })->orWhere(function ($query) use ($location)
-            {
+            })->orWhere(function ($query) use ($location) {
+
                 $query->where('assets.rtd_location_id', '=', $location->id);
                 $query->whereNull('assets.assigned_to');
             });
@@ -592,6 +634,23 @@ class Asset extends Depreciable
             $query->where('deployable', '=', 0)
                 ->where('pending', '=', 0)
                 ->where('archived', '=', 0);
+        });
+    }
+
+    /**
+     * Query builder scope for non-Archived assets
+     *
+     * @param  Illuminate\Database\Query\Builder $query Query builder instance
+     *
+     * @return Illuminate\Database\Query\Builder          Modified query builder
+     */
+
+    public function scopeNotArchived($query)
+    {
+
+        return $query->whereHas('assetstatus', function ($query) {
+
+            $query->where('archived', '=', 0);
         });
     }
 
@@ -639,10 +698,10 @@ class Asset extends Depreciable
     public function scopeRequestableAssets($query)
     {
 
-        return $query->where('requestable', '=', 1)
+        return Company::scopeCompanyables($query->where('requestable', '=', 1))
         ->whereHas('assetstatus', function ($query) {
 
-           $query->where('deployable', '=', 1)
+            $query->where('deployable', '=', 1)
                  ->where('pending', '=', 0)
                  ->where('archived', '=', 0);
         });
@@ -712,7 +771,7 @@ class Asset extends Depreciable
   */
     public function scopeAccepted($query)
     {
-        return $uery->where("accepted", "=", "accepted");
+        return $query->where("accepted", "=", "accepted");
     }
 
 
@@ -735,7 +794,8 @@ class Asset extends Depreciable
                     $query->whereHas('category', function ($query) use ($search) {
                         $query->where(function ($query) use ($search) {
                             $query->where('categories.name', 'LIKE', '%'.$search.'%')
-                            ->orWhere('models.name', 'LIKE', '%'.$search.'%');
+                            ->orWhere('models.name', 'LIKE', '%'.$search.'%')
+                            ->orWhere('models.model_number', 'LIKE', '%'.$search.'%');
                         });
                     });
                 })->orWhereHas('model', function ($query) use ($search) {
@@ -793,18 +853,31 @@ class Asset extends Depreciable
         return $query->join('models', 'assets.model_id', '=', 'models.id')->orderBy('models.name', $order);
     }
 
+    /**
+    * Query builder scope to order on model number
+    *
+    * @param  Illuminate\Database\Query\Builder  $query  Query builder instance
+    * @param  text                              $order       Order
+    *
+    * @return Illuminate\Database\Query\Builder          Modified query builder
+    */
+    public function scopeOrderModelNumber($query, $order)
+    {
+        return $query->join('models', 'assets.model_id', '=', 'models.id')->orderBy('models.model_number', $order);
+    }
 
-        /**
-        * Query builder scope to order on assigned user
-        *
-        * @param  Illuminate\Database\Query\Builder  $query  Query builder instance
-        * @param  text                              $order       Order
-        *
-        * @return Illuminate\Database\Query\Builder          Modified query builder
-        */
+
+    /**
+    * Query builder scope to order on assigned user
+    *
+    * @param  Illuminate\Database\Query\Builder  $query  Query builder instance
+    * @param  text                              $order       Order
+    *
+    * @return Illuminate\Database\Query\Builder          Modified query builder
+    */
     public function scopeOrderAssigned($query, $order)
     {
-        return $query->join('users', 'assets.assigned_to', '=', 'users.id')->orderBy('users.first_name', $order)->orderBy('users.last_name', $order);
+        return $query->leftJoin('users', 'assets.assigned_to', '=', 'users.id')->select('assets.*')->orderBy('users.first_name', $order)->orderBy('users.last_name', $order);
     }
 
     /**
@@ -865,7 +938,7 @@ class Asset extends Depreciable
     }
 
   /**
-    * Query builder scope to order on model
+    * Query builder scope to order on location
     *
     * @param  Illuminate\Database\Query\Builder  $query  Query builder instance
     * @param  text                              $order       Order

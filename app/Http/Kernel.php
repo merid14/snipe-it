@@ -14,13 +14,15 @@ class Kernel extends HttpKernel
      * @var array
      */
     protected $middleware = [
-        \Illuminate\Foundation\Http\Middleware\CheckForMaintenanceMode::class,
+        \MisterPhilip\MaintenanceMode\Http\Middleware\CheckForMaintenanceMode::class,
         \Illuminate\Session\Middleware\StartSession::class,
         \Illuminate\View\Middleware\ShareErrorsFromSession::class,
         \App\Http\Middleware\FrameGuard::class,
         \App\Http\Middleware\XssProtectHeader::class,
         \App\Http\Middleware\NosniffGuard::class,
         \App\Http\Middleware\CheckForSetup::class,
+        \Fideloper\Proxy\TrustProxies::class,
+        \App\Http\Middleware\CheckForDebug::class,
     ];
 
     /**
@@ -34,6 +36,7 @@ class Kernel extends HttpKernel
             \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
             \App\Http\Middleware\CheckLocale::class,
+            \App\Http\Middleware\CheckForTwoFactor::class,
         ],
 
         'api' => [

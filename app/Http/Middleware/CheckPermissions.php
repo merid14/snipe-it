@@ -12,6 +12,9 @@ class CheckPermissions
   /**
    * Handle the ACLs for permissions.
    *
+   * The $section variable is passed via the route middleware,
+   * 'middleware' => [authorize:superadmin']
+   *
    * @param  \Illuminate\Http\Request  $request
    * @param  \Closure  $next
    * @param  string|null  $section
@@ -19,6 +22,7 @@ class CheckPermissions
    */
     public function handle($request, Closure $next, $section = null)
     {
+
 
         if (Gate::allows($section)) {
             return $next($request);

@@ -21,7 +21,7 @@
           @if ($component->id)
             <div class="box-header with-border">
               <div class="box-heading">
-                <h3 class="box-title">{{ $component->name }} </h3>
+                <h3 class="box-title">{{ $component->name }}  ({{ $component->numRemaining()  }}  {{ trans('admin/components/general.remaining') }})</h3>
               </div>
             </div><!-- /.box-header -->
           @endif
@@ -32,7 +32,7 @@
           @if ($component->name)
           <!-- consumable name -->
           <div class="form-group">
-          <label class="col-sm-3 control-label">{{ trans('admin/consumables/general.consumable_name') }}</label>
+          <label class="col-sm-3 control-label">{{ trans('admin/components/general.component_name') }}</label>
               <div class="col-md-6">
                 <p class="form-control-static">{{ $component->name }}</p>
               </div>
@@ -46,7 +46,7 @@
               <label for="asset_id" class="col-md-3 control-label">{{ trans('admin/hardware/form.checkout_to') }}
                <i class='icon-asterisk'></i></label>
               <div class="col-md-9">
-                  {{ Form::select('asset_id', $assets_list , Input::old('asset_id', $component->asset_id), array('class'=>'select2', 'style'=>'min-width:100%')) }}
+                  {{ Form::select('asset_id', $assets_list , Input::old('asset_id', $component->asset_id), array('class'=>'select2', 'style'=>'width:100%')) }}
                   {!! $errors->first('asset_id', '<span class="alert-msg"><i class="fa fa-times"></i> :message</span>') !!}
               </div>
           </div>

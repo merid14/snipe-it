@@ -37,9 +37,11 @@ return array(
     ),
 
     'import' => array(
-        'error'         => 'Some Items did not import Correctly.',
-        'errorDetail'   => 'The Following Items were not imported because of errors.',
-        'success'       => "Your File has been imported",
+        'error'                 => 'Noen elementer ble ikke importert riktig.',
+        'errorDetail'           => 'Følgende elementer ble ikke importert på grunn av feil.',
+        'success'               => "Filen har blitt importert",
+        'file_delete_success'   => "Filen har blitt slettet",
+        'file_delete_error'      => "Filen kunne ikke bli slettet",
     ),
 
 
@@ -52,20 +54,22 @@ return array(
     'checkout' => array(
         'error'   		=> 'Eiendel ble ikke sjekket ut. Prøv igjen',
         'success' 		=> 'Vellykket utsjekk av eiendel.',
-        'user_does_not_exist' => 'Denne brukeren er ugyldig. Vennligst prøv igjen.'
+        'user_does_not_exist' => 'Denne brukeren er ugyldig. Vennligst prøv igjen.',
+        'not_available' => 'Den eiendelen er ikke tilgjengelig til å sjekkes ut!'
     ),
 
     'checkin' => array(
         'error'   		=> 'Eiendel ble ikke sjekket inn. Prøv igjen',
         'success' 		=> 'Vellykket innsjekk av eiendel.',
         'user_does_not_exist' => 'Denne brukeren er ugyldig. Vennligst prøv igjen.',
-        'already_checked_in'  => 'That asset is already checked in.',
+        'already_checked_in'  => 'Den eiendelen er allerede sjekket inn.',
 
     ),
 
     'requests' => array(
         'error'   		=> 'Eiendelen ble ikke forespurt, prøv igjen',
         'success' 		=> 'Eiendel ble forespurt.',
+        'canceled'      => 'Utsjekkingsforespørselen ble kansellert'
     )
 
 );

@@ -3,6 +3,9 @@ namespace App\Providers;
 
 use Validator;
 use Illuminate\Support\ServiceProvider;
+use DB;
+use Log;
+
 
 /**
  * This service provider handles a few custom validation rules.
@@ -47,6 +50,26 @@ class AppServiceProvider extends ServiceProvider
             }
 
         });
+
+        // Unique only if undeleted
+        // This works around the use case where multiple deleted items have the same unique attribute.
+        // (I think this is a bug in Laravel's validator?)
+        Validator::extend('unique_undeleted', function($attribute, $value, $parameters, $validator) {
+
+            $count = DB::table($parameters[0])->select('id')->where($attribute,'=',$value)->whereNull('deleted_at')->where('id','!=',$parameters[1])->count();
+
+            if ($count < 1) {
+                return true;
+            } else {
+                return false;
+            }
+
+        });
+
+        // Share common variables with all views.
+        view()->composer('*', function ($view) {
+            $view->with('snipeSettings', \App\Models\Setting::getSettings());
+        });
     }
 
     /**
@@ -56,6 +79,20 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        $monolog = Log::getMonolog();
+
+        if (config('app.debug')) {
+            $log_level = 'debug';
+        } else {
+            if (config('log-level')) {
+                $log_level = config('log-level');
+            } else {
+                $log_level = 'error';
+            }
+        }
+
+        foreach($monolog->getHandlers() as $handler) {
+            $handler->setLevel($log_level);
+        }
     }
 }
