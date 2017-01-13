@@ -370,7 +370,7 @@ function setupGitTags ()
         fi
         currenttag="$(basename "$(git symbolic-ref HEAD)")"
     else  # Must be a file copy install
-        currenttag="$(cat "$webdir"/app/config/version.php | grep app | awk -F "'" '{print $4}' | cut -f1 -d"-")"
+        currenttag="$(cat "$webdir"/config/version.php | grep app | awk -F "'" '{print $4}' | cut -f1 -d"-")"
     fi
 }
 
@@ -735,14 +735,19 @@ function setupBackup ()
     fi
 
     echo "  --  Backing up app file."
-    cp -p "$webdir"/app/config/app.php "$backup"/
+    if [ -e "$backup"/.env ]; then
+        cp -p "$webdir"/.env "$backup"
+    fi
+    if [ -e "$backup"/app/config/app.php ]; then
+        cp -p "$webdir"/app/config/app.php "$backup"
+    fi
 
     echo "  --  Backing up database."
     mysqldump "$name" > "$backup"/"$name".sql
 
     if [ ! -d "$gitdir" ]; then # If this is a file copy conversion
         echo "  --  Backing up $si folder."
-        cp -R "$webdir" "$backup"/"$name"
+        cp -p -R "$webdir" "$backup"/"$name"
         rm -rf "${webdir:?}"
     fi
 }

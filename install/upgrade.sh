@@ -39,14 +39,13 @@ if [ -d "$webdir" ]; then #If webdir exists
             git stash pop >> "$log" 2>&1
             set -e
 
-            echo "##  Cleaning cache and view directories."
-            rm -rf "$webdir"/app/storage/cache/*
-            rm -rf "$webdir"/app/storage/views/*
+            # echo "##  Cleaning cache and view directories."
+            # rm -rf "$webdir"/app/storage/cache/*
+            # rm -rf "$webdir"/app/storage/views/*
             # rm -rf "${$webdir:?}"/"${$name:?}"/app/storage/cache/*
             # rm -rf "${$webdir:?}"/"${$name:?}"/app/storage/views/*
-            if $newtag
-            echo "##  Restoring app.php file."
-            cp "$backup"/app.php "$webdir"/app/config/
+            echo "##  Restoring .env file."
+            cp "$backup"/.env "$webdir"
         else
             echo
             printf "${YELLOW}    You are already on the latest version.${NORMAL}\n"
@@ -57,7 +56,7 @@ if [ -d "$webdir" ]; then #If webdir exists
     else  # Must be a file copy install
 
         printf "${YELLOW}##  Beginning conversion from copy file install to git install.${NORMAL}\n"
-        # currenttag="$(cat "$webdir"/app/config/version.php | grep app | awk -F "'" '{print $4}' | cut -f1 -d"-")"
+        # currenttag="$(cat "$webdir"/config/version.php | grep app | awk -F "'" '{print $4}' | cut -f1 -d"-")"
         setupGitTags
 
         #clone to tmp so we can check the latest version
@@ -86,9 +85,9 @@ if [ -d "$webdir" ]; then #If webdir exists
             git checkout -b "$newtag" "$newtag" >> "$log" 2>&1
 
             echo "##  Restoring files."
-            echo "  --  Restoring app config file."
-            if [ -e "$backup"/app.php ]; then
-                cp "$backup"/app.php "$webdir"/app/config/
+            echo "  --  Restoring environment config file."
+            if [ -e "$backup"/.env ]; then
+                cp "$backup"/.env "$webdir"
             fi
             echo "  --  Restoring app production file."
             if [ -e "$backup"/"$name"/app/config/production/app.php ]; then
